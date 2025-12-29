@@ -245,8 +245,16 @@ def validate_character_image_url(image_url: str) -> None:
         raise HTTPException(status_code=400, detail="参考图URL必须以 http 或 https 开头")
 
     response = None
+    headers = {
+        'User-Agent': 'WaveSubtitleBot/1.0 (+https://example.com/contact)'
+    }
     try:
-        response = requests.get(image_url, timeout=CHARACTER_IMAGE_TIMEOUT, stream=True)
+        response = requests.get(
+            image_url,
+            timeout=CHARACTER_IMAGE_TIMEOUT,
+            stream=True,
+            headers=headers
+        )
         response.raise_for_status()
     except requests.RequestException as exc:
         raise HTTPException(status_code=400, detail=f"无法访问参考图: {exc}") from exc

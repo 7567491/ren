@@ -2,14 +2,18 @@
 AI 视频生成 REST API 服务
 提供 Web API 接口，管理任务队列和子进程执行
 """
+import json
 import os
 import sys
+import shutil
 import yaml
 import asyncio
 import subprocess
 from pathlib import Path
 from typing import Optional, List
 from datetime import datetime
+
+import requests
 from fastapi import FastAPI, HTTPException, BackgroundTasks
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import JSONResponse, FileResponse
@@ -40,11 +44,14 @@ app.add_middleware(
 # ==================== 全局变量 ====================
 TEMP_DIR = "temp"
 OUTPUT_DIR = "output"
+PUBLIC_EXPORT_DIR = Path("/mnt/www")
+PUBLIC_EXPORT_URL = "https://s.linapp.fun"
 task_manager = TaskManager(storage_dir=TEMP_DIR)
 
 # 并发限制（从配置读取）
 MAX_CONCURRENT_TASKS = 1
 running_tasks = {}  # {job_id: subprocess}
+WAVESPEED_BALANCE_URL = "https://api.wavespeed.ai/api/v3/balance"
 
 # ==================== 预设映射配置 ====================
 # 预设名称到风格编号的映射（对应 ad-back.py 中的 STYLE_NUMBER_MAP）
@@ -91,7 +98,10 @@ def generate_config_from_preset(
     video_model: int,
     voice: int,
     concurrent_workers: int,
-    job_id: str
+    job_id: str,
+    character_enabled: bool = False,
+    character_image_url: Optional[str] = None,
+    character_description: Optional[str] = None
 ) -> dict:
     """
     根据预设参数生成完整配置
@@ -151,6 +161,17 @@ def generate_config_from_preset(
         }
     }
 
+    if character_enabled:
+        character_config = {
+            'enabled': True,
+            'description': (character_description or '').strip() or '主角角色'
+        }
+        if character_image_url:
+            character_config['character_image'] = character_image_url.strip()
+        config['character'] = character_config
+    else:
+        config['character'] = {'enabled': False}
+
     # 验证配置有效性
     validate_config(config)
 
@@ -183,13 +204,45 @@ def validate_config(config: dict) -> None:
 
     # 验证镜头数
     shot_count = config['shot_count']
-    if shot_count < 2 or shot_count > 10:
-        raise ValueError(f"镜头数 {shot_count} 无效，有效范围: 2-10")
+    if shot_count < 1 or shot_count > 10:
+        raise ValueError(f"镜头数 {shot_count} 无效，有效范围: 1-10")
 
     # 验证分辨率
     valid_resolutions = ['480p', '720p', '1080p']
     if config['resolution'] not in valid_resolutions:
         raise ValueError(f"分辨率 {config['resolution']} 无效，有效值: {valid_resolutions}")
+
+
+# 兼容历史测试接口
+validate_config_params = validate_config
+
+
+def fetch_wavespeed_balance(api_key: str, timeout: int = 10) -> Optional[float]:
+    """查询 Wavespeed 余额（返回美元），失败返回 None"""
+    if not api_key:
+        return None
+
+    try:
+        response = requests.get(
+            WAVESPEED_BALANCE_URL,
+            headers={"Authorization": f"Bearer {api_key}"},
+            timeout=timeout
+        )
+        response.raise_for_status()
+        payload = response.json()
+
+        if isinstance(payload, dict) and 'data' in payload and isinstance(payload['data'], dict):
+            data = payload['data']
+            balance = data.get('balance') or data.get('credit') or data.get('amount')
+        else:
+            balance = payload.get('balance') or payload.get('credit') or payload.get('amount')
+
+        if balance is None:
+            return None
+        return float(balance)
+    except requests.exceptions.RequestException:
+        raise
+
 
 
 # ==================== 请求模型 ====================
@@ -231,6 +284,11 @@ class JobCreateRequest(BaseModel):
     # API密钥（前端传递）
     wavespeed_api_key: Optional[str] = None
 
+    # 参考人物图配置
+    character_enabled: Optional[bool] = False
+    character_image_url: Optional[str] = None
+    character_description: Optional[str] = None
+
     # 高级模式
     user_yaml: Optional[str] = None
     resume_id: Optional[str] = None
@@ -252,6 +310,17 @@ class LogResponse(BaseModel):
     lines: List[str]
     total_lines: int = 0
     eof: bool = True
+
+
+class BalanceRequest(BaseModel):
+    """账户余额查询请求"""
+    wavespeed_api_key: str
+
+
+class BalanceResponse(BaseModel):
+    """账户余额响应"""
+    balance: float
+    currency: str = "USD"
 
 
 # ==================== 静态文件服务 ====================
@@ -309,65 +378,113 @@ async def create_job(request: JobCreateRequest, background_tasks: BackgroundTask
     - **user_yaml**: 用户自定义 YAML 配置（完整覆盖上述选项）
     """
     try:
-        # 创建任务
-        job_id = task_manager.create_task(
-            preset_name=request.preset_name,
-            num_shots=request.num_shots or 5,
-            resolution=request.resolution or "720p",
-            user_yaml=request.user_yaml,
-            resume_id=request.resume_id,
-            no_auto_resume=request.no_auto_resume or False
-        )
+        resume_mode = bool(request.resume_id)
+        job_id = None
+        config_file = None
 
-        # 生成配置文件
-        config_file = Path(TEMP_DIR) / f"user-{job_id}.yaml"
-        if request.user_yaml:
-            # 使用用户提供的 YAML
-            with open(config_file, 'w', encoding='utf-8') as f:
-                f.write(request.user_yaml)
+        if resume_mode:
+            job_id = request.resume_id.strip()
+            if not job_id:
+                raise HTTPException(status_code=400, detail="无效的 resume_id")
 
-            # 验证用户提供的配置
-            try:
-                user_config = yaml.safe_load(request.user_yaml)
-                validate_config(user_config)
-            except Exception as e:
-                raise HTTPException(status_code=400, detail=f"配置验证失败: {str(e)}")
+            task = task_manager.get_task(job_id)
+            if not task:
+                raise HTTPException(status_code=404, detail=f"任务不存在: {job_id}")
+
+            if task['status'] == 'running':
+                raise HTTPException(status_code=400, detail="任务正在运行中，无法继续操作")
+
+            if task['status'] not in ['failed', 'succeeded', 'queued']:
+                raise HTTPException(status_code=400, detail=f"当前状态 {task['status']} 暂不支持断点续传")
+
+            config_file = Path(TEMP_DIR) / f"user-{job_id}.yaml"
+            if not config_file.exists():
+                raise HTTPException(status_code=400, detail="找不到任务配置文件，无法断点续传")
+
+            if request.wavespeed_api_key:
+                try:
+                    with open(config_file, 'r', encoding='utf-8') as f:
+                        resume_config = yaml.safe_load(f) or {}
+                except Exception:
+                    resume_config = {}
+
+                if not isinstance(resume_config, dict):
+                    resume_config = {}
+
+                api_settings = resume_config.get('api') or {}
+                api_settings['wavespeed_key'] = request.wavespeed_api_key.strip()
+                resume_config['api'] = api_settings
+
+                with open(config_file, 'w', encoding='utf-8') as f:
+                    yaml.dump(resume_config, f, allow_unicode=True, default_flow_style=False)
+
+            task_manager.update_status(job_id, 'queued', '重新开始任务，准备断点续传')
+            task_manager.update_progress(job_id, 0.0, '重新开始任务，准备断点续传')
         else:
-            # 使用新的配置生成函数
-            config = generate_config_from_preset(
-                topic=request.topic,
+            # 创建任务
+            job_id = task_manager.create_task(
                 preset_name=request.preset_name,
                 num_shots=request.num_shots or 5,
-                shot_duration=request.shot_duration or 5,
                 resolution=request.resolution or "720p",
-                llm_provider=request.llm_provider or 1,
-                image_model=request.image_model or 4,
-                video_model=request.video_model or 1,
-                voice=request.voice or 1,
-                concurrent_workers=request.concurrent_workers or 6,
-                job_id=job_id
+                user_yaml=request.user_yaml,
+                resume_id=request.resume_id,
+                no_auto_resume=request.no_auto_resume or False
             )
 
-            # 如果提供了Wavespeed API密钥，添加到配置中
-            if request.wavespeed_api_key:
-                if 'api' not in config:
-                    config['api'] = {}
-                config['api']['wavespeed_key'] = request.wavespeed_api_key
+            # 生成配置文件
+            config_file = Path(TEMP_DIR) / f"user-{job_id}.yaml"
+            if request.user_yaml:
+                # 使用用户提供的 YAML
+                with open(config_file, 'w', encoding='utf-8') as f:
+                    f.write(request.user_yaml)
 
-            # 验证配置
-            validate_config(config)
+                # 验证用户提供的配置
+                try:
+                    user_config = yaml.safe_load(request.user_yaml)
+                    validate_config(user_config)
+                except Exception as e:
+                    raise HTTPException(status_code=400, detail=f"配置验证失败: {str(e)}")
+            else:
+                # 使用新的配置生成函数
+                config = generate_config_from_preset(
+                    topic=request.topic,
+                    preset_name=request.preset_name,
+                    num_shots=request.num_shots or 5,
+                    shot_duration=request.shot_duration or 5,
+                    resolution=request.resolution or "720p",
+                    llm_provider=request.llm_provider or 1,
+                    image_model=request.image_model or 4,
+                    video_model=request.video_model or 1,
+                    voice=request.voice or 1,
+                    concurrent_workers=request.concurrent_workers or 6,
+                    job_id=job_id,
+                    character_enabled=bool(request.character_enabled),
+                    character_image_url=request.character_image_url,
+                    character_description=request.character_description
+                )
 
-            # 写入文件
-            with open(config_file, 'w', encoding='utf-8') as f:
-                yaml.dump(config, f, allow_unicode=True, default_flow_style=False)
+                # 如果提供了Wavespeed API密钥，添加到配置中
+                if request.wavespeed_api_key:
+                    if 'api' not in config:
+                        config['api'] = {}
+                    config['api']['wavespeed_key'] = request.wavespeed_api_key.strip()
+
+                # 验证配置
+                validate_config(config)
+
+                # 写入文件
+                with open(config_file, 'w', encoding='utf-8') as f:
+                    yaml.dump(config, f, allow_unicode=True, default_flow_style=False)
 
         # 添加后台任务执行
-        background_tasks.add_task(run_video_generation, job_id, config_file)
+        background_tasks.add_task(run_video_generation, job_id, config_file, resume_mode)
 
         # 返回任务信息
         task = task_manager.get_task(job_id)
         return JobResponse(**task)
 
+    except HTTPException:
+        raise
     except Exception as e:
         raise HTTPException(status_code=500, detail=f"创建任务失败: {str(e)}")
 
@@ -380,6 +497,31 @@ async def list_jobs():
         "jobs": tasks,
         "total": len(tasks)
     }
+
+
+@app.post("/api/wavespeed/balance", response_model=BalanceResponse)
+async def get_wavespeed_balance_api(request: BalanceRequest):
+    """查询 Wavespeed API 账户余额"""
+    api_key = (request.wavespeed_api_key or "").strip()
+    if not api_key:
+        raise HTTPException(status_code=400, detail="缺少 Wavespeed API 密钥")
+
+    try:
+        balance = fetch_wavespeed_balance(api_key)
+    except requests.exceptions.HTTPError as exc:
+        status_code = exc.response.status_code if exc.response else 502
+        if status_code == 401:
+            raise HTTPException(status_code=401, detail="Wavespeed API 密钥无效或已过期") from exc
+        raise HTTPException(status_code=status_code, detail="Wavespeed 余额查询失败") from exc
+    except requests.exceptions.Timeout as exc:
+        raise HTTPException(status_code=504, detail="查询 Wavespeed 余额超时，请稍后重试") from exc
+    except requests.exceptions.RequestException as exc:
+        raise HTTPException(status_code=502, detail="无法连接 Wavespeed 服务，请稍后再试") from exc
+
+    if balance is None:
+        raise HTTPException(status_code=502, detail="未能从 Wavespeed API 获取余额信息")
+
+    return BalanceResponse(balance=round(balance, 4))
 
 
 @app.get("/api/jobs/{job_id}", response_model=JobResponse)
@@ -462,19 +604,21 @@ def parse_checkpoint_file(checkpoint_file: Path) -> Optional[dict]:
     Returns:
         checkpoint字典，如果文件不存在或损坏则返回None
     """
+    import json as json_module
+
     if not checkpoint_file.exists():
         return None
 
     try:
         with open(checkpoint_file, 'r', encoding='utf-8') as f:
-            return json.load(f)
-    except (json.JSONDecodeError, IOError):
+            return json_module.load(f)
+    except (json_module.JSONDecodeError, IOError):
         return None
 
 
 def calculate_progress_from_checkpoint(checkpoint: dict, detailed: bool = False) -> float:
     """
-    根据checkpoint计算进度
+    根据checkpoint计算进度（5个阶段，每个20%）
 
     Args:
         checkpoint: checkpoint字典
@@ -486,14 +630,14 @@ def calculate_progress_from_checkpoint(checkpoint: dict, detailed: bool = False)
     if not checkpoint or 'completed_steps' not in checkpoint:
         return 0.0
 
-    # 定义步骤权重
-    total_steps = ['story', 'images', 'videos', 'composition']
+    # 定义步骤权重（5个阶段，每个20%）
+    total_steps = ['story', 'images', 'videos', 'audio_subtitle', 'composition']
     completed_steps = checkpoint.get('completed_steps', [])
 
     # 只计数已知步骤
     valid_completed = [s for s in completed_steps if s in total_steps]
 
-    # 基础进度
+    # 基础进度（每个阶段20%）
     base_progress = len(valid_completed) / len(total_steps)
 
     if not detailed:
@@ -501,7 +645,7 @@ def calculate_progress_from_checkpoint(checkpoint: dict, detailed: bool = False)
 
     # 详细进度：考虑子任务
     sub_progress = 0.0
-    step_weight = 1.0 / len(total_steps)
+    step_weight = 1.0 / len(total_steps)  # 每个阶段占20%
 
     # 如果正在执行图像生成
     if 'images' in checkpoint and 'images' not in valid_completed:
@@ -524,7 +668,7 @@ def calculate_progress_from_checkpoint(checkpoint: dict, detailed: bool = False)
 
 def generate_progress_message(checkpoint: dict) -> str:
     """
-    根据checkpoint生成进度消息
+    根据checkpoint生成进度消息（5个阶段）
 
     Args:
         checkpoint: checkpoint字典
@@ -537,14 +681,13 @@ def generate_progress_message(checkpoint: dict) -> str:
 
     completed = checkpoint.get('completed_steps', [])
 
-    # 判断当前阶段
+    # 判断当前阶段（按倒序检查）
     if 'composition' in completed:
         return '✅ 视频合成完成'
+    elif 'audio_subtitle' in completed:
+        return '🎬 正在合成视频...'
     elif 'videos' in completed:
-        videos_info = checkpoint.get('videos', {})
-        if 'completed' in videos_info and 'total' in videos_info:
-            return f'🎬 正在合成视频...'
-        return '✅ 视频生成完成，准备合成'
+        return '🎙️ 正在生成字幕旁白...'
     elif 'images' in completed:
         videos_info = checkpoint.get('videos', {})
         if 'completed' in videos_info and 'total' in videos_info:
@@ -565,7 +708,7 @@ def generate_progress_message(checkpoint: dict) -> str:
 
 # ==================== 后台任务执行 ====================
 
-async def run_video_generation(job_id: str, config_file: Path):
+async def run_video_generation(job_id: str, config_file: Path, resume_mode: bool = False):
     """
     后台运行视频生成任务
 
@@ -599,7 +742,13 @@ async def run_video_generation(job_id: str, config_file: Path):
         ]
 
         # 启动子进程
-        with open(log_file, 'w', encoding='utf-8') as log_f:
+        append_existing_log = resume_mode and log_file.exists()
+        mode = 'a' if append_existing_log else 'w'
+        with open(log_file, mode, encoding='utf-8') as log_f:
+            if append_existing_log:
+                separator = "=" * 20
+                log_f.write(f"\n{separator} 断点续传启动 {datetime.now().strftime('%Y-%m-%d %H:%M:%S')} {separator}\n")
+                log_f.flush()
             process = subprocess.Popen(
                 cmd,
                 stdout=log_f,
@@ -642,10 +791,47 @@ async def run_video_generation(job_id: str, config_file: Path):
         if returncode == 0:
             # 查找生成的视频文件
             output_dir = Path(OUTPUT_DIR) / job_id
-            result_file = output_dir / 'final_video.mp4'
+            preferred_paths = [
+                output_dir / 'final_video.mp4',
+                output_dir / 'final.mp4',
+                output_dir / '90_final.mp4',
+            ]
+            result_file = None
+            for candidate in preferred_paths:
+                if candidate.exists():
+                    result_file = candidate
+                    break
+            if result_file is None:
+                # 回退到匹配 *final*.mp4 的最新文件
+                final_candidates = sorted(output_dir.glob("*final*.mp4"))
+                if final_candidates:
+                    result_file = final_candidates[-1]
 
-            if result_file.exists():
-                task_manager.set_result_path(job_id, str(result_file))
+            if result_file and result_file.exists():
+                final_name = f"{job_id}.mp4"
+                canonical_path = output_dir / final_name
+                try:
+                    if result_file.resolve() != canonical_path.resolve():
+                        shutil.copy2(result_file, canonical_path)
+                except Exception as copy_err:
+                    print(f"[WARN] 无法生成命名文件 {canonical_path}: {copy_err}")
+                    canonical_path = result_file
+
+                public_url = None
+                if canonical_path.exists():
+                    try:
+                        PUBLIC_EXPORT_DIR.mkdir(parents=True, exist_ok=True)
+                        public_target = PUBLIC_EXPORT_DIR / final_name
+                        shutil.copy2(canonical_path, public_target)
+                        public_url = f"{PUBLIC_EXPORT_URL.rstrip('/')}/{final_name}"
+                    except Exception as export_err:
+                        print(f"[WARN] 无法复制视频到公共存储 {PUBLIC_EXPORT_DIR}: {export_err}")
+                        public_url = str(canonical_path)
+                else:
+                    canonical_path = result_file
+
+                final_result = public_url or str(canonical_path)
+                task_manager.set_result_path(job_id, final_result)
                 task_manager.update_status(job_id, 'succeeded', '视频生成成功')
                 task_manager.update_progress(job_id, 1.0, '已完成')
             else:

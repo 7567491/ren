@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>AI 视频生成系统</title>
+    <title>AI视频广告一键生成</title>
 
     <!-- 前端配置文件（固定后端API地址） -->
     <script src="config.js"></script>
@@ -17,7 +17,8 @@
 
         body {
             font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
-            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            background: linear-gradient(135deg, #050C1A 0%, #0A1A2F 45%, #0F2542 100%);
+            color: #E6F1FF;
             min-height: 100vh;
             padding: 20px;
         }
@@ -29,7 +30,7 @@
 
         header {
             text-align: center;
-            color: white;
+            color: #E6F1FF;
             margin-bottom: 30px;
         }
 
@@ -69,10 +70,11 @@
         }
 
         .card {
-            background: rgba(255, 255, 255, 0.95);
+            background: #11233F;
             border-radius: 12px;
             padding: 25px;
-            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.2);
+            box-shadow: 0 15px 35px rgba(0, 0, 0, 0.45);
+            border: 1px solid rgba(0, 181, 226, 0.15);
         }
 
         @media (max-width: 900px) {
@@ -88,7 +90,7 @@
         }
 
         .card h2 {
-            color: #667eea;
+            color: #00B5E2;
             margin-bottom: 20px;
             font-size: 1.5em;
         }
@@ -106,7 +108,7 @@
         label {
             display: block;
             margin-bottom: 8px;
-            color: #333;
+            color: #C5D8F5;
             font-weight: 500;
         }
 
@@ -123,17 +125,20 @@
         textarea {
             width: 100%;
             padding: 12px;
-            border: 2px solid #e0e0e0;
+            border: 2px solid #1E3657;
             border-radius: 8px;
             font-size: 1em;
-            transition: border-color 0.3s;
+            background: #0F1E34;
+            color: #E6F1FF;
+            transition: border-color 0.3s, background 0.3s;
         }
 
         input:focus,
         select:focus,
         textarea:focus {
             outline: none;
-            border-color: #667eea;
+            border-color: #00B5E2;
+            background: #122849;
         }
 
         textarea {
@@ -143,7 +148,7 @@
         }
 
         button {
-            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            background: linear-gradient(135deg, #00B5E2 0%, #0075A4 100%);
             color: white;
             border: none;
             padding: 14px 28px;
@@ -158,8 +163,8 @@
 
         button:hover {
             transform: translateY(-2px);
-            box-shadow: 0 8px 20px rgba(102, 126, 234, 0.4);
-            background: linear-gradient(135deg, #7589ed 0%, #8556b0 100%);
+            box-shadow: 0 8px 20px rgba(0, 181, 226, 0.35);
+            background: linear-gradient(135deg, #00C3FF 0%, #0089C7 100%);
         }
 
         button:active {
@@ -177,50 +182,177 @@
         }
 
         .job-info {
-            background: #f5f5f5;
+            background: #0F1E34;
             padding: 15px;
             border-radius: 8px;
             margin-bottom: 20px;
+            border: 1px solid rgba(0, 181, 226, 0.15);
         }
 
         .job-info p {
             margin-bottom: 8px;
-            color: #555;
+            color: #C5D8F5;
         }
 
         .job-info strong {
-            color: #333;
+            color: #fff;
+        }
+
+        .progress-bar-container {
+            width: 100%;
+            margin-bottom: 20px;
         }
 
         .progress-bar {
             width: 100%;
-            height: 30px;
-            background: #e0e0e0;
-            border-radius: 15px;
-            overflow: hidden;
-            margin-bottom: 15px;
+            height: 32px;
+            background: linear-gradient(180deg, #08162B 0%, #091A30 100%);
+            border-radius: 18px;
+            overflow: visible;
+            position: relative;
+            border: 1px solid rgba(0, 181, 226, 0.28);
+            box-shadow: inset 0 0 12px rgba(0, 0, 0, 0.35);
         }
 
         .progress-fill {
             height: 100%;
-            background: linear-gradient(90deg, #667eea 0%, #764ba2 100%);
-            transition: width 0.5s ease;
+            background: linear-gradient(90deg, #00C6FF 0%, #0071BC 55%, #00B5E2 100%);
+            transition: width 0.45s ease;
             display: flex;
             align-items: center;
             justify-content: center;
             color: white;
             font-weight: 600;
+            border-radius: 16px 4px 4px 16px;
+            box-shadow: 0 8px 20px rgba(0, 181, 226, 0.35);
+            position: relative;
+            letter-spacing: 0.5px;
+            text-shadow: 0 1px 2px rgba(0, 0, 0, 0.35);
+        }
+
+        .progress-fill::after {
+            content: '';
+            position: absolute;
+            top: 3px;
+            bottom: 3px;
+            left: 6px;
+            right: 6px;
+            border-radius: 12px 2px 2px 12px;
+            background: linear-gradient(90deg, rgba(255, 255, 255, 0.25), rgba(255, 255, 255, 0));
+            pointer-events: none;
+            opacity: 0.6;
+        }
+
+        .progress-fill.is-complete {
+            border-radius: 16px;
+        }
+
+        .milestones {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            pointer-events: none;
+        }
+
+        .milestone {
+            position: absolute;
+            top: 50%;
+            transform: translate(-50%, -50%);
+            width: 8px;
+            height: 8px;
+            background: #1E3657;
+            border: 2px solid #00B5E2;
+            border-radius: 50%;
+            z-index: 2;
+        }
+
+        .milestone.completed {
+            background: #00B5E2;
+            box-shadow: 0 0 10px rgba(0, 181, 226, 0.5);
+        }
+
+        .milestone-label {
+            position: absolute;
+            top: -25px;
+            left: 50%;
+            transform: translateX(-50%);
+            font-size: 0.75em;
+            color: #86CAE2;
+            white-space: nowrap;
+        }
+
+        .milestone.completed .milestone-label {
+            color: #00B5E2;
+            font-weight: 600;
+        }
+
+        .time-estimate {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-top: 8px;
+            font-size: 0.9em;
+            color: #86CAE2;
+        }
+
+        .time-estimate .eta {
+            font-weight: 600;
+            color: #00B5E2;
+        }
+
+        .stage-timer {
+            background: rgba(0, 181, 226, 0.1);
+            padding: 4px 10px;
+            border-radius: 12px;
+            font-size: 0.85em;
+        }
+
+        /* 移动端适配 - milestone标签 */
+        @media (max-width: 768px) {
+            .milestone-label {
+                font-size: 0.65em;
+                top: -22px;
+            }
+
+            .milestone {
+                width: 6px;
+                height: 6px;
+            }
+
+            .time-estimate {
+                flex-direction: column;
+                align-items: flex-start;
+                gap: 5px;
+            }
+
+            .stage-timer {
+                width: 100%;
+            }
+        }
+
+        @media (max-width: 480px) {
+            .milestone-label {
+                font-size: 0.6em;
+                top: -20px;
+            }
+
+            .progress-bar {
+                height: 25px;
+            }
         }
 
         .log-container {
-            background: #2d2d30;
-            color: #d4d4d4;
+            background: #0B1728;
+            color: #9CC4FF;
             padding: 15px;
             border-radius: 8px;
             font-family: 'Courier New', monospace;
             font-size: 0.9em;
             max-height: 400px;
             overflow-y: auto;
+            border: 1px solid rgba(0, 181, 226, 0.25);
         }
 
         .log-line {
@@ -236,16 +368,27 @@
             font-weight: 600;
         }
 
-        .status-queued { background: #ffc107; color: #000; }
-        .status-running { background: #2196F3; color: white; }
-        .status-succeeded { background: #4CAF50; color: white; }
-        .status-failed { background: #e53935; color: white; }
+        .status-queued { background: rgba(255, 193, 7, 0.2); color: #FFC107; }
+        .status-running { background: rgba(0, 181, 226, 0.2); color: #00B5E2; }
+        .status-succeeded { background: rgba(76, 209, 149, 0.2); color: #4CD195; }
+        .status-failed { background: rgba(229, 57, 53, 0.2); color: #FF6B6B; }
+
+        .job-download {
+            margin-left: 8px;
+            font-size: 0.85em;
+            color: #4CD195;
+            text-decoration: none;
+        }
+
+        .job-download:hover {
+            text-decoration: underline;
+        }
 
         .result-link {
             display: inline-block;
             margin-top: 15px;
             padding: 12px 24px;
-            background: #4CAF50;
+            background: linear-gradient(135deg, #00B5E2 0%, #0075A4 100%);
             color: white;
             text-decoration: none;
             border-radius: 8px;
@@ -254,7 +397,7 @@
         }
 
         .result-link:hover {
-            background: #45a049;
+            background: linear-gradient(135deg, #00C3FF 0%, #0089C7 100%);
         }
 
         .hidden {
@@ -269,15 +412,16 @@
 
         .tab {
             padding: 10px 20px;
-            background: #f0f0f0;
+            background: #142743;
             border: none;
             border-radius: 6px;
             cursor: pointer;
             transition: background 0.3s;
+            color: #C5D8F5;
         }
 
         .tab.active {
-            background: #667eea;
+            background: #00B5E2;
             color: white;
         }
 
@@ -289,9 +433,16 @@
             display: block;
         }
 
+        .resume-hint {
+            margin-top: 6px;
+            font-size: 0.9em;
+            color: #555;
+            text-align: center;
+        }
+
         .section-divider {
             border: none;
-            border-top: 2px solid #e0e0e0;
+            border-top: 2px solid #1F3657;
             margin: 25px 0;
             position: relative;
         }
@@ -302,17 +453,17 @@
             top: -12px;
             left: 50%;
             transform: translateX(-50%);
-            background: white;
+            background: #11233F;
             padding: 0 15px;
-            color: #667eea;
+            color: #00B5E2;
             font-weight: 600;
             font-size: 0.95em;
         }
 
         .advanced-toggle {
             width: 100%;
-            background: #f5f5f5;
-            border: 2px solid #e0e0e0;
+            background: #142743;
+            border: 2px solid #1F3657;
             border-radius: 8px;
             padding: 14px 20px;
             display: flex;
@@ -322,21 +473,22 @@
             cursor: pointer;
             transition: all 0.3s;
             margin-bottom: 15px;
+            color: #C5D8F5;
         }
 
         .advanced-toggle:hover {
-            background: #ececec;
-            border-color: #667eea;
+            background: #1A3355;
+            border-color: #00B5E2;
         }
 
         .advanced-toggle .toggle-text {
             font-weight: 600;
-            color: #333;
+            color: #C5D8F5;
             line-height: 1.4;
         }
 
         .advanced-toggle .toggle-icon {
-            color: #667eea;
+            color: #00B5E2;
             font-size: 1.2em;
             flex-shrink: 0;
         }
@@ -376,15 +528,15 @@
         }
 
         .subsection {
-            background: #f0f0f0;
-            border: 1px solid #e0e0e0;
+            background: #162B48;
+            border: 1px solid #1F3657;
             border-radius: 8px;
             padding: 15px;
             margin-bottom: 15px;
         }
 
         .subsection h3 {
-            color: #667eea;
+            color: #00B5E2;
             font-size: 1.1em;
             margin-bottom: 12px;
             display: flex;
@@ -393,18 +545,21 @@
         }
 
         .cost-display {
-            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-            color: white;
+            background: #0D2C48;
+            color: #A8EDFF;
             padding: 20px;
             border-radius: 10px;
             text-align: center;
             margin-bottom: 20px;
+            border: 1px solid rgba(0, 181, 226, 0.35);
+            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.4);
         }
 
         .cost-display .cost-amount {
             font-size: 2em;
             font-weight: 700;
             margin-bottom: 5px;
+            color: #00B5E2;
         }
 
         @media (max-width: 768px) {
@@ -416,6 +571,13 @@
         .cost-display .cost-detail {
             font-size: 0.9em;
             opacity: 0.9;
+            color: #86CAE2;
+        }
+
+        .cost-display .balance-info {
+            font-size: 0.9em;
+            color: #8fe0ff;
+            margin-top: 6px;
         }
 
     </style>
@@ -423,8 +585,8 @@
 <body>
     <div class="container">
         <header>
-            <h1>🎬 AI 视频生成系统</h1>
-            <p>基于 DeepSeek + WavespeedAI 的智能视频制作工具</p>
+            <h1>🎬 AI视频广告一键生成</h1>
+            <p>基于Linode + WavespeedAI的Akamai广告生成智能体Demo</p>
         </header>
 
         <div class="main-content">
@@ -433,6 +595,7 @@
                 <h2>🎬 创建新视频</h2>
 
                 <form id="video-form">
+                    <input type="hidden" id="resume-id" name="resume_id" value="">
                     <!-- 必填参数区域 -->
                     <hr class="section-divider" data-title="必填参数">
 
@@ -461,13 +624,18 @@
                     <div class="form-group">
                         <label for="num_shots">🎞️ 镜头数量</label>
                         <select id="num_shots" name="num_shots">
-                            <option value="1">1个镜头（约5秒视频，快速测试）</option>
-                            <option value="3" selected>3个镜头（约15秒视频，推荐）</option>
+                            <option value="1" selected>1个镜头（约5秒视频，快速测试）</option>
+                            <option value="2">2个镜头（约10秒视频）</option>
+                            <option value="3">3个镜头（约15秒视频）</option>
                             <option value="4">4个镜头（约20秒视频）</option>
                             <option value="5">5个镜头（约25秒视频）</option>
                             <option value="6">6个镜头（约30秒视频）</option>
                             <option value="7">7个镜头（约35秒视频）</option>
                             <option value="8">8个镜头（约40秒视频）</option>
+                            <option value="9">9个镜头（约45秒视频）</option>
+                            <option value="10">10个镜头（约50秒视频）</option>
+                            <option value="11">11个镜头（约55秒视频）</option>
+                            <option value="12">12个镜头（约60秒视频）</option>
                         </select>
                     </div>
 
@@ -480,6 +648,16 @@
                     </button>
 
                     <div class="advanced-content" id="advanced-content">
+                        <!-- API密钥配置 -->
+                        <div class="subsection">
+                            <h3>🔑 API密钥配置</h3>
+                            <div class="form-group">
+                                <label for="wavespeed_api_key">Wavespeed API密钥</label>
+                                <input type="password" id="wavespeed_api_key" name="wavespeed_api_key" placeholder="输入你的Wavespeed API密钥">
+                                <small style="color: #666; font-size: 0.85em;">提示：浏览器会自动记住此密钥</small>
+                            </div>
+                        </div>
+
                         <!-- 时长与分辨率 -->
                         <div class="subsection">
                             <h3>⏱️ 时长与分辨率</h3>
@@ -531,6 +709,35 @@
                             </div>
                         </div>
 
+                        <!-- 参考人物图 -->
+                        <div class="subsection">
+                            <h3>👤 参考人物图</h3>
+                            <div class="form-group">
+                                <label class="checkbox-label" style="display: flex; align-items: center; gap: 8px;">
+                                    <input type="checkbox" id="character_enabled" checked>
+                                    启用参考人物图（保持角色一致性）
+                                </label>
+                            </div>
+                            <div class="form-group">
+                                <label for="character_preset">快速选择</label>
+                                <select id="character_preset">
+                                    <option value="mai">默认：红色旗袍角色</option>
+                                    <option value="jack">默认：黑客帝国风男主</option>
+                                    <option value="custom">自定义</option>
+                                </select>
+                            </div>
+                            <div class="form-group">
+                                <label for="character_image_url">参考图URL</label>
+                                <input type="text" id="character_image_url" placeholder="https://example.com/reference.jpg">
+                                <small style="color: #666; font-size: 0.85em;">支持公网URL或可访问的图床链接</small>
+                            </div>
+                            <div class="form-group">
+                                <label for="character_description">人物描述</label>
+                                <textarea id="character_description" rows="3" placeholder="例如：角色外观、服装、风格..."></textarea>
+                                <small style="color: #666; font-size: 0.85em;">文字描述将与参考图结合，帮助AI保持角色特征</small>
+                            </div>
+                        </div>
+
                         <!-- 配音与字幕 -->
                         <div class="subsection">
                             <h3>🎙️ 配音与字幕</h3>
@@ -560,16 +767,6 @@
                             </div>
                         </div>
 
-                        <!-- API密钥配置 -->
-                        <div class="subsection">
-                            <h3>🔑 API密钥配置</h3>
-                            <div class="form-group">
-                                <label for="wavespeed_api_key">Wavespeed API密钥</label>
-                                <input type="password" id="wavespeed_api_key" name="wavespeed_api_key" placeholder="输入你的Wavespeed API密钥">
-                                <small style="color: #666; font-size: 0.85em;">提示：浏览器会自动记住此密钥</small>
-                            </div>
-                        </div>
-
                         <!-- 工作流设置 -->
                         <div class="subsection">
                             <h3>⚙️ 工作流设置</h3>
@@ -591,10 +788,12 @@
                     <div class="cost-display">
                         <div class="cost-amount">💰 <span id="cost-amount">$0.33</span></div>
                         <div class="cost-detail" id="cost-detail">1镜头 × 480p × Kling O1 + WAN 2.5 I2V</div>
+                        <div class="balance-info" id="cost-balance">Wavespeed余额: 未输入密钥</div>
                     </div>
 
                     <!-- 操作按钮 -->
-                    <button type="submit" style="margin-bottom: 10px;">开始生成</button>
+                    <button type="submit" id="submit-button" style="margin-bottom: 10px;">开始生成</button>
+                    <p id="resume-hint" class="resume-hint hidden">继续任务：<strong id="resume-job-label"></strong></p>
                     <button type="button" onclick="resetForm()" style="background: #999;">恢复默认配置</button>
                 </form>
             </div>
@@ -618,8 +817,31 @@
                 <p><strong>消息:</strong> <span id="current-message">-</span></p>
             </div>
 
-            <div class="progress-bar">
-                <div class="progress-fill" id="progress-fill" style="width: 0%">0%</div>
+            <div class="progress-bar-container">
+                <div class="progress-bar">
+                    <div class="progress-fill" id="progress-fill" style="width: 0%">0%</div>
+                    <div class="milestones">
+                        <div class="milestone" style="left: 20%">
+                            <div class="milestone-label">故事生成</div>
+                        </div>
+                        <div class="milestone" style="left: 40%">
+                            <div class="milestone-label">图像生成</div>
+                        </div>
+                        <div class="milestone" style="left: 60%">
+                            <div class="milestone-label">视频生成</div>
+                        </div>
+                        <div class="milestone" style="left: 80%">
+                            <div class="milestone-label">字幕旁白</div>
+                        </div>
+                        <div class="milestone" style="left: 100%">
+                            <div class="milestone-label">合成完成</div>
+                        </div>
+                    </div>
+                </div>
+                <div class="time-estimate">
+                    <span class="stage-timer" id="stage-timer">准备中...</span>
+                    <span class="eta" id="eta-timer">预计剩余: --:--</span>
+                </div>
             </div>
 
             <div id="result-section" class="hidden">
@@ -640,6 +862,197 @@
         let currentJobId = null;
         let pollInterval = null;
         let lastLogLineCount = 0;  // 记录已读取的日志行数
+        let resumeJobId = null;    // 需要断点续传的任务ID
+        let stageStartTime = null; // 当前阶段开始时间
+        let currentStage = '';     // 当前阶段名称
+        let etaInterval = null;    // 倒计时定时器
+        let localProgress = 0;     // 本地模拟进度（0-1）
+        let serverProgress = 0;    // 服务器返回的进度（0-1）
+        let displayedProgress = 0; // UI展示的进度（0-1），确保单调递增
+        let highestStageIndex = -1;// 已确认的最高阶段索引
+        let lastKnownJobStatus = '';
+
+        const resumeInput = document.getElementById('resume-id');
+        const submitButton = document.getElementById('submit-button');
+        const resumeHint = document.getElementById('resume-hint');
+        const resumeLabel = document.getElementById('resume-job-label');
+        const wavespeedInput = document.getElementById('wavespeed_api_key');
+        const balanceDisplay = document.getElementById('cost-balance');
+        let balanceFetchTimer = null;
+        let lastBalanceKey = '';
+        let cachedBalanceValue = null;
+
+        // 阶段配置（每个阶段占总进度的20%）
+        const STAGE_CONFIG = {
+            'story': { start: 0, end: 0.20, estimateBase: 30 },
+            'images': { start: 0.20, end: 0.40, estimateBase: 60 },
+            'videos': { start: 0.40, end: 0.60, estimateBase: 180 },
+            'audio_subtitle': { start: 0.60, end: 0.80, estimateBase: 45 },
+            'composition': { start: 0.80, end: 1.0, estimateBase: 45 }
+        };
+
+        const CHARACTER_PRESETS = {
+            mai: {
+                label: '红色旗袍中国女性',
+                image: 'https://s.linapp.fun/mai.jpg',
+                description: '中国女性，漂亮，衣服是红色旗袍'
+            },
+            jack: {
+                label: '黑客帝国风男主',
+                image: 'https://s.linapp.fun/Jack.jpg',
+                description: '中国男性，带墨镜，黑客帝国打扮'
+            }
+        };
+
+        const characterPresetSelect = document.getElementById('character_preset');
+        const characterImageInput = document.getElementById('character_image_url');
+        const characterDescriptionInput = document.getElementById('character_description');
+        const characterEnabledCheckbox = document.getElementById('character_enabled');
+
+        function applyCharacterPreset(presetKey) {
+            const preset = CHARACTER_PRESETS[presetKey];
+            if (!preset || !characterImageInput || !characterDescriptionInput) {
+                return;
+            }
+            characterImageInput.value = preset.image;
+            characterDescriptionInput.value = preset.description;
+        }
+
+        function updateCharacterFieldsState() {
+            const disabled = !characterEnabledCheckbox.checked;
+            [characterPresetSelect, characterImageInput, characterDescriptionInput].forEach(el => {
+                if (el) {
+                    el.disabled = disabled;
+                }
+            });
+        }
+
+        if (characterEnabledCheckbox) {
+            characterEnabledCheckbox.addEventListener('change', updateCharacterFieldsState);
+        }
+
+        if (characterPresetSelect) {
+            characterPresetSelect.addEventListener('change', () => {
+                const value = characterPresetSelect.value;
+                if (value !== 'custom') {
+                    applyCharacterPreset(value);
+                }
+            });
+        }
+
+        function markCharacterPresetCustom() {
+            if (characterPresetSelect && characterPresetSelect.value !== 'custom') {
+                characterPresetSelect.value = 'custom';
+            }
+        }
+
+        if (characterImageInput) {
+            characterImageInput.addEventListener('input', markCharacterPresetCustom);
+        }
+        if (characterDescriptionInput) {
+            characterDescriptionInput.addEventListener('input', markCharacterPresetCustom);
+        }
+
+        const STAGE_SEQUENCE = ['story', 'images', 'videos', 'audio_subtitle', 'composition'];
+
+        // 阶段时间估算配置（秒）
+        const STAGE_ESTIMATES = {
+            'story': 30,        // 故事生成：30秒
+            'images': 60,       // 图像生成：60秒（基础，会根据镜头数调整）
+            'videos': 180,      // 视频生成：180秒（基础，会根据公式计算）
+            'audio_subtitle': 45,  // 字幕旁白：45秒
+            'composition': 45   // 合成：45秒
+        };
+
+        // 倒计时管理器（集成本地进度计算）
+        class CountdownTimer {
+            constructor() {
+                this.startTime = null;
+                this.estimatedDuration = 0;
+                this.stageName = '';
+                this.numShots = 1;
+                this.stageStartProgress = 0;  // 阶段起始进度（0-1）
+                this.stageEndProgress = 0;    // 阶段结束进度（0-1）
+            }
+
+            start(stageName, numShots = 1, serverProgress = 0) {
+                this.stageName = stageName;
+                this.numShots = numShots;
+                this.startTime = Date.now();
+
+                // 获取阶段配置
+                const config = STAGE_CONFIG[stageName];
+                if (config) {
+                    this.stageStartProgress = config.start;
+                    this.stageEndProgress = config.end;
+                } else {
+                    // 降级：使用老的25%分段逻辑
+                    this.stageStartProgress = serverProgress;
+                    this.stageEndProgress = serverProgress + 0.20;
+                }
+
+                // 计算预估时长
+                if (stageName === 'videos') {
+                    // 视频倒计时 = 180 * (视频段/3 + 1)
+                    this.estimatedDuration = 180 * (numShots / 3 + 1);
+                } else if (stageName === 'images') {
+                    // 图像生成时间随镜头数线性增长
+                    this.estimatedDuration = 30 + numShots * 30;
+                } else {
+                    this.estimatedDuration = STAGE_ESTIMATES[stageName] || 30;
+                }
+
+                console.log(`⏱️ 阶段 ${stageName} 开始，预计耗时 ${this.estimatedDuration}秒，进度区间 ${(this.stageStartProgress*100).toFixed(0)}%-${(this.stageEndProgress*100).toFixed(0)}%`);
+            }
+
+            getRemaining() {
+                if (!this.startTime) return 0;
+                const elapsed = (Date.now() - this.startTime) / 1000;
+                const remaining = Math.max(0, this.estimatedDuration - elapsed);
+                return Math.ceil(remaining);
+            }
+
+            getElapsed() {
+                if (!this.startTime) return 0;
+                return Math.floor((Date.now() - this.startTime) / 1000);
+            }
+
+            /**
+             * 获取本地模拟进度（平滑增长）
+             * 基于已用时和预估时长计算
+             */
+            getLocalProgress() {
+                if (!this.startTime || this.estimatedDuration <= 0) {
+                    return this.stageStartProgress;
+                }
+
+                const elapsed = (Date.now() - this.startTime) / 1000;
+                const stageProgressRatio = Math.min(1.0, elapsed / this.estimatedDuration);
+
+                // 计算当前阶段内的进度
+                const stageRange = this.stageEndProgress - this.stageStartProgress;
+                const localProgress = this.stageStartProgress + (stageProgressRatio * stageRange);
+
+                // 不超过阶段结束点
+                return Math.min(localProgress, this.stageEndProgress);
+            }
+
+            formatTime(seconds) {
+                const mins = Math.floor(seconds / 60);
+                const secs = seconds % 60;
+                return `${mins}:${secs.toString().padStart(2, '0')}`;
+            }
+
+            stop() {
+                this.startTime = null;
+                this.stageName = '';
+                this.stageStartProgress = 0;
+                this.stageEndProgress = 0;
+                this.estimatedDuration = 0;
+            }
+        }
+
+        const countdown = new CountdownTimer();
 
         // 模型成本配置（根据config.yaml）
         const MODEL_COSTS = {
@@ -688,6 +1101,29 @@
             });
         })();
 
+        function enableResumeMode(jobId) {
+            resumeJobId = jobId;
+            resumeInput.value = jobId;
+            submitButton.textContent = '继续生成';
+            submitButton.dataset.mode = 'resume';
+            if (resumeLabel) {
+                resumeLabel.textContent = jobId;
+            }
+            if (resumeHint) {
+                resumeHint.classList.remove('hidden');
+            }
+        }
+
+        function clearResumeMode() {
+            resumeJobId = null;
+            resumeInput.value = '';
+            submitButton.textContent = '开始生成';
+            delete submitButton.dataset.mode;
+            if (resumeHint) {
+                resumeHint.classList.add('hidden');
+            }
+        }
+
         // 监听影响成本的字段变化
         ['resolution', 'image_model', 'video_model'].forEach(id => {
             document.getElementById(id).addEventListener('change', updateCost);
@@ -712,8 +1148,89 @@
                 `${shots}镜头 × ${resolution} × ${imageModelName} + ${videoModelName}`;
         }
 
+        function setBalanceMessage(message) {
+            if (balanceDisplay) {
+                balanceDisplay.textContent = message;
+            }
+        }
+
+        async function fetchAndDisplayBalance(apiKey) {
+            if (!balanceDisplay) {
+                return;
+            }
+
+            const trimmedKey = (apiKey || '').trim();
+            if (!trimmedKey) {
+                cachedBalanceValue = null;
+                lastBalanceKey = '';
+                setBalanceMessage('Wavespeed余额: 未输入密钥');
+                return;
+            }
+
+            if (trimmedKey === lastBalanceKey && cachedBalanceValue !== null) {
+                setBalanceMessage(`Wavespeed余额: $${cachedBalanceValue.toFixed(2)}`);
+                return;
+            }
+
+            lastBalanceKey = trimmedKey;
+            setBalanceMessage('Wavespeed余额: 查询中...');
+
+            try {
+                const response = await fetch(`${API_BASE}/api/wavespeed/balance`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ wavespeed_api_key: trimmedKey })
+                });
+
+                if (!response.ok) {
+                    const errorText = await response.text();
+                    throw new Error(errorText || `HTTP ${response.status}`);
+                }
+
+                const data = await response.json();
+                const balance = typeof data.balance === 'number'
+                    ? data.balance
+                    : parseFloat(data.balance);
+
+                if (Number.isNaN(balance)) {
+                    throw new Error('无效余额数据');
+                }
+
+                cachedBalanceValue = balance;
+                setBalanceMessage(`Wavespeed余额: $${balance.toFixed(2)}`);
+            } catch (error) {
+                console.error('查询Wavespeed余额失败:', error);
+                cachedBalanceValue = null;
+                setBalanceMessage('Wavespeed余额: 查询失败，请检查密钥');
+            }
+        }
+
+        function scheduleBalanceFetch() {
+            if (!wavespeedInput) {
+                return;
+            }
+
+            const currentValue = wavespeedInput.value || '';
+            if (!currentValue.trim()) {
+                if (balanceFetchTimer) {
+                    clearTimeout(balanceFetchTimer);
+                }
+                fetchAndDisplayBalance('');
+                return;
+            }
+
+            if (balanceFetchTimer) {
+                clearTimeout(balanceFetchTimer);
+            }
+
+            balanceFetchTimer = setTimeout(() => {
+                fetchAndDisplayBalance(currentValue);
+            }, 600);
+        }
+
         // 恢复默认配置
         function resetForm() {
+            clearResumeMode();
             // 重置为默认值
             document.getElementById('topic').value = '一个银行客户经理遇到问题，后来使用akamai推理云，分布式、低延迟、高并发，解决了问题';
 
@@ -729,6 +1246,15 @@
             document.getElementById('voice').value = '1';
             document.getElementById('llm_provider').value = '1';
             document.getElementById('concurrent_workers').value = '3';
+
+            if (characterEnabledCheckbox) {
+                characterEnabledCheckbox.checked = true;
+            }
+            if (characterPresetSelect) {
+                characterPresetSelect.value = 'mai';
+            }
+            applyCharacterPreset('mai');
+            updateCharacterFieldsState();
 
             // 更新成本显示
             updateCost();
@@ -770,6 +1296,28 @@
                 concurrent_workers: parseInt(formData.get('concurrent_workers')),
                 wavespeed_api_key: wavespeedApiKey.trim()
             };
+            if (resumeJobId) {
+                data.resume_id = resumeJobId;
+            }
+
+            const characterEnabled = characterEnabledCheckbox?.checked;
+            if (characterEnabled) {
+                const imageUrl = characterImageInput?.value.trim();
+                const description = characterDescriptionInput?.value.trim();
+                if (!imageUrl && !description) {
+                    alert('⚠️ 启用参考人物图时，请至少提供参考图URL或人物描述');
+                    return;
+                }
+                data.character_enabled = true;
+                if (imageUrl) {
+                    data.character_image_url = imageUrl;
+                }
+                if (description) {
+                    data.character_description = description;
+                }
+            } else {
+                data.character_enabled = false;
+            }
 
             // 确认对话框（防止误触发）
             const cost = document.getElementById('cost-amount').textContent;
@@ -837,6 +1385,11 @@
                 // 开始轮询
                 startPolling();
                 loadJobsList();
+                clearResumeMode();
+
+                if (wavespeedInput && wavespeedInput.value.trim()) {
+                    await fetchAndDisplayBalance(wavespeedInput.value);
+                }
 
             } catch (error) {
                 console.error('❌ 创建任务失败:', error);
@@ -862,9 +1415,23 @@
         // 开始轮询任务状态
         function startPolling() {
             if (pollInterval) clearInterval(pollInterval);
+            if (etaInterval) clearInterval(etaInterval);
 
-            // 重置日志计数
+            // 重置状态
             lastLogLineCount = 0;
+            currentStage = '';
+            highestStageIndex = -1;
+            countdown.stop();
+            localProgress = 0;
+            serverProgress = 0;
+            displayedProgress = 0;
+            lastKnownJobStatus = '';
+            document.getElementById('stage-timer').textContent = '准备中...';
+            document.getElementById('eta-timer').textContent = '预计剩余: --:--';
+            const progressFill = document.getElementById('progress-fill');
+            progressFill.classList.remove('is-complete');
+            progressFill.style.width = '0%';
+            progressFill.textContent = '0%';
 
             pollInterval = setInterval(async () => {
                 await updateJobStatus();
@@ -895,19 +1462,76 @@
                 statusBadge.textContent = data.status;
                 statusBadge.className = `status-badge status-${data.status}`;
 
-                const progress = Math.round(data.progress * 100);
+                if (data.status && data.status !== lastKnownJobStatus) {
+                    const normalizedStatus = data.status.toLowerCase();
+                    if ((normalizedStatus === 'succeeded' || normalizedStatus === 'failed') &&
+                        wavespeedInput && wavespeedInput.value.trim()) {
+                        await fetchAndDisplayBalance(wavespeedInput.value);
+                    }
+                    lastKnownJobStatus = data.status;
+                }
+
+                // ========== 平滑进度条：本地模拟 + 服务器进度 ==========
+                const rawProgress = typeof data.progress === 'number' ? data.progress : 0;
+                serverProgress = Math.min(1, Math.max(0, rawProgress));
+
+                // 获取本地模拟进度
+                localProgress = countdown.getLocalProgress();
+
+                // 如果服务器进度大幅超前（说明阶段完成），更新本地进度
+                if (serverProgress > localProgress + 0.05) {
+                    localProgress = serverProgress;
+                }
+
+                // 展示进度单调递增
+                displayedProgress = Math.max(displayedProgress, localProgress, serverProgress);
+                displayedProgress = Math.min(1, displayedProgress);
+
+                const progressPercent = Math.round(displayedProgress * 100);
                 const progressFill = document.getElementById('progress-fill');
-                progressFill.style.width = `${progress}%`;
-                progressFill.textContent = `${progress}%`;
+                progressFill.style.width = `${progressPercent}%`;
+                progressFill.textContent = `${progressPercent}%`;
+                if (progressPercent >= 100) {
+                    progressFill.classList.add('is-complete');
+                } else {
+                    progressFill.classList.remove('is-complete');
+                }
+
+                // ========== 阶段检测与倒计时 ==========
+                const stageFromServer = detectStage(data.message, Math.round(serverProgress * 100));
+                if (stageFromServer) {
+                    const candidateIndex = STAGE_SEQUENCE.indexOf(stageFromServer);
+                    if (candidateIndex !== -1 && candidateIndex >= highestStageIndex) {
+                        if (stageFromServer !== currentStage) {
+                            highestStageIndex = candidateIndex;
+                            currentStage = stageFromServer;
+                            const numShots = parseInt(document.getElementById('num_shots').value) || 1;
+                            countdown.start(stageFromServer, numShots, displayedProgress);
+                            startETATimer();
+                        }
+                    }
+                }
+
+                // 更新milestone标记
+                updateMilestones(progressPercent);
 
                 // 在控制台输出进度（移动端调试）
-                if (progress > 0) {
-                    console.log(`📊 进度更新: ${progress}% - ${data.message}`);
+                if (progressPercent > 0) {
+                    console.log(`📊 进度更新: ${progressPercent}% (服务器: ${Math.round(serverProgress*100)}%, 本地: ${Math.round(localProgress*100)}%) - ${data.message}`);
                 }
 
                 // 任务完成
                 if (data.status === 'succeeded') {
                     clearInterval(pollInterval);
+                    stopETATimer();
+                    countdown.stop();
+                    // 确保进度条到达100%
+                    displayedProgress = 1;
+                    progressFill.style.width = '100%';
+                    progressFill.textContent = '100%';
+                    progressFill.classList.add('is-complete');
+                    document.getElementById('stage-timer').textContent = '✅ 任务完成';
+                    document.getElementById('eta-timer').textContent = '';
                     console.log('✅ 任务成功完成!');
                     document.getElementById('result-section').classList.remove('hidden');
                     document.getElementById('result-link').href = data.result_path;
@@ -916,6 +1540,10 @@
                 // 任务失败
                 if (data.status === 'failed') {
                     clearInterval(pollInterval);
+                    stopETATimer();
+                    countdown.stop();
+                    document.getElementById('stage-timer').textContent = '❌ 任务失败';
+                    document.getElementById('eta-timer').textContent = '';
                     console.error('❌ 任务失败:', data.message);
                     alert(`任务失败：${data.message}\n\n请查看日志了解详细信息`);
                 }
@@ -923,6 +1551,91 @@
                 console.error('❌ 更新状态失败:', error);
                 // 不中断轮询，继续尝试
             }
+        }
+
+        // 检测当前阶段（根据消息和进度）
+        function detectStage(message, progress) {
+            if (!message) return null;
+
+            const msg = message.toLowerCase();
+
+            // 优先根据关键词检测
+            if (msg.includes('故事') || msg.includes('脚本') || msg.includes('story')) {
+                return 'story';
+            } else if (msg.includes('图像') || msg.includes('image')) {
+                return 'images';
+            } else if (msg.includes('视频') && !msg.includes('合成') && !msg.includes('字幕') && !msg.includes('旁白')) {
+                return 'videos';
+            } else if (msg.includes('字幕') || msg.includes('旁白') || msg.includes('配音') || msg.includes('audio') || msg.includes('subtitle')) {
+                return 'audio_subtitle';
+            } else if (msg.includes('合成') || msg.includes('composition') || msg.includes('拼接')) {
+                return 'composition';
+            }
+
+            // 根据进度推断（每20%一个阶段）
+            if (progress < 20) return 'story';
+            if (progress < 40) return 'images';
+            if (progress < 60) return 'videos';
+            if (progress < 80) return 'audio_subtitle';
+            if (progress < 100) return 'composition';
+
+            return null;
+        }
+
+        // 更新milestone标记
+        function updateMilestones(progress) {
+            const milestones = document.querySelectorAll('.milestone');
+            const positions = [20, 40, 60, 80, 100];
+
+            milestones.forEach((milestone, index) => {
+                if (progress >= positions[index]) {
+                    milestone.classList.add('completed');
+                } else {
+                    milestone.classList.remove('completed');
+                }
+            });
+        }
+
+        // 启动倒计时更新定时器
+        function startETATimer() {
+            if (etaInterval) clearInterval(etaInterval);
+
+            etaInterval = setInterval(() => {
+                const remaining = countdown.getRemaining();
+                const elapsed = countdown.getElapsed();
+
+                if (remaining > 0) {
+                    document.getElementById('stage-timer').textContent =
+                        `当前阶段: ${getStageNameCN(countdown.stageName)} (已用时: ${countdown.formatTime(elapsed)})`;
+                    document.getElementById('eta-timer').textContent =
+                        `预计剩余: ${countdown.formatTime(remaining)}`;
+                } else {
+                    document.getElementById('stage-timer').textContent =
+                        `当前阶段: ${getStageNameCN(countdown.stageName)} (处理中...)`;
+                    document.getElementById('eta-timer').textContent =
+                        `超出预期，请耐心等待`;
+                }
+            }, 1000); // 每秒更新
+        }
+
+        // 停止倒计时更新定时器
+        function stopETATimer() {
+            if (etaInterval) {
+                clearInterval(etaInterval);
+                etaInterval = null;
+            }
+        }
+
+        // 获取阶段中文名称
+        function getStageNameCN(stageName) {
+            const names = {
+                'story': '故事生成',
+                'images': '图像生成',
+                'videos': '视频生成',
+                'audio_subtitle': '字幕旁白',
+                'composition': '合成完成'
+            };
+            return names[stageName] || stageName;
         }
 
         // 更新日志（增量更新模式）
@@ -1000,8 +1713,11 @@
                 data.jobs.slice(0, 10).forEach(job => {
                     const jobItem = document.createElement('div');
                     jobItem.style.cssText = 'padding: 10px; border-bottom: 1px solid #eee; cursor: pointer;';
+                    const downloadLink = (job.status === 'succeeded' && job.result_path)
+                        ? `<a href="${job.result_path}" target="_blank" rel="noopener" class="job-download" onclick="event.stopPropagation();">视频下载</a>`
+                        : '';
                     jobItem.innerHTML = `
-                        <strong>${job.job_id}</strong>
+                        <strong>${job.job_id}</strong>${downloadLink}
                         <span class="status-badge status-${job.status}" style="float: right; font-size: 0.8em;">
                             ${job.status}
                         </span>
@@ -1011,11 +1727,23 @@
                     jobItem.onclick = () => {
                         currentJobId = job.job_id;
                         document.getElementById('status-panel').classList.remove('hidden');
+                        if (job.status === 'failed') {
+                            enableResumeMode(job.job_id);
+                        } else {
+                            clearResumeMode();
+                        }
                         startPolling();
                     };
 
                     jobsList.appendChild(jobItem);
                 });
+
+                if (resumeJobId) {
+                    const stillFailed = data.jobs.some(job => job.job_id === resumeJobId && job.status === 'failed');
+                    if (!stillFailed) {
+                        clearResumeMode();
+                    }
+                }
             } catch (error) {
                 console.error('加载任务列表失败:', error);
             }
@@ -1023,22 +1751,41 @@
 
         // localStorage管理 - 保存和读取Wavespeed API密钥
         function saveWavespeedApiKey() {
-            const apiKey = document.getElementById('wavespeed_api_key').value;
+            if (!wavespeedInput) {
+                return;
+            }
+
+            const apiKey = wavespeedInput.value;
             if (apiKey && apiKey.trim() !== '') {
                 localStorage.setItem('wavespeed_api_key', apiKey.trim());
+            } else {
+                localStorage.removeItem('wavespeed_api_key');
             }
         }
 
         function loadWavespeedApiKey() {
+            if (!wavespeedInput) {
+                return;
+            }
+
             const savedKey = localStorage.getItem('wavespeed_api_key');
-            if (savedKey) {
-                document.getElementById('wavespeed_api_key').value = savedKey;
+            if (savedKey && savedKey.trim() !== '') {
+                wavespeedInput.value = savedKey;
+                fetchAndDisplayBalance(savedKey);
+            } else {
+                wavespeedInput.value = '';
+                fetchAndDisplayBalance('');
             }
         }
 
 
-        // 监听API密钥输入框变化，自动保存
-        document.getElementById('wavespeed_api_key').addEventListener('input', saveWavespeedApiKey);
+        // 监听API密钥输入框变化，自动保存并查询余额
+        if (wavespeedInput) {
+            wavespeedInput.addEventListener('input', () => {
+                saveWavespeedApiKey();
+                scheduleBalanceFetch();
+            });
+        }
 
         // 清除旧版本可能保存的错误配置
         (function cleanupOldConfig() {
@@ -1048,7 +1795,11 @@
             }
         })();
 
+        applyCharacterPreset('mai');
+        updateCharacterFieldsState();
+
         // 页面加载时初始化
+        clearResumeMode();
         updateCost();  // 初始化成本显示
         loadWavespeedApiKey();  // 加载保存的API密钥
         loadJobsList();

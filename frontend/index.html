@@ -78,55 +78,96 @@
 
         .balance-header {
             display: flex;
-            justify-content: space-between;
-            align-items: flex-start;
+            align-items: center;
             gap: 12px;
+            flex-wrap: nowrap;
         }
 
-        .balance-title {
-            font-size: 0.9em;
+        .balance-chip {
+            display: inline-flex;
+            align-items: center;
+            justify-content: space-between;
+            gap: 12px;
+            border-radius: 999px;
+            padding: 10px 18px;
+            font-size: 0.95em;
+            border: 1px solid rgba(0, 181, 226, 0.35);
+            background: rgba(0, 181, 226, 0.12);
+            transition: background 0.2s ease, border-color 0.2s ease;
+            color: #E6F1FF;
+            width: 100%;
+        }
+
+        .balance-chip:hover {
+            background: rgba(0, 181, 226, 0.2);
+            border-color: rgba(0, 181, 226, 0.55);
+        }
+
+        .balance-chip:disabled,
+        .balance-chip.loading {
+            opacity: 0.7;
+            cursor: not-allowed;
+        }
+
+        .balance-chip .balance-info {
+            display: flex;
+            flex-direction: column;
+            gap: 2px;
+            min-width: 0;
+            text-align: left;
+        }
+
+        .balance-inline-toggle {
+            display: inline-flex;
+            align-items: center;
+            gap: 6px;
+            padding-left: 12px;
+            border-left: 1px solid rgba(0, 181, 226, 0.3);
             color: #8AA7D5;
-            margin-bottom: 4px;
+            font-size: 0.85em;
+            cursor: pointer;
+            white-space: nowrap;
+            transition: color 0.2s ease;
+        }
+
+        .balance-inline-toggle:hover {
+            color: #E6F1FF;
+        }
+
+        .balance-inline-toggle:focus-visible {
+            outline: none;
+            color: #E6F1FF;
+            text-decoration: underline;
+        }
+
+        .balance-inline-toggle .toggle-arrow {
+            font-size: 0.75em;
         }
 
         .balance-amount {
-            font-size: 1.4em;
+            font-size: 1.2em;
             font-weight: 600;
+            color: #00B5E2;
         }
 
-        .balance-toggle {
-            width: auto;
-            padding: 10px 16px;
-            font-size: 0.95em;
-            background: rgba(0, 181, 226, 0.15);
-            border: 1px solid rgba(0, 181, 226, 0.35);
-        }
-
-        .balance-toggle:hover {
-            background: rgba(0, 181, 226, 0.25);
-        }
-
-        .balance-meta {
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            margin-top: 12px;
-            font-size: 0.9em;
-            color: #8AA7D5;
-            gap: 12px;
-        }
-
-        .balance-meta button {
-            width: auto;
-            padding: 8px 14px;
+        .balance-label {
             font-size: 0.85em;
-            min-height: 38px;
-            background: rgba(0, 181, 226, 0.12);
-            border: 1px solid rgba(0, 181, 226, 0.35);
+            color: #8AA7D5;
+            text-transform: uppercase;
+            letter-spacing: 0.06em;
         }
 
-        .balance-meta button:disabled {
-            opacity: 0.7;
+        @media (max-width: 520px) {
+            .balance-chip {
+                flex-direction: column;
+                align-items: flex-start;
+                gap: 8px;
+            }
+
+            .balance-inline-toggle {
+                padding-left: 0;
+                border-left: none;
+            }
         }
 
         .api-input-panel {
@@ -193,8 +234,89 @@
             font-size: 1.5em;
         }
 
+        #jobs-list {
+            display: flex;
+            flex-direction: column;
+            gap: 10px;
+        }
+
+        #jobs-list .job-item {
+            padding: 12px 14px;
+            border-radius: 8px;
+            border: 1px solid rgba(0, 181, 226, 0.18);
+            background: #0F1E34;
+            cursor: pointer;
+            transition: border-color 0.2s ease, background 0.2s ease;
+        }
+
+        #jobs-list .job-item:hover {
+            border-color: rgba(0, 181, 226, 0.4);
+            background: #132946;
+        }
+
+        #jobs-list .job-item strong {
+            font-size: 0.95em;
+            color: #E6F1FF;
+        }
+
+        #jobs-list .job-message {
+            color: #8AA7D5;
+            font-size: 0.85em;
+            margin-top: 6px;
+        }
+
+        #jobs-list .jobs-toggle {
+            width: 100%;
+            padding: 10px 12px;
+            border-radius: 8px;
+            border: 1px dashed rgba(0, 181, 226, 0.4);
+            background: rgba(0, 181, 226, 0.1);
+            color: #8AA7D5;
+            font-size: 0.9em;
+            font-weight: 600;
+            cursor: pointer;
+            transition: background 0.2s ease, border-color 0.2s ease;
+        }
+
+        #jobs-list .jobs-toggle:hover {
+            background: rgba(0, 181, 226, 0.2);
+            border-color: rgba(0, 181, 226, 0.65);
+            color: #E6F1FF;
+        }
+
+        #jobs-list .additional-jobs {
+            display: none;
+            flex-direction: column;
+            gap: 10px;
+            margin-top: 8px;
+        }
+
+        #jobs-list .additional-jobs.open {
+            display: flex;
+        }
+
+        .topic-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            gap: 12px;
+        }
+
+        .topic-header label {
+            margin-bottom: 0;
+            flex: 1;
+        }
+
         .form-group {
             margin-bottom: 20px;
+        }
+
+        .custom-character-field {
+            display: none;
+        }
+
+        .custom-character-field.active {
+            display: block;
         }
 
         @media (max-width: 768px) {
@@ -273,6 +395,24 @@
             opacity: 0.6;
             cursor: not-allowed;
             transform: none;
+        }
+
+        .topic-random-btn {
+            width: auto;
+            min-height: 32px;
+            padding: 6px 14px;
+            font-size: 0.9em;
+            line-height: 1.2;
+            border-radius: 6px;
+            border: 1px solid rgba(0, 181, 226, 0.35);
+            background: rgba(0, 181, 226, 0.12);
+            color: #E6F1FF;
+            flex-shrink: 0;
+        }
+
+        .topic-random-btn:hover {
+            background: rgba(0, 181, 226, 0.25);
+            border-color: rgba(0, 181, 226, 0.55);
         }
 
         .status-panel {
@@ -693,22 +833,22 @@
     <div class="container">
         <header>
             <h1>🎬 广告一键生成</h1>
-            <p>基于Linode + WavespeedAI的Akamai广告生成智能体Demo</p>
+            <p>Linode+WavespeedAI，视频即刻可得</p>
         </header>
 
         <div class="main-content">
             <div class="left-column">
                 <div class="card balance-card">
                     <div class="balance-header">
-                        <div>
-                            <p class="balance-title">账户概览</p>
-                            <p class="balance-amount" id="cost-balance">Wavespeed余额: 未输入密钥</p>
-                        </div>
-                        <button type="button" class="balance-toggle" id="balance-toggle">管理密钥</button>
-                    </div>
-                    <div class="balance-meta">
-                        <span id="balance-hint">输入 Wavespeed API 密钥后自动查询额度</span>
-                        <button type="button" id="balance-refresh">刷新余额</button>
+                        <button type="button" class="balance-chip" id="balance-refresh">
+                            <span class="balance-info">
+                                <span class="balance-label">余额</span>
+                                <span>Wavespeed <span class="balance-amount" id="cost-balance">未输入密钥</span></span>
+                            </span>
+                            <span class="balance-inline-toggle" id="balance-toggle" aria-expanded="false" aria-controls="api-input-panel" tabindex="0">
+                                密钥 <span class="toggle-arrow" id="balance-toggle-arrow">▼</span>
+                            </span>
+                        </button>
                     </div>
                     <div class="api-input-panel collapsed" id="api-input-panel">
                         <label for="wavespeed_api_key">Wavespeed API密钥</label>
@@ -736,8 +876,11 @@
                     <hr class="section-divider" data-title="必填参数">
 
                     <div class="form-group">
-                        <label for="topic">📝 广告主题</label>
-                        <textarea id="topic" name="topic" placeholder="输入视频主题描述..." rows="4">一个银行客户经理遇到问题，后来使用akamai推理云，分布式、低延迟、高并发，解决了问题</textarea>
+                        <div class="topic-header">
+                            <label for="topic">📝 广告主题</label>
+                            <button type="button" id="topic-refresh" class="topic-random-btn">更换</button>
+                        </div>
+                        <textarea id="topic" name="topic" placeholder="输入视频主题描述..." rows="4">一家零售商准备推出夏季促销，后来使用Akamai推理云，依托分布式、低延迟、高并发的推理底座，复用统一素材与推理链路，高效解决了客户问题。</textarea>
                         <small style="color: #666; font-size: 0.85em;">提示：输入完整的场景描述，可包含情节、产品特点等</small>
                     </div>
 
@@ -846,10 +989,15 @@
                             <div class="form-group">
                                 <label for="character_preset">快速选择</label>
                                 <select id="character_preset">
-                                    <option value="mai">默认：红色旗袍角色</option>
+                                    <option value="mai">默认：红色旗袍女主</option>
                                     <option value="jack">默认：黑客帝国风男主</option>
                                     <option value="custom">自定义</option>
                                 </select>
+                            </div>
+                            <div class="form-group custom-character-field" data-character-custom>
+                                <label for="character_name">人物名称</label>
+                                <input type="text" id="character_name" placeholder="例如：红色旗袍女主">
+                                <small style="color: #666; font-size: 0.85em;">验证保存后，将出现于快速选择列表</small>
                             </div>
                             <div class="form-group">
                                 <label for="character_image_url">参考图URL</label>
@@ -860,6 +1008,10 @@
                                 <label for="character_description">人物描述</label>
                                 <textarea id="character_description" rows="3" placeholder="例如：角色外观、服装、风格..."></textarea>
                                 <small style="color: #666; font-size: 0.85em;">文字描述将与参考图结合，帮助AI保持角色特征</small>
+                            </div>
+                            <div class="form-group custom-character-field" data-character-custom>
+                                <button type="button" id="character_save_button">验证并加入图库</button>
+                                <small style="color: #666; font-size: 0.85em;">确保填写人物名称、参考图和描述后再点击</small>
                             </div>
                         </div>
 
@@ -896,15 +1048,26 @@
                         <div class="subsection">
                             <h3>⚙️ 工作流设置</h3>
                             <div class="form-group">
-                                <label for="llm_provider">LLM提供商（故事生成）</label>
+                                <label for="llm_provider">LLM提供商（故事生成，仅支持 DeepSeek）</label>
                                 <select id="llm_provider" name="llm_provider">
                                     <option value="1" selected>DeepSeek - 推荐，性价比高</option>
-                                    <option value="2">Kimi (Moonshot) - 中文更强</option>
                                 </select>
                             </div>
                             <div class="form-group">
                                 <label for="concurrent_workers">并发线程数（图像生成并发数，建议2-4）</label>
                                 <input type="number" id="concurrent_workers" name="concurrent_workers" min="1" max="9" value="3">
+                            </div>
+                        </div>
+
+                        <!-- 片尾动画开关 -->
+                        <div class="subsection">
+                            <h3>✨ 片尾动画</h3>
+                            <div class="form-group">
+                                <label class="checkbox-label" style="display: flex; align-items: center; gap: 8px;">
+                                    <input type="checkbox" id="logo_outro_enabled" checked>
+                                    添加片尾 Akamai Logo 渐入
+                                </label>
+                                <small style="color: #666; font-size: 0.85em; display: block; margin-top: 4px;">关闭后将跳过片尾动画，旁白时长与视频保持一致</small>
                             </div>
                         </div>
                     </div>
@@ -939,22 +1102,22 @@
                     <div class="progress-fill" id="progress-fill" style="width: 0%">0%</div>
                     <div class="milestones">
                         <div class="milestone" style="left: 0%">
-                            <div class="milestone-label">资产准备</div>
+                            <div class="milestone-label">制稿</div>
                         </div>
                         <div class="milestone" style="left: 10%">
-                            <div class="milestone-label">剧本生成</div>
+                            <div class="milestone-label">剧本</div>
                         </div>
                         <div class="milestone" style="left: 20%">
-                            <div class="milestone-label">图像生成</div>
+                            <div class="milestone-label">绘景</div>
                         </div>
                         <div class="milestone" style="left: 50%">
-                            <div class="milestone-label">视频生成</div>
+                            <div class="milestone-label">合成</div>
                         </div>
                         <div class="milestone" style="left: 90%">
-                            <div class="milestone-label">音频字幕</div>
+                            <div class="milestone-label">配音</div>
                         </div>
                         <div class="milestone" style="left: 100%">
-                            <div class="milestone-label">发布成片</div>
+                            <div class="milestone-label">发布</div>
                         </div>
                     </div>
                 </div>
@@ -970,7 +1133,7 @@
             </div>
 
             <div id="result-section" class="hidden">
-                <a href="#" id="result-link" class="result-link">📥 下载视频</a>
+                <a href="#" id="result-link" class="result-link" target="_blank" rel="noopener noreferrer">📥 打开视频</a>
             </div>
         </div>
     </div>
@@ -991,6 +1154,7 @@
         let displayedProgress = 0; // UI展示的进度（0-1），确保单调递增
         let highestStageIndex = -1;// 已确认的最高阶段索引
         let lastKnownJobStatus = '';
+        let currentEtaProfile = null;
 
         const MIN_PROGRESS_INCREMENT = 0.001; // 0.1% per second
         const MAX_VIRTUAL_PROGRESS = 0.99;    // 虚拟进度封顶，避免提前100%
@@ -1004,11 +1168,35 @@
         const balanceDisplay = document.getElementById('cost-balance');
         const apiInputPanel = document.getElementById('api-input-panel');
         const balanceToggleButton = document.getElementById('balance-toggle');
+        const balanceToggleArrow = document.getElementById('balance-toggle-arrow');
         const balanceRefreshButton = document.getElementById('balance-refresh');
-        const balanceHint = document.getElementById('balance-hint');
         let balanceFetchTimer = null;
         let lastBalanceKey = '';
         let cachedBalanceValue = null;
+
+        const topicInput = document.getElementById('topic');
+        const topicRefreshButton = document.getElementById('topic-refresh');
+        const presetSelect = document.getElementById('preset');
+        const voiceSelect = document.getElementById('voice');
+
+        const PRESET_TOPICS_PATH = 'preset-topics.json';
+        const FALLBACK_TOPICS = [
+            '银行理财经理在高净值客户视频策略会上需要实时给出多资产配置建议，旧AI助手延迟十几秒让客户失去耐心，使用Akamai推理云分布式、低延迟、专注推理高性价比的底座后，响应缩短到3秒，签约转化率提升22%。'
+        ];
+        let PRESET_TOPICS = FALLBACK_TOPICS.slice();
+        const CHARACTER_ROTATION_ORDER = ['mai', 'jack'];
+        const STORAGE_KEYS = {
+            topic: 'aka_last_topic_index',
+            style: 'aka_last_style_value',
+            voice: 'aka_last_voice_value',
+            character: 'aka_character_rotation_index'
+        };
+        const initialDynamicDefaults = {
+            topic: '',
+            style: '3D',
+            voice: '6',
+            characterPreset: 'mai'
+        };
 
         // 阶段配置（资产0% → 剧本10% → 图像20% → 视频50% → 音频字幕90% → 发布100%）
         const STAGE_CONFIG = {
@@ -1019,24 +1207,52 @@
             'composition': { start: 0.90, end: 1.0, estimateBase: 60 }
         };
 
+        function getStageEstimate(stageName) {
+            if (!stageName || !currentEtaProfile || !currentEtaProfile.stages) {
+                return null;
+            }
+            const stageValue = currentEtaProfile.stages[stageName];
+            if (typeof stageValue === 'number' && stageValue > 0) {
+                return stageValue;
+            }
+            return null;
+        }
+
         function setApiPanelState(collapsed) {
             if (!apiInputPanel || !balanceToggleButton) {
                 return;
             }
             if (collapsed) {
                 apiInputPanel.classList.add('collapsed');
-                balanceToggleButton.textContent = '管理密钥';
+                balanceToggleButton.setAttribute('aria-expanded', 'false');
+                if (balanceToggleArrow) {
+                    balanceToggleArrow.textContent = '▼';
+                }
             } else {
                 apiInputPanel.classList.remove('collapsed');
-                balanceToggleButton.textContent = '收起密钥';
+                balanceToggleButton.setAttribute('aria-expanded', 'true');
+                if (balanceToggleArrow) {
+                    balanceToggleArrow.textContent = '▲';
+                }
             }
         }
 
         if (balanceToggleButton && apiInputPanel) {
-            balanceToggleButton.addEventListener('click', () => {
+            const handleToggle = (event) => {
+                event.stopPropagation();
                 const isCollapsed = apiInputPanel.classList.contains('collapsed');
                 setApiPanelState(!isCollapsed);
+            };
+
+            balanceToggleButton.addEventListener('click', handleToggle);
+            balanceToggleButton.addEventListener('keydown', (event) => {
+                if (event.key === 'Enter' || event.key === ' ') {
+                    event.preventDefault();
+                    event.stopPropagation();
+                    handleToggle(event);
+                }
             });
+
             // 默认收起，除非后续需要提示输入
             setApiPanelState(true);
         }
@@ -1046,14 +1262,13 @@
                 if (!wavespeedInput) {
                     return;
                 }
-                const originalText = balanceRefreshButton.textContent;
                 balanceRefreshButton.disabled = true;
-                balanceRefreshButton.textContent = '刷新中...';
+                balanceRefreshButton.classList.add('loading');
                 try {
                     await fetchAndDisplayBalance(wavespeedInput.value);
                 } finally {
                     balanceRefreshButton.disabled = false;
-                    balanceRefreshButton.textContent = originalText;
+                    balanceRefreshButton.classList.remove('loading');
                 }
             });
         }
@@ -1071,10 +1286,65 @@
             }
         };
 
+        function ensureCharacterPresetOption(value, name) {
+            if (!characterPresetSelect) {
+                return;
+            }
+            const label = `收藏：${name}`;
+            let option = characterPresetSelect.querySelector(`option[value="${value}"]`);
+            if (!option) {
+                option = document.createElement('option');
+                option.value = value;
+                option.textContent = label;
+                const customOption = characterPresetSelect.querySelector('option[value="custom"]');
+                if (customOption && customOption.parentElement) {
+                    customOption.parentElement.insertBefore(option, customOption);
+                } else {
+                    characterPresetSelect.appendChild(option);
+                }
+            } else {
+                option.textContent = label;
+            }
+        }
+
+        function registerCharacterLibraryPreset(record, options = {}) {
+            if (!record || !record.id) {
+                return;
+            }
+            CHARACTER_PRESETS[record.id] = {
+                label: record.name,
+                image: record.image_url,
+                description: record.description
+            };
+            ensureCharacterPresetOption(record.id, record.name);
+            if (options.selectImmediately && characterPresetSelect) {
+                characterPresetSelect.value = record.id;
+                applyCharacterPreset(record.id);
+                updateCustomCharacterFields();
+            }
+        }
+
+        async function loadCharacterLibrary() {
+            try {
+                const response = await fetch(`${API_BASE}/api/character-references`, { cache: 'no-cache' });
+                if (!response.ok) {
+                    throw new Error(`HTTP ${response.status}`);
+                }
+                const references = await response.json();
+                references.forEach(record => registerCharacterLibraryPreset(record));
+            } catch (error) {
+                console.warn('⚠️ 无法加载人物图库', error);
+            }
+        }
+
         const characterPresetSelect = document.getElementById('character_preset');
         const characterImageInput = document.getElementById('character_image_url');
         const characterDescriptionInput = document.getElementById('character_description');
+        const characterNameInput = document.getElementById('character_name');
+        const characterSaveButton = document.getElementById('character_save_button');
+        const customCharacterFields = document.querySelectorAll('[data-character-custom]');
         const characterEnabledCheckbox = document.getElementById('character_enabled');
+        const logoOutroCheckbox = document.getElementById('logo_outro_enabled');
 
         function applyCharacterPreset(presetKey) {
             const preset = CHARACTER_PRESETS[presetKey];
@@ -1083,6 +1353,9 @@
             }
             characterImageInput.value = preset.image;
             characterDescriptionInput.value = preset.description;
+            if (characterNameInput && preset.label) {
+                characterNameInput.value = preset.label;
+            }
         }
 
         function updateCharacterFieldsState() {
@@ -1092,6 +1365,25 @@
                     el.disabled = disabled;
                 }
             });
+            updateCustomCharacterFields(disabled);
+        }
+
+        function updateCustomCharacterFields(disabled = !characterEnabledCheckbox.checked) {
+            const isCustom = characterPresetSelect && characterPresetSelect.value === 'custom';
+            customCharacterFields.forEach(field => {
+                if (!field) return;
+                if (isCustom) {
+                    field.classList.add('active');
+                } else {
+                    field.classList.remove('active');
+                }
+            });
+            if (characterNameInput) {
+                characterNameInput.disabled = disabled || !isCustom;
+            }
+            if (characterSaveButton) {
+                characterSaveButton.disabled = disabled || !isCustom;
+            }
         }
 
         if (characterEnabledCheckbox) {
@@ -1104,12 +1396,71 @@
                 if (value !== 'custom') {
                     applyCharacterPreset(value);
                 }
+                updateCustomCharacterFields();
             });
         }
 
         function markCharacterPresetCustom() {
             if (characterPresetSelect && characterPresetSelect.value !== 'custom') {
                 characterPresetSelect.value = 'custom';
+            }
+            updateCustomCharacterFields();
+        }
+
+        async function handleCharacterSave() {
+            if (!characterEnabledCheckbox?.checked) {
+                alert('⚠️ 请先启用参考人物图');
+                return;
+            }
+            if (!characterPresetSelect || characterPresetSelect.value !== 'custom') {
+                alert('⚠️ 请选择“自定义”模式再保存');
+                return;
+            }
+
+            const name = characterNameInput?.value.trim();
+            const imageUrl = characterImageInput?.value.trim();
+            const description = characterDescriptionInput?.value.trim();
+
+            if (!name || !imageUrl || !description) {
+                alert('⚠️ 请填写人物名称、参考图URL和人物描述');
+                return;
+            }
+
+            const payload = {
+                name,
+                image_url: imageUrl,
+                description
+            };
+
+            if (!characterSaveButton) {
+                return;
+            }
+
+            const originalText = characterSaveButton.textContent;
+            characterSaveButton.disabled = true;
+            characterSaveButton.textContent = '验证中...';
+
+            try {
+                const response = await fetch(`${API_BASE}/api/character-references`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify(payload)
+                });
+
+                if (!response.ok) {
+                    const errorText = await response.text();
+                    throw new Error(errorText || `HTTP ${response.status}`);
+                }
+
+                const record = await response.json();
+                registerCharacterLibraryPreset(record, { selectImmediately: true });
+                alert('✅ 已验证并加入人物图库，可在快速选择中使用');
+            } catch (error) {
+                console.error('❌ 保存人物失败', error);
+                alert(`❌ 保存失败：${error.message}`);
+            } finally {
+                characterSaveButton.disabled = false;
+                characterSaveButton.textContent = originalText;
             }
         }
 
@@ -1118,6 +1469,206 @@
         }
         if (characterDescriptionInput) {
             characterDescriptionInput.addEventListener('input', markCharacterPresetCustom);
+        }
+        if (characterNameInput) {
+            characterNameInput.addEventListener('input', markCharacterPresetCustom);
+        }
+        if (characterSaveButton) {
+            characterSaveButton.addEventListener('click', handleCharacterSave);
+        }
+
+        function safeSetStorage(key, value) {
+            try {
+                if (typeof localStorage === 'undefined') {
+                    return;
+                }
+                localStorage.setItem(key, String(value));
+            } catch (error) {
+                console.warn('localStorage写入失败', error);
+            }
+        }
+
+        function safeGetStorage(key) {
+            try {
+                if (typeof localStorage === 'undefined') {
+                    return null;
+                }
+                return localStorage.getItem(key);
+            } catch (error) {
+                console.warn('localStorage读取失败', error);
+                return null;
+            }
+        }
+
+        function safeGetInt(key) {
+            const rawValue = safeGetStorage(key);
+            if (rawValue === null || rawValue === undefined || rawValue === '') {
+                return null;
+            }
+            const parsed = parseInt(rawValue, 10);
+            return Number.isNaN(parsed) ? null : parsed;
+        }
+
+        function pickRandomIndex(length, lastIndex) {
+            if (!Number.isInteger(length) || length <= 0) {
+                return 0;
+            }
+            if (length === 1) {
+                return 0;
+            }
+            let candidate = Math.floor(Math.random() * length);
+            if (!Number.isInteger(lastIndex) || lastIndex < 0 || lastIndex >= length) {
+                return candidate;
+            }
+            let attempt = 0;
+            while (candidate === lastIndex && attempt < 10) {
+                candidate = Math.floor(Math.random() * length);
+                attempt += 1;
+            }
+            if (candidate === lastIndex) {
+                candidate = (lastIndex + 1) % length;
+            }
+            return candidate;
+        }
+
+        function pickDifferentRandomValue(values, lastValue) {
+            if (!Array.isArray(values) || values.length === 0) {
+                return '';
+            }
+            if (values.length === 1) {
+                return values[0];
+            }
+            let candidate = values[Math.floor(Math.random() * values.length)];
+            if (!lastValue || !values.includes(lastValue)) {
+                return candidate;
+            }
+            let attempt = 0;
+            while (candidate === lastValue && attempt < 10) {
+                candidate = values[Math.floor(Math.random() * values.length)];
+                attempt += 1;
+            }
+            if (candidate === lastValue) {
+                candidate = values.find(value => value !== lastValue) || candidate;
+            }
+            return candidate;
+        }
+
+        function setPresetTopics(topics) {
+            if (!Array.isArray(topics)) {
+                PRESET_TOPICS = FALLBACK_TOPICS.slice();
+                return;
+            }
+            const sanitized = topics
+                .map(item => (typeof item === 'string' ? item.trim() : ''))
+                .filter(item => item.length > 0);
+            PRESET_TOPICS = sanitized.length > 0 ? sanitized : FALLBACK_TOPICS.slice();
+        }
+
+        async function loadPresetTopicsFromJson() {
+            try {
+                const response = await fetch(PRESET_TOPICS_PATH, { cache: 'no-cache' });
+                if (!response.ok) {
+                    throw new Error(`HTTP ${response.status}`);
+                }
+                const data = await response.json();
+                if (!data || !Array.isArray(data.topics)) {
+                    throw new Error('Invalid topics format');
+                }
+                setPresetTopics(data.topics);
+                console.log(`📚 载入 ${PRESET_TOPICS.length} 条预设广告主题`);
+                return true;
+            } catch (error) {
+                console.warn('⚠️ 预设广告主题加载失败，将使用默认备选：', error);
+                setPresetTopics([]);
+                return false;
+            }
+        }
+
+        function randomizeTopic() {
+            if (!topicInput || !Array.isArray(PRESET_TOPICS) || PRESET_TOPICS.length === 0) {
+                return '';
+            }
+            const lastIndex = safeGetInt(STORAGE_KEYS.topic);
+            const newIndex = pickRandomIndex(PRESET_TOPICS.length, lastIndex);
+            const newTopic = PRESET_TOPICS[newIndex];
+            topicInput.value = newTopic;
+            safeSetStorage(STORAGE_KEYS.topic, newIndex);
+            return newTopic;
+        }
+
+        function randomizeVisualStyle() {
+            if (!presetSelect) {
+                return '';
+            }
+            const values = Array.from(presetSelect.options || []).map(option => option.value);
+            if (values.length === 0) {
+                return '';
+            }
+            const lastValue = safeGetStorage(STORAGE_KEYS.style);
+            const newValue = pickDifferentRandomValue(values, lastValue);
+            if (newValue) {
+                presetSelect.value = newValue;
+                safeSetStorage(STORAGE_KEYS.style, newValue);
+            }
+            return newValue || '';
+        }
+
+        function randomizeVoice() {
+            if (!voiceSelect) {
+                return '';
+            }
+            const values = Array.from(voiceSelect.options || []).map(option => option.value);
+            if (values.length === 0) {
+                return '';
+            }
+            const lastValue = safeGetStorage(STORAGE_KEYS.voice);
+            const newValue = pickDifferentRandomValue(values, lastValue);
+            if (newValue) {
+                voiceSelect.value = newValue;
+                safeSetStorage(STORAGE_KEYS.voice, newValue);
+            }
+            return newValue || '';
+        }
+
+        function rotateCharacterPreset() {
+            if (!characterPresetSelect || CHARACTER_ROTATION_ORDER.length === 0) {
+                return '';
+            }
+            const lastIndex = safeGetInt(STORAGE_KEYS.character);
+            const nextIndex = Number.isInteger(lastIndex)
+                ? (lastIndex + 1) % CHARACTER_ROTATION_ORDER.length
+                : 0;
+            const presetKey = CHARACTER_ROTATION_ORDER[nextIndex];
+            characterPresetSelect.value = presetKey;
+            if (characterEnabledCheckbox) {
+                characterEnabledCheckbox.checked = true;
+            }
+            applyCharacterPreset(presetKey);
+            updateCharacterFieldsState();
+            safeSetStorage(STORAGE_KEYS.character, nextIndex);
+            return presetKey;
+        }
+
+        function initializeDynamicDefaults() {
+            const topic = randomizeTopic();
+            if (topic) {
+                initialDynamicDefaults.topic = topic;
+            }
+
+            const style = randomizeVisualStyle();
+            if (style) {
+                initialDynamicDefaults.style = style;
+            }
+
+            const voice = randomizeVoice();
+            if (voice) {
+                initialDynamicDefaults.voice = voice;
+            }
+
+            const presetKey = rotateCharacterPreset();
+            if (presetKey) {
+                initialDynamicDefaults.characterPreset = presetKey;
+            }
         }
 
         const STAGE_SEQUENCE = ['assets', 'story', 'images', 'videos', 'composition'];
@@ -1173,15 +1724,20 @@
                     this.stageEndProgress = serverProgress + 0.20;
                 }
 
-                // 计算预估时长
-                if (stageName === 'videos') {
-                    // 视频倒计时 = 180 * (视频段/3 + 1)
-                    this.estimatedDuration = 180 * (numShots / 3 + 1);
-                } else if (stageName === 'images') {
-                    // 图像生成时间随镜头数线性增长
-                    this.estimatedDuration = 30 + numShots * 30;
+                const etaOverride = getStageEstimate(stageName);
+                if (typeof etaOverride === 'number' && !Number.isNaN(etaOverride)) {
+                    this.estimatedDuration = etaOverride;
                 } else {
-                    this.estimatedDuration = STAGE_ESTIMATES[stageName] || 30;
+                    // 计算预估时长
+                    if (stageName === 'videos') {
+                        // 视频倒计时 = 180 * (视频段/3 + 1)
+                        this.estimatedDuration = 180 * (numShots / 3 + 1);
+                    } else if (stageName === 'images') {
+                        // 图像生成时间随镜头数线性增长
+                        this.estimatedDuration = 30 + numShots * 30;
+                    } else {
+                        this.estimatedDuration = STAGE_ESTIMATES[stageName] || 30;
+                    }
                 }
 
                 console.log(`⏱️ 阶段 ${stageName} 开始，预计耗时 ${this.estimatedDuration}秒，进度区间 ${(this.stageStartProgress*100).toFixed(0)}%-${(this.stageEndProgress*100).toFixed(0)}%`);
@@ -1334,15 +1890,6 @@
             if (balanceDisplay) {
                 balanceDisplay.textContent = message;
             }
-            if (balanceHint) {
-                if (message.includes('未输入密钥')) {
-                    balanceHint.textContent = '输入 Wavespeed API 密钥后自动查询额度';
-                } else if (message.includes('查询中')) {
-                    balanceHint.textContent = '正在向 Wavespeed 服务请求余额...';
-                } else {
-                    balanceHint.textContent = '余额状态已更新，可折叠输入框保护密钥';
-                }
-            }
         }
 
         async function fetchAndDisplayBalance(apiKey) {
@@ -1354,17 +1901,17 @@
             if (!trimmedKey) {
                 cachedBalanceValue = null;
                 lastBalanceKey = '';
-                setBalanceMessage('Wavespeed余额: 未输入密钥');
+                setBalanceMessage('未输入密钥');
                 return;
             }
 
             if (trimmedKey === lastBalanceKey && cachedBalanceValue !== null) {
-                setBalanceMessage(`Wavespeed余额: $${cachedBalanceValue.toFixed(2)}`);
+                setBalanceMessage(`$${cachedBalanceValue.toFixed(2)}`);
                 return;
             }
 
             lastBalanceKey = trimmedKey;
-            setBalanceMessage('Wavespeed余额: 查询中...');
+            setBalanceMessage('查询中...');
 
             try {
                 const response = await fetch(`${API_BASE}/api/wavespeed/balance`, {
@@ -1402,27 +1949,27 @@
                 }
 
                 cachedBalanceValue = balance;
-                setBalanceMessage(`Wavespeed余额: $${balance.toFixed(2)}`);
+                setBalanceMessage(`$${balance.toFixed(2)}`);
             } catch (error) {
                 console.error('查询Wavespeed余额失败:', error);
                 cachedBalanceValue = null;
 
                 const baseMessage = typeof error?.message === 'string' ? error.message : '';
-                let message = 'Wavespeed余额: 查询失败，请稍后重试';
+                let message = '查询失败，请稍后重试';
                 if (error?.status === 401) {
-                    message = 'Wavespeed余额: API密钥无效或已过期';
+                    message = 'API密钥无效或已过期';
                 } else if (error?.status === 400) {
-                    message = 'Wavespeed余额: 未输入有效密钥';
+                    message = '未输入有效密钥';
                 } else if (error?.status === 504) {
-                    message = 'Wavespeed余额: Wavespeed服务超时，请稍后再试';
+                    message = '服务超时，请稍后再试';
                 } else if (error?.status === 502) {
-                    message = 'Wavespeed余额: Wavespeed服务暂不可用';
+                    message = '服务暂不可用';
                 } else if (baseMessage.includes('Failed to fetch') || baseMessage.includes('NetworkError')) {
-                    message = 'Wavespeed余额: 无法连接后端，请检查API地址或网络';
+                    message = '无法连接后端，请检查API地址或网络';
                 } else if (error?.detail) {
-                    message = `Wavespeed余额: ${error.detail}`;
+                    message = error.detail;
                 } else if (baseMessage) {
-                    message = `Wavespeed余额: ${baseMessage}`;
+                    message = baseMessage;
                 }
 
                 setBalanceMessage(message);
@@ -1455,11 +2002,15 @@
         // 恢复默认配置
         function resetForm() {
             clearResumeMode();
-            // 重置为默认值
-            document.getElementById('topic').value = '一个银行客户经理遇到问题，后来使用akamai推理云，分布式、低延迟、高并发，解决了问题';
 
-            // 重置风格和镜头数
-            document.getElementById('preset').value = '3D';
+            if (topicInput) {
+                const fallbackTopic = PRESET_TOPICS[0] || '';
+                topicInput.value = initialDynamicDefaults.topic || fallbackTopic;
+            }
+
+            if (presetSelect) {
+                presetSelect.value = initialDynamicDefaults.style || '3D';
+            }
             document.getElementById('num_shots').value = '3';
 
             // 重置高级选项
@@ -1467,17 +2018,23 @@
             document.getElementById('resolution').value = '480p';
             document.getElementById('video_model').value = '1';
             document.getElementById('image_model').value = '4';
-            document.getElementById('voice').value = '6';
+            if (voiceSelect) {
+                voiceSelect.value = initialDynamicDefaults.voice || '6';
+            }
             document.getElementById('llm_provider').value = '1';
             document.getElementById('concurrent_workers').value = '3';
+            if (logoOutroCheckbox) {
+                logoOutroCheckbox.checked = true;
+            }
 
             if (characterEnabledCheckbox) {
                 characterEnabledCheckbox.checked = true;
             }
+            const defaultPresetKey = initialDynamicDefaults.characterPreset || 'mai';
             if (characterPresetSelect) {
-                characterPresetSelect.value = 'mai';
+                characterPresetSelect.value = defaultPresetKey;
             }
-            applyCharacterPreset('mai');
+            applyCharacterPreset(defaultPresetKey);
             updateCharacterFieldsState();
 
             // 更新成本显示
@@ -1506,6 +2063,8 @@
                 return;
             }
 
+            const includeLogoOutro = logoOutroCheckbox ? logoOutroCheckbox.checked : true;
+
             // 构建完整的配置数据
             const data = {
                 topic: topic.trim(),
@@ -1518,7 +2077,8 @@
                 video_model: parseInt(formData.get('video_model')),
                 voice: parseInt(formData.get('voice')),
                 concurrent_workers: parseInt(formData.get('concurrent_workers')),
-                wavespeed_api_key: wavespeedApiKey.trim()
+                wavespeed_api_key: wavespeedApiKey.trim(),
+                logo_outro_enabled: includeLogoOutro
             };
             if (resumeJobId) {
                 data.resume_id = resumeJobId;
@@ -1528,6 +2088,7 @@
             if (characterEnabled) {
                 const imageUrl = characterImageInput?.value.trim();
                 const description = characterDescriptionInput?.value.trim();
+                const characterName = characterNameInput?.value.trim();
                 if (!imageUrl && !description) {
                     alert('⚠️ 启用参考人物图时，请至少提供参考图URL或人物描述');
                     return;
@@ -1538,6 +2099,12 @@
                 }
                 if (description) {
                     data.character_description = description;
+                }
+                const presetKey = characterPresetSelect?.value || '';
+                if (presetKey === 'custom' && characterName) {
+                    data.character_name = characterName;
+                } else if (presetKey && CHARACTER_PRESETS[presetKey]?.label) {
+                    data.character_name = CHARACTER_PRESETS[presetKey].label;
                 }
             } else {
                 data.character_enabled = false;
@@ -1595,6 +2162,7 @@
                 const result = await response.json();
                 console.log('✅ 任务创建成功:', result);
 
+                currentEtaProfile = result.eta_profile || null;
                 currentJobId = result.job_id;
 
                 // 显示状态面板
@@ -1679,6 +2247,10 @@
 
                 const data = await response.json();
 
+                if (Object.prototype.hasOwnProperty.call(data, 'eta_profile')) {
+                    currentEtaProfile = data.eta_profile;
+                }
+
                 document.getElementById('current-job-id').textContent = data.job_id;
                 document.getElementById('current-message').textContent = data.message;
 
@@ -1743,8 +2315,9 @@
                             stageChanged = true;
                             highestStageIndex = candidateIndex;
                             currentStage = stageFromServer;
-                            const numShots = parseInt(document.getElementById('num_shots').value) || 1;
-                            countdown.start(stageFromServer, numShots, displayedProgress);
+                            const formShots = parseInt(document.getElementById('num_shots').value) || 1;
+                            const jobShots = parseInt(data.num_shots ?? formShots) || formShots;
+                            countdown.start(stageFromServer, jobShots, displayedProgress);
                             startETATimer();
                         }
                     }
@@ -1992,27 +2565,36 @@
                 const jobsList = document.getElementById('jobs-list');
                 jobsList.innerHTML = '';
 
-                if (data.jobs.length === 0) {
+                const jobs = Array.isArray(data.jobs) ? data.jobs : [];
+
+                if (jobs.length === 0) {
                     jobsList.innerHTML = '<p style="color: #999; text-align: center;">暂无任务</p>';
                     return;
                 }
 
-                data.jobs.slice(0, 10).forEach(job => {
+                const VISIBLE_LIMIT = 3;
+                const createJobItem = (job) => {
                     const jobItem = document.createElement('div');
-                    jobItem.style.cssText = 'padding: 10px; border-bottom: 1px solid #eee; cursor: pointer;';
+                    jobItem.className = 'job-item';
                     const downloadLink = (job.status === 'succeeded' && job.result_path)
-                        ? `<a href="${job.result_path}" target="_blank" rel="noopener" class="job-download" onclick="event.stopPropagation();">视频下载</a>`
+                        ? `<a href="${job.result_path}" target="_blank" rel="noopener" class="job-download" onclick="event.stopPropagation();">视频链接</a>`
                         : '';
                     jobItem.innerHTML = `
-                        <strong>${job.job_id}</strong>${downloadLink}
-                        <span class="status-badge status-${job.status}" style="float: right; font-size: 0.8em;">
-                            ${job.status}
-                        </span>
-                        <p style="color: #666; font-size: 0.9em; margin-top: 5px;">${job.message || '-'}</p>
+                        <div style="display: flex; align-items: center; justify-content: space-between; gap: 10px; flex-wrap: wrap;">
+                            <div style="display: flex; align-items: center; gap: 10px; flex-wrap: wrap;">
+                                <strong>${job.job_id}</strong>
+                                ${downloadLink}
+                            </div>
+                            <span class="status-badge status-${job.status}" style="font-size: 0.8em;">
+                                ${job.status}
+                            </span>
+                        </div>
+                        <p class="job-message">${job.message || '-'}</p>
                     `;
 
-                    jobItem.onclick = () => {
+                    jobItem.addEventListener('click', () => {
                         currentJobId = job.job_id;
+                        currentEtaProfile = job.eta_profile || null;
                         document.getElementById('status-panel').classList.remove('hidden');
                         if (job.status === 'failed') {
                             enableResumeMode(job.job_id);
@@ -2020,13 +2602,37 @@
                             clearResumeMode();
                         }
                         startPolling();
-                    };
+                    });
 
-                    jobsList.appendChild(jobItem);
+                    return jobItem;
+                };
+
+                jobs.slice(0, VISIBLE_LIMIT).forEach(job => {
+                    jobsList.appendChild(createJobItem(job));
                 });
 
+                const hiddenJobs = jobs.slice(VISIBLE_LIMIT);
+                if (hiddenJobs.length > 0) {
+                    const toggleButton = document.createElement('button');
+                    toggleButton.type = 'button';
+                    toggleButton.className = 'jobs-toggle';
+                    toggleButton.textContent = `展开剩余${hiddenJobs.length}个任务`;
+
+                    const hiddenContainer = document.createElement('div');
+                    hiddenContainer.className = 'additional-jobs';
+                    hiddenJobs.forEach(job => hiddenContainer.appendChild(createJobItem(job)));
+
+                    toggleButton.addEventListener('click', () => {
+                        const isOpen = hiddenContainer.classList.toggle('open');
+                        toggleButton.textContent = isOpen ? '收起更多任务' : `展开剩余${hiddenJobs.length}个任务`;
+                    });
+
+                    jobsList.appendChild(toggleButton);
+                    jobsList.appendChild(hiddenContainer);
+                }
+
                 if (resumeJobId) {
-                    const stillFailed = data.jobs.some(job => job.job_id === resumeJobId && job.status === 'failed');
+                    const stillFailed = jobs.some(job => job.job_id === resumeJobId && job.status === 'failed');
                     if (!stillFailed) {
                         clearResumeMode();
                     }
@@ -2068,6 +2674,17 @@
         }
 
 
+        if (topicRefreshButton) {
+            topicRefreshButton.addEventListener('click', () => {
+                const topic = randomizeTopic();
+                if (topic && topicInput && typeof topicInput.setSelectionRange === 'function') {
+                    const end = topic.length;
+                    topicInput.focus();
+                    topicInput.setSelectionRange(end, end);
+                }
+            });
+        }
+
         // 监听API密钥输入框变化，自动保存并查询余额
         if (wavespeedInput) {
             wavespeedInput.addEventListener('input', () => {
@@ -2084,15 +2701,19 @@
             }
         })();
 
-        applyCharacterPreset('mai');
-        updateCharacterFieldsState();
+        async function bootstrapPage() {
+            await loadPresetTopicsFromJson();
+            await loadCharacterLibrary();
+            initializeDynamicDefaults();
+            updateCharacterFieldsState();
+            clearResumeMode();
+            updateCost();  // 初始化成本显示
+            loadWavespeedApiKey();  // 加载保存的API密钥
+            loadJobsList();
+            setInterval(loadJobsList, 5000); // 每5秒刷新列表
+        }
 
-        // 页面加载时初始化
-        clearResumeMode();
-        updateCost();  // 初始化成本显示
-        loadWavespeedApiKey();  // 加载保存的API密钥
-        loadJobsList();
-        setInterval(loadJobsList, 5000); // 每5秒刷新列表
+        bootstrapPage();
     </script>
 </body>
 </html>

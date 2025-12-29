@@ -4502,16 +4502,22 @@ def main():
                 else:
                     font_path = font_config if font_config else VideoComposer.get_system_font()
 
+                font_size_map = subtitle_config.get('font_size_by_resolution') or subtitle_config.get('font_sizes') or {}
+                resolved_font_size = font_size_map.get(resolution, subtitle_config.get('font_size', 48))
+
                 success_sub = video_composer.add_subtitles_to_video(
                     str(temp_with_audio),
                     str(global_subtitle),
                     str(final_no_bgm),
                     style_config={
                         'font': font_path,
-                        'fontsize': subtitle_config.get('font_size', 48),
+                        'fontsize': resolved_font_size,
                         'color': subtitle_config.get('font_color', 'white'),
                         'stroke_color': subtitle_config.get('outline_color', 'black'),
                         'stroke_width': subtitle_config.get('outline_width', 2),
+                        'bottom_margin': subtitle_config.get('bottom_margin'),
+                        'line_offset_ratio': subtitle_config.get('line_offset_ratio'),
+                        'safe_area_padding': subtitle_config.get('safe_area_padding'),
                     }
                 )
                 if not success_sub:

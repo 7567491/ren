@@ -661,6 +661,14 @@ subtitle:
   outline_color: "black"  # 描边颜色
   outline_width: 2  # 描边宽度
   position: "bottom"  # 位置: top, center, bottom
+  bottom_margin: 60  # 与画面底部的安全距离
+  line_offset_ratio: 0  # 额外抬升 0-1 倍行高，避免和进度条/遮挡重叠
+  safe_area_padding: 12  # 在字幕贴图底部增加透明 padding，避免被裁
+  font_size: 48  # 作为兜底字号，若未匹配分辨率映射时使用
+  font_size_by_resolution:
+    "480p": 42
+    "720p": 54
+    "1080p": 66
 
 # ============================================================
 # 视频写入与字幕样式（MoviePy参数）
@@ -691,6 +699,17 @@ subtitles:
     stroke_width: 2
     bottom_margin: 60
     line_offset_ratio: 0  # 0=紧贴底部(含bottom_margin)，0.5=上移半行
+    safe_area_padding: 12  # 额外透明留白，防止渲染时裁切
+    resolution_styles:
+      "480p":
+        fontsize: 42
+        bottom_margin: 60
+      "720p":
+        fontsize: 54
+        bottom_margin: 72
+      "1080p":
+        fontsize: 66
+        bottom_margin: 90
 
 # ============================================================
 # 提示词模板（可编辑文案，减少硬编码）

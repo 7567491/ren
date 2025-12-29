@@ -12,6 +12,7 @@ import subprocess
 from pathlib import Path
 from typing import Optional, List
 from datetime import datetime
+from urllib.parse import urlparse
 
 import requests
 from fastapi import FastAPI, HTTPException, BackgroundTasks
@@ -24,6 +25,8 @@ from pydantic import BaseModel, ConfigDict
 sys.path.insert(0, str(Path(__file__).parent.parent))
 
 from py.services.task_manager import TaskManager
+from py.services.eta_estimator import ETAEstimator
+from py.services import character_library
 
 # ==================== FastAPI 应用初始化 ====================
 app = FastAPI(
@@ -47,12 +50,15 @@ OUTPUT_DIR = "output"
 PUBLIC_EXPORT_DIR = Path("/mnt/www")
 PUBLIC_EXPORT_URL = "https://s.linapp.fun"
 task_manager = TaskManager(storage_dir=TEMP_DIR)
+eta_estimator = ETAEstimator(stats_file=Path(TEMP_DIR) / "eta_stats.json")
+eta_bootstrap_done = False
 
 # 并发限制（从配置读取）
 MAX_CONCURRENT_TASKS = 1
 PROGRESS_POLL_INTERVAL = 1  # seconds between checkpoint inspections
 running_tasks = {}  # {job_id: subprocess}
 WAVESPEED_BALANCE_URL = "https://api.wavespeed.ai/api/v3/balance"
+CHARACTER_IMAGE_TIMEOUT = 10
 
 # ==================== 预设映射配置 ====================
 # 预设名称到风格编号的映射（对应 ad-back.py 中的 STYLE_NUMBER_MAP）
@@ -83,9 +89,11 @@ PRESET_TO_STYLE_NUMBER = {
 
 def set_temp_dir(temp_dir: str):
     """设置临时目录（用于测试）"""
-    global task_manager, TEMP_DIR
+    global task_manager, TEMP_DIR, eta_estimator, eta_bootstrap_done
     TEMP_DIR = temp_dir
     task_manager = TaskManager(storage_dir=temp_dir)
+    eta_estimator = ETAEstimator(stats_file=Path(temp_dir) / "eta_stats.json")
+    eta_bootstrap_done = False
 
 
 def generate_config_from_preset(
@@ -102,7 +110,9 @@ def generate_config_from_preset(
     job_id: str,
     character_enabled: bool = False,
     character_image_url: Optional[str] = None,
-    character_description: Optional[str] = None
+    character_description: Optional[str] = None,
+    character_name: Optional[str] = None,
+    logo_outro_enabled: Optional[bool] = True
 ) -> dict:
     """
     根据预设参数生成完整配置
@@ -113,12 +123,13 @@ def generate_config_from_preset(
         num_shots: 镜头数
         shot_duration: 每镜头时长
         resolution: 分辨率
-        llm_provider: LLM提供商（1-DeepSeek 2-Kimi）
+        llm_provider: LLM提供商（仅支持 1=DeepSeek）
         image_model: 图像模型（1-6）
         video_model: 视频模型（1-5）
         voice: 音色选择（1-13）
         concurrent_workers: 并发线程数
         job_id: 任务 ID
+        logo_outro_enabled: 是否启用片尾logo动画
 
     Returns:
         配置字典
@@ -141,6 +152,8 @@ def generate_config_from_preset(
                     break
 
     # 构建完整配置（对应user.yaml结构）
+    include_logo_outro = True if logo_outro_enabled is None else bool(logo_outro_enabled)
+
     config = {
         'topic': topic or f'AI视频-{job_id}',
         'style': style_num,
@@ -167,11 +180,18 @@ def generate_config_from_preset(
             'enabled': True,
             'description': (character_description or '').strip() or '主角角色'
         }
+        cleaned_name = (character_name or '').strip()
+        if cleaned_name:
+            character_config['name'] = cleaned_name
         if character_image_url:
             character_config['character_image'] = character_image_url.strip()
         config['character'] = character_config
     else:
         config['character'] = {'enabled': False}
+
+    config['logo'] = {
+        'enabled': include_logo_outro
+    }
 
     # 验证配置有效性
     validate_config(config)
@@ -216,6 +236,30 @@ def validate_config(config: dict) -> None:
 
 # 兼容历史测试接口
 validate_config_params = validate_config
+
+
+def validate_character_image_url(image_url: str) -> None:
+    """确保参考图URL可访问并返回图片。"""
+    parsed = urlparse(image_url)
+    if parsed.scheme not in ('http', 'https'):
+        raise HTTPException(status_code=400, detail="参考图URL必须以 http 或 https 开头")
+
+    response = None
+    try:
+        response = requests.get(image_url, timeout=CHARACTER_IMAGE_TIMEOUT, stream=True)
+        response.raise_for_status()
+    except requests.RequestException as exc:
+        raise HTTPException(status_code=400, detail=f"无法访问参考图: {exc}") from exc
+    finally:
+        if response is not None:
+            try:
+                response.close()
+            except Exception:
+                pass
+
+    content_type = (response.headers.get('Content-Type') or '').lower()
+    if 'image' not in content_type:
+        raise HTTPException(status_code=400, detail="参考图URL返回的不是图片资源")
 
 
 def fetch_wavespeed_balance(api_key: str, timeout: int = 10) -> Optional[float]:
@@ -281,6 +325,7 @@ class JobCreateRequest(BaseModel):
 
     # 工作流配置
     concurrent_workers: Optional[int] = 6
+    logo_outro_enabled: Optional[bool] = True
 
     # API密钥（前端传递）
     wavespeed_api_key: Optional[str] = None
@@ -289,6 +334,7 @@ class JobCreateRequest(BaseModel):
     character_enabled: Optional[bool] = False
     character_image_url: Optional[str] = None
     character_description: Optional[str] = None
+    character_name: Optional[str] = None
 
     # 高级模式
     user_yaml: Optional[str] = None
@@ -304,6 +350,8 @@ class JobResponse(BaseModel):
     progress: float = 0.0
     result_path: Optional[str] = None
     created_at: str = ""
+    eta_profile: Optional[dict] = None
+    num_shots: Optional[int] = None
 
 
 class LogResponse(BaseModel):
@@ -322,6 +370,23 @@ class BalanceResponse(BaseModel):
     """账户余额响应"""
     balance: float
     currency: str = "USD"
+
+
+class CharacterReferenceRequest(BaseModel):
+    """新增人物图库请求"""
+    name: str
+    image_url: str
+    description: str
+
+
+class CharacterReferenceResponse(BaseModel):
+    """人物图库响应"""
+    id: str
+    name: str
+    image_url: str
+    description: str
+    created_at: str
+    updated_at: Optional[str] = None
 
 
 # ==================== 静态文件服务 ====================
@@ -347,6 +412,7 @@ async def root():
 async def on_startup_event():
     """服务启动时先尝试修复任务状态"""
     reconcile_task_states()
+    bootstrap_eta_history()
 
 
 @app.get("/health")
@@ -358,6 +424,27 @@ async def health_check():
         "running_tasks": len(running_tasks),
         "max_concurrent": MAX_CONCURRENT_TASKS
     }
+
+
+@app.get("/api/character-references", response_model=List[CharacterReferenceResponse])
+async def list_character_references_endpoint():
+    """返回已保存的人物参考图库。"""
+    return character_library.list_references()
+
+
+@app.post("/api/character-references", response_model=CharacterReferenceResponse)
+async def create_character_reference_endpoint(request: CharacterReferenceRequest):
+    """验证并保存新的参考人物图。"""
+    validate_character_image_url(request.image_url.strip())
+    try:
+        record = character_library.upsert_reference(
+            name=request.name,
+            image_url=request.image_url,
+            description=request.description
+        )
+    except ValueError as exc:
+        raise HTTPException(status_code=400, detail=str(exc)) from exc
+    return record
 
 
 @app.post("/api/jobs", response_model=JobResponse)
@@ -373,7 +460,7 @@ async def create_job(request: JobCreateRequest, background_tasks: BackgroundTask
     - **resolution**: 分辨率（480p/720p/1080p）
 
     **模型选择：**
-    - **llm_provider**: LLM提供商（1-DeepSeek 2-Kimi）
+    - **llm_provider**: LLM提供商（仅支持 1=DeepSeek）
     - **image_model**: 图像模型（1-6）
     - **video_model**: 视频模型（1-5）
     - **voice**: 配音音色（1-13）
@@ -388,6 +475,7 @@ async def create_job(request: JobCreateRequest, background_tasks: BackgroundTask
         resume_mode = bool(request.resume_id)
         job_id = None
         config_file = None
+        config_data = None
 
         if resume_mode:
             job_id = request.resume_id.strip()
@@ -424,6 +512,13 @@ async def create_job(request: JobCreateRequest, background_tasks: BackgroundTask
 
                 with open(config_file, 'w', encoding='utf-8') as f:
                     yaml.dump(resume_config, f, allow_unicode=True, default_flow_style=False)
+                config_data = resume_config
+            else:
+                try:
+                    with open(config_file, 'r', encoding='utf-8') as f:
+                        config_data = yaml.safe_load(f)
+                except Exception:
+                    config_data = None
 
             task_manager.update_status(job_id, 'queued', '重新开始任务，准备断点续传')
             task_manager.update_progress(job_id, 0.0, '重新开始任务，准备断点续传')
@@ -447,8 +542,8 @@ async def create_job(request: JobCreateRequest, background_tasks: BackgroundTask
 
                 # 验证用户提供的配置
                 try:
-                    user_config = yaml.safe_load(request.user_yaml)
-                    validate_config(user_config)
+                    config_data = yaml.safe_load(request.user_yaml)
+                    validate_config(config_data)
                 except Exception as e:
                     raise HTTPException(status_code=400, detail=f"配置验证失败: {str(e)}")
             else:
@@ -467,7 +562,9 @@ async def create_job(request: JobCreateRequest, background_tasks: BackgroundTask
                     job_id=job_id,
                     character_enabled=bool(request.character_enabled),
                     character_image_url=request.character_image_url,
-                    character_description=request.character_description
+                    character_description=request.character_description,
+                    character_name=request.character_name,
+                    logo_outro_enabled=request.logo_outro_enabled if request.logo_outro_enabled is not None else True
                 )
 
                 # 如果提供了Wavespeed API密钥，添加到配置中
@@ -482,9 +579,24 @@ async def create_job(request: JobCreateRequest, background_tasks: BackgroundTask
                 # 写入文件
                 with open(config_file, 'w', encoding='utf-8') as f:
                     yaml.dump(config, f, allow_unicode=True, default_flow_style=False)
+                config_data = config
 
         # 添加后台任务执行
         background_tasks.add_task(run_video_generation, job_id, config_file, resume_mode)
+
+        # 计算并保存 ETA 估计
+        if config_data and not isinstance(config_data, str):
+            eta_profile = eta_estimator.estimate(config_data)
+            task_manager.set_eta_profile(job_id, eta_profile)
+        elif resume_mode and config_data is None:
+            try:
+                with open(config_file, 'r', encoding='utf-8') as f:
+                    resume_conf = yaml.safe_load(f)
+            except Exception:
+                resume_conf = None
+            if resume_conf:
+                eta_profile = eta_estimator.estimate(resume_conf)
+                task_manager.set_eta_profile(job_id, eta_profile)
 
         # 返回任务信息
         task = task_manager.get_task(job_id)
@@ -825,6 +937,37 @@ def reconcile_task_states():
             task_manager.update_progress(job_id, 1.0, '已完成')
 
 
+def bootstrap_eta_history():
+    """基于历史成功任务构建 ETA 样本"""
+    global eta_bootstrap_done
+    if eta_bootstrap_done:
+        return
+
+    try:
+        tasks = task_manager.list_tasks()
+        tasks_sorted = sorted(
+            [task for task in tasks if task.get('status') == 'succeeded'],
+            key=lambda item: item.get('created_at', '')
+        )
+        imported = 0
+        for task in tasks_sorted:
+            job_id = task.get('job_id')
+            if not job_id or eta_estimator.has_record(job_id):
+                continue
+            config_path = Path(TEMP_DIR) / f"user-{job_id}.yaml"
+            log_path = Path(OUTPUT_DIR) / job_id / "log.txt"
+            if not config_path.exists() or not log_path.exists():
+                continue
+            if eta_estimator.record_success(job_id, config_path, log_path):
+                imported += 1
+        if imported:
+            print(f"[INFO] 已导入 {imported} 个历史 ETA 样本")
+    except Exception as exc:
+        print(f"[WARN] 导入历史 ETA 样本失败: {exc}")
+    finally:
+        eta_bootstrap_done = True
+
+
 # ==================== 后台任务执行 ====================
 
 async def run_video_generation(job_id: str, config_file: Path, resume_mode: bool = False):
@@ -914,6 +1057,10 @@ async def run_video_generation(job_id: str, config_file: Path, resume_mode: bool
                 task_manager.set_result_path(job_id, final_result)
                 task_manager.update_status(job_id, 'succeeded', '视频生成成功')
                 task_manager.update_progress(job_id, 1.0, '已完成')
+                try:
+                    eta_estimator.record_success(job_id, config_file, log_file)
+                except Exception as eta_err:
+                    print(f"[WARN] 记录 ETA 数据失败: {eta_err}")
             else:
                 task_manager.update_status(job_id, 'failed', '未找到输出文件')
         else:

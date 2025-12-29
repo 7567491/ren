@@ -175,19 +175,21 @@ class VideoComposer:
             return False
 
         try:
-            if style_config is None:
-                style_config = self._default_subtitle_style()
+            video = VideoFileClip(video_file)
+            resolution_key = self._infer_resolution_key(video)
+            style_config = self._merge_subtitle_style(style_config, resolution_key)
 
             font_name = self._resolve_subtitle_font(style_config)
             if not font_name:
+                video.close()
                 logger.error("❌ 找不到可用字体，请安装中文字体或在config.yaml中配置 subtitles.default_style.font")
                 return False
 
-            video = VideoFileClip(video_file)
+            safe_padding = int(style_config.get('safe_area_padding', 0) or 0)
 
             # 字幕生成器
             def generator(txt):
-                return TextClip(
+                clip = TextClip(
                     font=font_name,
                     text=txt,
                     font_size=style_config.get('fontsize', 48),
@@ -198,6 +200,14 @@ class VideoComposer:
                     size=(int(video.w * 0.9), None),
                     text_align='center'
                 )
+                if safe_padding > 0:
+                    # 给字幕贴图底部留透明安全区，避免导出时被裁切
+                    clip = clip.margin(
+                        top=max(0, safe_padding // 2),
+                        bottom=safe_padding,
+                        opacity=0
+                    )
+                return clip
 
             # 读取字幕
             subs = subtitles.file_to_subtitles(subtitle_file, encoding='utf-8')
@@ -209,9 +219,13 @@ class VideoComposer:
             subtitle_clips = []
             for ((start, end), txt) in subs:
                 clip = generator(txt)
-                base_y = max(0, video.h - clip.h - bottom_margin)
-                # 按配置抬升字幕，避免始终上移半行导致底部被裁
-                y_pos = max(0, base_y - clip.h * offset_ratio)
+                y_pos = self._compute_subtitle_position(
+                    video_height=video.h,
+                    clip_height=clip.h,
+                    bottom_margin=bottom_margin,
+                    offset_ratio=offset_ratio,
+                    safe_padding=safe_padding
+                )
                 clip = clip.with_position(('center', y_pos))
                 clip = clip.with_start(start)
                 clip = clip.with_duration(end - start)
@@ -228,6 +242,12 @@ class VideoComposer:
             return True
 
         except Exception as e:
+            if 'video' in locals():
+                try:
+                    video.close()
+                except Exception:
+                    pass
+
             logger.error(f"❌ 字幕添加失败: {str(e)}")
             logger.error(f"   错误类型: {type(e).__name__}")
             logger.info(f"   提示: 请确保已安装ImageMagick")
@@ -235,6 +255,23 @@ class VideoComposer:
             import traceback
             logger.error(f"   详细错误:\n{traceback.format_exc()}")
             return False
+
+    @staticmethod
+    def _compute_subtitle_position(
+        video_height: int,
+        clip_height: int,
+        bottom_margin: float,
+        offset_ratio: float,
+        safe_padding: int
+    ) -> float:
+        """综合安全边距与行偏移计算字幕Y坐标。"""
+        safe = max(0, safe_padding)
+        margin = float(bottom_margin or 0) + safe
+        base_y = max(0.0, float(video_height) - float(clip_height) - margin)
+        offset_base = float(clip_height) + safe
+        offset_ratio = max(0.0, float(offset_ratio or 0.0))
+        y_pos = max(0.0, base_y - offset_ratio * offset_base)
+        return y_pos
 
     def _resolve_subtitle_font(self, style_config: Dict) -> Optional[str]:
         """
@@ -629,8 +666,55 @@ class VideoComposer:
             'color': style.get('color', 'white'),
             'stroke_color': style.get('stroke_color', 'black'),
             'stroke_width': style.get('stroke_width', 2),
-            'bottom_margin': style.get('bottom_margin', 60)
+            'bottom_margin': style.get('bottom_margin', 60),
+            'line_offset_ratio': style.get('line_offset_ratio', 0),
+            'safe_area_padding': style.get('safe_area_padding', 0)
         }
+
+    def _merge_subtitle_style(self, style_config: Optional[Dict], resolution_key: Optional[str] = None) -> Dict:
+        """合并默认字幕样式、分辨率预设与调用方的局部覆盖。"""
+        base_style = self._default_subtitle_style()
+        base_style = self._apply_resolution_presets(base_style, resolution_key)
+        if not style_config:
+            return base_style
+
+        merged = base_style.copy()
+        for key, value in style_config.items():
+            if value is None:
+                continue
+            merged[key] = value
+        return merged
+
+    def _apply_resolution_presets(self, base: Dict, resolution_key: Optional[str]) -> Dict:
+        """根据输出分辨率覆盖默认样式，保持字号/留白一致。"""
+        if not resolution_key:
+            return base
+        presets = self.config.get('subtitles', {}).get('resolution_styles', {})
+        preset = presets.get(resolution_key)
+        if not isinstance(preset, dict):
+            return base
+        merged = base.copy()
+        for key, value in preset.items():
+            if value is None:
+                continue
+            merged[key] = value
+        return merged
+
+    @staticmethod
+    def _infer_resolution_key(video) -> Optional[str]:
+        """根据视频高度推断常见分辨率档位。"""
+        try:
+            height = int(getattr(video, "h", 0))
+        except Exception:
+            return None
+
+        if height >= 1000:
+            return "1080p"
+        if height >= 660:
+            return "720p"
+        if height > 0:
+            return "480p"
+        return None
 
     @staticmethod
     def get_system_font() -> str:

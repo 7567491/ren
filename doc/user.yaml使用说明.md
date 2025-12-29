@@ -35,7 +35,7 @@ topic: "云计算弹性扩容解决方案"
 # 视觉风格（1-10）
 style: 4
 
-# 镜头数量（3-9）
+# 镜头数量（1-10）
 shot_count: 6
 
 # 每镜头时长（3-5秒）
@@ -52,7 +52,8 @@ resolution: 1
 character:
   enabled: 1  # 0-不启用 1-启用
   description: "东方少女，长发，红色衣服"
-  default_character_image: "https://s.linapp.fun/mai.jpg"
+  character_image: "./resource/pic/mai.jpg"   # 或 reference_image 字段，支持本地路径或URL
+  dna: "Custom DNA prompt..."                 # 可选，直接使用自定义角色DNA
 
 # 品牌Logo
 brand:
@@ -110,6 +111,8 @@ subtitle:
 | 1 | bottom |
 | 2 | center |
 | 3 | top |
+
+> 提示：如果更习惯 `reference_image` / `default_reference_image` 命名，也会被自动识别；若已有稳定的角色描述，可将 DNA 文本写入 `character.dna`，系统会跳过自动提取流程并直接复用该描述。
 
 ## 使用方法
 

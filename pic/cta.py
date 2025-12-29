@@ -45,10 +45,22 @@ CURRENT_VIDEO_MODEL = CONFIG.get("models", {}).get("video", {}).get("current", "
 
 WAVESPEED_CONFIG = CONFIG.get("wavespeed", {})
 WAVESPEED_BASE = WAVESPEED_CONFIG.get("base_url", "https://api.wavespeed.ai")
-WAVESPEED_API_KEY = os.getenv("Wavespeed_API_KEY") or CONFIG.get("api", {}).get("wavespeed_key", "")
+WAVESPEED_API_KEY = (CONFIG.get("api", {}) or {}).get("wavespeed_key", "") or ""
 
 if not WAVESPEED_API_KEY:
-    raise RuntimeError("缺少 Wavespeed_API_KEY，请在 .env 或 config.yaml 配置")
+    if sys.stdin.isatty():
+        print("🔑 Wavespeed API 密钥未在配置中找到，请输入：")
+        while not WAVESPEED_API_KEY:
+            try:
+                user_key = input("Wavespeed API Key: ").strip()
+            except EOFError:
+                user_key = ""
+            if user_key:
+                WAVESPEED_API_KEY = user_key
+            else:
+                print("❌ Wavespeed API Key 不能为空，请重新输入。")
+    else:
+        raise RuntimeError("缺少 Wavespeed API Key，请在 user.yaml/config.yaml 的 api.wavespeed_key 中配置或通过前端输入。")
 
 rate_limits = CONFIG.get("rate_limits", {})
 image_limiter = RateLimiter(

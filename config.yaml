@@ -544,7 +544,7 @@ wavespeed:
 audio:
   # 语音合成设置
   voice_provider: "edge"  # 选项: edge（推荐，免费）
-  voice_name: "zh-CN-XiaoxiaoNeural"  # 默认Edge TTS音色（晓晓-女声）
+  voice_name: "zh-CN-YunyangNeural"  # 默认Edge TTS音色（云扬-男声）
   voice_volume: 1.0  # 配音音量 (0.0-1.0)
 
   # Edge TTS音色映射表（用于user.yaml的数字选择）
@@ -675,19 +675,22 @@ video_encoding:
 
 subtitles:
   default_style:
+    font: './resource/fonts/NotoSansSC-Regular.otf'
     font_candidates:
+      - './resource/fonts/NotoSansSC-Regular.otf'
       - '/System/Library/Fonts/STHeiti Medium.ttc'
       - '/System/Library/Fonts/PingFang.ttc'
       - '/System/Library/Fonts/Hiragino Sans GB.ttc'
       - 'C:\\Windows\\Fonts\\msyh.ttc'
       - '/usr/share/fonts/truetype/wqy/wqy-zenhei.ttc'
       - '/System/Library/Fonts/Supplemental/Arial Unicode.ttf'
-    fallback_font: 'Arial'
+    fallback_font: './resource/fonts/NotoSansSC-Regular.otf'
     fontsize: 48
     color: 'white'
     stroke_color: 'black'
     stroke_width: 2
     bottom_margin: 60
+    line_offset_ratio: 0  # 0=紧贴底部(含bottom_margin)，0.5=上移半行
 
 # ============================================================
 # 提示词模板（可编辑文案，减少硬编码）

@@ -260,7 +260,7 @@ class JobCreateRequest(BaseModel):
                 "llm_provider": 1,
                 "image_model": 4,
                 "video_model": 1,
-                "voice": 1,
+                "voice": 6,
                 "concurrent_workers": 6
             }
         }
@@ -277,7 +277,7 @@ class JobCreateRequest(BaseModel):
     llm_provider: Optional[int] = 1
     image_model: Optional[int] = 4
     video_model: Optional[int] = 1
-    voice: Optional[int] = 1
+    voice: Optional[int] = 6
 
     # 工作流配置
     concurrent_workers: Optional[int] = 6
@@ -342,6 +342,12 @@ async def root():
 
 
 # ==================== API 端点 ====================
+
+@app.on_event("startup")
+async def on_startup_event():
+    """服务启动时先尝试修复任务状态"""
+    reconcile_task_states()
+
 
 @app.get("/health")
 async def health_check():
@@ -456,7 +462,7 @@ async def create_job(request: JobCreateRequest, background_tasks: BackgroundTask
                     llm_provider=request.llm_provider or 1,
                     image_model=request.image_model or 4,
                     video_model=request.video_model or 1,
-                    voice=request.voice or 1,
+                    voice=request.voice or 6,
                     concurrent_workers=request.concurrent_workers or 6,
                     job_id=job_id,
                     character_enabled=bool(request.character_enabled),
@@ -493,6 +499,7 @@ async def create_job(request: JobCreateRequest, background_tasks: BackgroundTask
 @app.get("/api/jobs", response_model=dict)
 async def list_jobs():
     """列出所有任务"""
+    reconcile_task_states()
     tasks = task_manager.list_tasks()
     return {
         "jobs": tasks,
@@ -522,12 +529,13 @@ async def get_wavespeed_balance_api(request: BalanceRequest):
     if balance is None:
         raise HTTPException(status_code=502, detail="未能从 Wavespeed API 获取余额信息")
 
-    return BalanceResponse(balance=round(balance, 4))
+    return BalanceResponse(balance=round(balance, 2))
 
 
 @app.get("/api/jobs/{job_id}", response_model=JobResponse)
 async def get_job_status(job_id: str):
     """获取任务状态"""
+    reconcile_task_states()
     task = task_manager.get_task(job_id)
 
     if not task:
@@ -578,6 +586,7 @@ async def get_job_log(job_id: str, lines: int = 100, offset: int = 0):
 @app.get("/api/jobs/{job_id}/result")
 async def get_job_result(job_id: str):
     """获取任务结果"""
+    reconcile_task_states()
     task = task_manager.get_task(job_id)
 
     if not task:
@@ -619,7 +628,7 @@ def parse_checkpoint_file(checkpoint_file: Path) -> Optional[dict]:
 
 def calculate_progress_from_checkpoint(checkpoint: dict, detailed: bool = False) -> float:
     """
-    根据checkpoint计算进度（5个阶段，每个20%）
+    根据checkpoint计算进度，按照“资产→剧本→图像→视频→音频/合成”权重映射
 
     Args:
         checkpoint: checkpoint字典
@@ -631,38 +640,55 @@ def calculate_progress_from_checkpoint(checkpoint: dict, detailed: bool = False)
     if not checkpoint or 'completed_steps' not in checkpoint:
         return 0.0
 
-    # 定义步骤权重（5个阶段，每个20%）
-    total_steps = ['story', 'images', 'videos', 'audio_subtitle', 'composition']
+    # 阶段权重（累计后为100%）
+    stage_weights = {
+        'assets': 0.10,
+        'story': 0.10,
+        'images': 0.30,
+        'videos': 0.40,
+        'audio_subtitle': 0.05,
+        'composition': 0.05,
+    }
+
     completed_steps = checkpoint.get('completed_steps', [])
+    stages_info = checkpoint.get('stages', {})
 
-    # 只计数已知步骤
-    valid_completed = [s for s in completed_steps if s in total_steps]
+    # 只计数已知步骤，保持顺序
+    valid_completed = []
+    seen = set()
+    for step in completed_steps:
+        if step in stage_weights and step not in seen:
+            valid_completed.append(step)
+            seen.add(step)
 
-    # 基础进度（每个阶段20%）
-    base_progress = len(valid_completed) / len(total_steps)
+    base_progress = sum(stage_weights[step] for step in valid_completed)
+
+    # 兼容旧checkpoint：character_reference完成视为资产阶段完成
+    if 'assets' not in seen and stages_info and stages_info.get('character_reference'):
+        base_progress += stage_weights.get('assets', 0.0)
+
+    base_progress = min(base_progress, 1.0)
 
     if not detailed:
         return base_progress
 
-    # 详细进度：考虑子任务
     sub_progress = 0.0
-    step_weight = 1.0 / len(total_steps)  # 每个阶段占20%
 
-    # 如果正在执行图像生成
-    if 'images' in checkpoint and 'images' not in valid_completed:
+    # 图像生成细化
+    if 'images' in checkpoint and 'images' not in seen:
         images_info = checkpoint['images']
         if 'completed' in images_info and 'total' in images_info:
             total = images_info['total']
             if total > 0:
-                sub_progress = step_weight * (images_info['completed'] / total)
+                sub_progress = stage_weights['images'] * (images_info['completed'] / total)
 
-    # 如果正在执行视频生成
-    elif 'videos' in checkpoint and 'videos' not in valid_completed:
+    # 视频生成细化（仅在图像阶段完成但视频未完成时）
+    elif 'videos' in checkpoint and 'videos' not in seen:
         videos_info = checkpoint['videos']
         if 'completed' in videos_info and 'total' in videos_info:
             total = videos_info['total']
             if total > 0:
-                sub_progress = step_weight * (videos_info['completed'] / total)
+                sub_progress = stage_weights['videos'] * (videos_info['completed'] / total)
 
     return min(base_progress + sub_progress, 1.0)
 
@@ -681,14 +707,15 @@ def generate_progress_message(checkpoint: dict) -> str:
         return '准备中...'
 
     completed = checkpoint.get('completed_steps', [])
+    stages = checkpoint.get('stages', {})
 
     # 判断当前阶段（按倒序检查）
     if 'composition' in completed:
-        return '✅ 视频合成完成'
+        return '✅ 视频成片已完成'
     elif 'audio_subtitle' in completed:
-        return '🎬 正在合成视频...'
+        return '🎬 正在进行音频与合成'
     elif 'videos' in completed:
-        return '🎙️ 正在生成字幕旁白...'
+        return '🎧 正在制作旁白与字幕...'
     elif 'images' in completed:
         videos_info = checkpoint.get('videos', {})
         if 'completed' in videos_info and 'total' in videos_info:
@@ -702,9 +729,100 @@ def generate_progress_message(checkpoint: dict) -> str:
             c = images_info['completed']
             t = images_info['total']
             return f'🖼️ 正在生成图像 ({c}/{t})'
-        return '✅ 故事生成完成，准备生成图像'
+        return '✅ 剧本生成完成，准备生成图像'
+    elif 'assets' in completed or stages.get('character_reference'):
+        return '🧬 正在准备角色与品牌资产...'
     else:
-        return '📝 正在生成故事脚本...'
+        return '🚀 正在初始化任务...'
+
+
+# ==================== 结果整理与状态修复 ====================
+
+def locate_final_video(output_dir: Path) -> Optional[Path]:
+    """在输出目录中寻找最终视频文件"""
+    preferred_paths = [
+        output_dir / 'final_video.mp4',
+        output_dir / 'final.mp4',
+        output_dir / '90_final.mp4',
+    ]
+    for candidate in preferred_paths:
+        if candidate.exists():
+            return candidate
+
+    final_candidates = sorted(output_dir.glob("*final*.mp4"))
+    if final_candidates:
+        return final_candidates[-1]
+    return None
+
+
+def prepare_final_result(job_id: str) -> Optional[str]:
+    """
+    查找并整理最终视频文件，返回可供前端访问的路径
+    """
+    output_dir = Path(OUTPUT_DIR) / job_id
+    if not output_dir.exists():
+        return None
+
+    result_file = locate_final_video(output_dir)
+    if not result_file:
+        return None
+
+    final_name = f"{job_id}.mp4"
+    canonical_path = output_dir / final_name
+
+    try:
+        if not canonical_path.exists() or result_file.resolve() != canonical_path.resolve():
+            shutil.copy2(result_file, canonical_path)
+    except Exception as copy_err:
+        print(f"[WARN] 无法生成命名文件 {canonical_path}: {copy_err}")
+        canonical_path = result_file
+
+    public_url = None
+    if canonical_path.exists():
+        try:
+            PUBLIC_EXPORT_DIR.mkdir(parents=True, exist_ok=True)
+            public_target = PUBLIC_EXPORT_DIR / final_name
+            need_copy = True
+            if public_target.exists():
+                need_copy = canonical_path.stat().st_mtime > public_target.stat().st_mtime
+            if need_copy:
+                shutil.copy2(canonical_path, public_target)
+            public_url = f"{PUBLIC_EXPORT_URL.rstrip('/')}/{final_name}"
+        except Exception as export_err:
+            print(f"[WARN] 无法复制视频到公共存储 {PUBLIC_EXPORT_DIR}: {export_err}")
+            public_url = str(canonical_path)
+
+    if public_url:
+        return public_url
+    if canonical_path.exists():
+        return str(canonical_path)
+    return str(result_file)
+
+
+def reconcile_task_states():
+    """
+    扫描任务列表，修复已完成但状态未更新的任务
+    """
+    tasks_snapshot = task_manager.list_tasks()
+    for task in tasks_snapshot:
+        job_id = task.get('job_id')
+        if not job_id:
+            continue
+
+        status = task.get('status')
+        result_path = task.get('result_path')
+
+        if status == 'succeeded' and result_path:
+            continue
+
+        final_result = prepare_final_result(job_id)
+        if not final_result:
+            continue
+
+        task_manager.set_result_path(job_id, final_result)
+        if status != 'succeeded':
+            task_manager.update_status(job_id, 'succeeded', '视频生成成功（状态自动修复）')
+            task_manager.update_progress(job_id, 1.0, '已完成')
 
 
 # ==================== 后台任务执行 ====================
@@ -724,8 +842,8 @@ async def run_video_generation(job_id: str, config_file: Path, resume_mode: bool
         await asyncio.sleep(1)
 
     try:
-        # 更新状态为运行中
-        task_manager.update_status(job_id, 'running', '正在生成视频...')
+        # 更新状态为运行中（首阶段是故事脚本生成）
+        task_manager.update_status(job_id, 'running', '正在生成故事脚本...')
 
         # 构建命令
         ad_back_path = Path(__file__).parent / 'ad-back.py'
@@ -791,47 +909,8 @@ async def run_video_generation(job_id: str, config_file: Path, resume_mode: bool
         # 更新状态
         if returncode == 0:
             # 查找生成的视频文件
-            output_dir = Path(OUTPUT_DIR) / job_id
-            preferred_paths = [
-                output_dir / 'final_video.mp4',
-                output_dir / 'final.mp4',
-                output_dir / '90_final.mp4',
-            ]
-            result_file = None
-            for candidate in preferred_paths:
-                if candidate.exists():
-                    result_file = candidate
-                    break
-            if result_file is None:
-                # 回退到匹配 *final*.mp4 的最新文件
-                final_candidates = sorted(output_dir.glob("*final*.mp4"))
-                if final_candidates:
-                    result_file = final_candidates[-1]
-
-            if result_file and result_file.exists():
-                final_name = f"{job_id}.mp4"
-                canonical_path = output_dir / final_name
-                try:
-                    if result_file.resolve() != canonical_path.resolve():
-                        shutil.copy2(result_file, canonical_path)
-                except Exception as copy_err:
-                    print(f"[WARN] 无法生成命名文件 {canonical_path}: {copy_err}")
-                    canonical_path = result_file
-
-                public_url = None
-                if canonical_path.exists():
-                    try:
-                        PUBLIC_EXPORT_DIR.mkdir(parents=True, exist_ok=True)
-                        public_target = PUBLIC_EXPORT_DIR / final_name
-                        shutil.copy2(canonical_path, public_target)
-                        public_url = f"{PUBLIC_EXPORT_URL.rstrip('/')}/{final_name}"
-                    except Exception as export_err:
-                        print(f"[WARN] 无法复制视频到公共存储 {PUBLIC_EXPORT_DIR}: {export_err}")
-                        public_url = str(canonical_path)
-                else:
-                    canonical_path = result_file
-
-                final_result = public_url or str(canonical_path)
+            final_result = prepare_final_result(job_id)
+            if final_result:
                 task_manager.set_result_path(job_id, final_result)
                 task_manager.update_status(job_id, 'succeeded', '视频生成成功')
                 task_manager.update_progress(job_id, 1.0, '已完成')

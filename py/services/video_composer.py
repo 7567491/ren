@@ -7,12 +7,20 @@
 注意：需要先安装 moviepy 和系统依赖（如 ImageMagick）
 """
 
+import os
 import random
 import warnings
 from pathlib import Path
-from typing import List, Dict, Optional
-from loguru import logger
+from typing import Dict, List, Optional
+
 import yaml
+from loguru import logger
+from services import font_manager
+
+try:
+    from PIL import ImageFont
+except ImportError:  # pragma: no cover - Pillow 在运行时安装
+    ImageFont = None  # type: ignore[assignment]
 
 # 抑制MoviePy读取视频最后一帧的警告（不影响功能）
 warnings.filterwarnings('ignore', message='.*bytes wanted but 0 bytes read.*')
@@ -33,7 +41,6 @@ try:
     import moviepy.config as mpconfig
 
     # 配置ImageMagick路径（macOS Homebrew）
-    import os
     if os.path.exists('/opt/homebrew/bin/magick'):
         mpconfig.IMAGEMAGICK_BINARY = '/opt/homebrew/bin/magick'
     elif os.path.exists('/usr/local/bin/magick'):
@@ -48,6 +55,15 @@ except ImportError:
 class VideoComposer:
     """视频合成器"""
 
+    DEFAULT_FONT_CANDIDATES = [
+        "/usr/share/fonts/truetype/noto/NotoSansCJK-Regular.ttc",
+        "/usr/share/fonts/truetype/noto/NotoSansCJK-Bold.ttc",
+        "/usr/share/fonts/truetype/dejavu/DejaVuSans.ttf",
+        "/usr/share/fonts/truetype/dejavu/DejaVuSans-Bold.ttf",
+        "/usr/share/fonts/truetype/wqy/wqy-microhei.ttc",
+        "/usr/share/fonts/truetype/wqy/wqy-zenhei.ttc",
+    ]
+
     def __init__(self, temp_dir: str = "./temp", config: Optional[Dict] = None):
         """
         初始化视频合成器
@@ -59,6 +75,7 @@ class VideoComposer:
         self.config = config or self._load_config()
         self.temp_dir = Path(temp_dir)
         self.temp_dir.mkdir(parents=True, exist_ok=True)
+        self.local_font_candidates = font_manager.ensure_fonts()
 
         if not MOVIEPY_AVAILABLE:
             logger.error("❌ MoviePy未安装！请先运行: pip install moviepy")
@@ -161,12 +178,17 @@ class VideoComposer:
             if style_config is None:
                 style_config = self._default_subtitle_style()
 
+            font_name = self._resolve_subtitle_font(style_config)
+            if not font_name:
+                logger.error("❌ 找不到可用字体，请安装中文字体或在config.yaml中配置 subtitles.default_style.font")
+                return False
+
             video = VideoFileClip(video_file)
 
             # 字幕生成器
             def generator(txt):
                 return TextClip(
-                    font=style_config.get('font', 'STHeiti'),
+                    font=font_name,
                     text=txt,
                     font_size=style_config.get('fontsize', 48),
                     color=style_config.get('color', 'white'),
@@ -181,12 +203,15 @@ class VideoComposer:
             subs = subtitles.file_to_subtitles(subtitle_file, encoding='utf-8')
 
             bottom_margin = style_config.get('bottom_margin', 60)  # 保持底部留白，避免贴边
+            offset_ratio = style_config.get('line_offset_ratio', 0)
 
             # 创建字幕clips
             subtitle_clips = []
             for ((start, end), txt) in subs:
                 clip = generator(txt)
-                y_pos = max(0, video.h - clip.h - bottom_margin)
+                base_y = max(0, video.h - clip.h - bottom_margin)
+                # 按配置抬升字幕，避免始终上移半行导致底部被裁
+                y_pos = max(0, base_y - clip.h * offset_ratio)
                 clip = clip.with_position(('center', y_pos))
                 clip = clip.with_start(start)
                 clip = clip.with_duration(end - start)
@@ -210,6 +235,48 @@ class VideoComposer:
             import traceback
             logger.error(f"   详细错误:\n{traceback.format_exc()}")
             return False
+
+    def _resolve_subtitle_font(self, style_config: Dict) -> Optional[str]:
+        """
+        选择一个可用的字幕字体。优先用户配置，其次 fallback。
+        """
+        requested = style_config.get('font')
+        fallback_cfg = self.config.get('subtitles', {}).get('fallback_fonts', [])
+        fallback_list = fallback_cfg if isinstance(fallback_cfg, list) else []
+        style_candidates = style_config.get('font_candidates', [])
+        if isinstance(style_candidates, list):
+            fallback_style = [c for c in style_candidates if c]
+        else:
+            fallback_style = []
+
+        candidates = [requested] if requested else []
+        candidates.extend(fallback_style)
+        candidates.extend(fallback_list)
+        candidates.extend(self.local_font_candidates)
+        candidates.extend(self.DEFAULT_FONT_CANDIDATES)
+
+        for font in candidates:
+            resolved = self._validate_font(font)
+            if resolved:
+                if font != requested and requested:
+                    logger.warning(f"⚠️ 字体 {requested} 不可用，改用 {resolved}")
+                return resolved
+        return self._validate_font("DejaVuSans") or None
+
+    @staticmethod
+    def _validate_font(font: Optional[str]) -> Optional[str]:
+        if not font:
+            return None
+        path = Path(font).expanduser()
+        if path.exists():
+            return str(path)
+        if ImageFont is None:
+            return None
+        try:
+            ImageFont.truetype(font, size=48)
+            return font
+        except Exception:
+            return None
 
     def add_background_music(
         self,
@@ -519,7 +586,6 @@ class VideoComposer:
         Returns:
             dict: 样式配置
         """
-        import os
         style = self.subtitle_style_config or {}
         font_candidates = style.get('font_candidates', [
             '/System/Library/Fonts/STHeiti Medium.ttc',
@@ -530,16 +596,32 @@ class VideoComposer:
             '/System/Library/Fonts/Supplemental/Arial Unicode.ttf',
         ])
 
+        deduped_candidates: List[str] = []
+        seen: set[str] = set()
+        for candidate in font_candidates + self.local_font_candidates:
+            if not candidate:
+                continue
+            if candidate in seen:
+                continue
+            seen.add(candidate)
+            deduped_candidates.append(candidate)
+
         font = None
-        for path in font_candidates:
+        for path in deduped_candidates:
             if os.path.exists(path):
                 font = path
                 logger.info(f"   使用字体: {os.path.basename(path)}")
                 break
 
         if not font:
-            font = style.get('fallback_font', 'Arial')
-            logger.warning("⚠️  未找到中文字体，使用Arial作为回退字体（可能无法显示中文）")
+            fallback_font = style.get('fallback_font')
+            if not fallback_font and self.local_font_candidates:
+                fallback_font = self.local_font_candidates[0]
+            font = fallback_font or 'Arial'
+            if font == 'Arial':
+                logger.warning("⚠️  未找到中文字体，使用Arial作为回退字体（可能无法显示中文）。建议安装中文字体或保持网络畅通以自动下载。")
+            else:
+                logger.info(f"   使用回退字体: {os.path.basename(font)}")
 
         return {
             'font': font,
@@ -558,17 +640,34 @@ class VideoComposer:
         Returns:
             str: 字体文件路径
         """
-        import os
-        font_paths = [
+        resource_dir = Path(__file__).resolve().parents[2] / 'resource' / 'fonts'
+        candidate_paths: List[str] = []
+
+        # 1) 优先使用已下载的字体（Noto Sans等），保证跨平台可用
+        try:
+            candidate_paths.extend(font_manager.ensure_fonts())
+        except Exception:
+            # 字体模块异常时继续尝试系统字体
+            pass
+
+        # 2) 自动发现 resource/fonts 目录下的字体文件
+        if resource_dir.exists():
+            for font_file in sorted(resource_dir.glob('*.tt*')) + sorted(resource_dir.glob('*.otf')):
+                candidate_paths.append(str(font_file))
+
+        # 3) 常见操作系统自带字体
+        candidate_paths.extend([
             '/System/Library/Fonts/STHeiti Medium.ttc',
             '/System/Library/Fonts/PingFang.ttc',
             '/System/Library/Fonts/Hiragino Sans GB.ttc',
             'C:\\Windows\\Fonts\\msyh.ttc',
             '/usr/share/fonts/truetype/wqy/wqy-zenhei.ttc',
-        ]
+            '/usr/share/fonts/truetype/noto/NotoSansCJK-Regular.ttc',
+            '/usr/share/fonts/truetype/noto/NotoSansSC-Regular.otf',
+        ])
 
-        for path in font_paths:
-            if os.path.exists(path):
+        for path in candidate_paths:
+            if path and os.path.exists(path):
                 return path
 
-        return 'Arial'  # 回退字体
+        return 'Arial'  # 回退字体，确保函数总有返回值

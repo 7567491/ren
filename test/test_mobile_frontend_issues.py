@@ -35,7 +35,7 @@ class TestBackendAPIIntegration:
             "llm_provider": 1,
             "image_model": 4,
             "video_model": 1,
-            "voice": 1,
+            "voice": 6,
             "concurrent_workers": 3,
             "wavespeed_api_key": "test-api-key-12345"  # 关键参数
         }
@@ -222,7 +222,7 @@ def test_integration_scenario():
         "llm_provider": 1,
         "image_model": 4,
         "video_model": 1,
-        "voice": 1,
+        "voice": 6,
         "concurrent_workers": 3,
         "wavespeed_api_key": "sk-test-123456"
     }

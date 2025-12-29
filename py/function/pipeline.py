@@ -11,7 +11,7 @@ from .context import RunContext
 from .llm_client import LLMClient
 from .media_clients import ComposerClient, MediaGenClient, MusicClient, SubtitleClient, VoiceClient
 from .storage import save_state
-from .steps import compose, images, music, script, shots, subtitle, videos, voice
+from .steps import background_image, compose, images, music, script, shots, subtitle, videos, voice
 
 
 def _prepare_clients(ctx: RunContext) -> None:
@@ -31,6 +31,7 @@ def _step_done(ctx: RunContext, name: str) -> bool:
 def _paths(ctx: RunContext) -> dict:
     work_dir = ctx.work_dir
     return {
+        "background_dir": work_dir / "background",
         "images_dir": work_dir / "images",
         "videos_dir": work_dir / "videos",
         "voice_path": work_dir / "voice.wav",
@@ -49,6 +50,8 @@ async def run_step(ctx: RunContext, name: str) -> None:
         await script.run(ctx)
     elif name == "shots":
         await shots.run(ctx, shots=ctx.options.get("shots"))
+    elif name == "background_image":
+        await background_image.run(ctx, paths["background_dir"])
     elif name == "images":
         await images.run(ctx, paths["images_dir"])
     elif name == "videos":
@@ -76,7 +79,7 @@ async def run_step(ctx: RunContext, name: str) -> None:
 
 
 async def run_all(ctx: RunContext) -> RunContext:
-    step_order = ["script", "shots", "images", "videos", "voice", "subtitle", "music", "compose"]
+    step_order = ["script", "shots", "background_image", "images", "videos", "voice", "subtitle", "music", "compose"]
 
     for name in step_order:
         if _step_done(ctx, name):
@@ -88,6 +91,8 @@ async def run_all(ctx: RunContext) -> RunContext:
                 ctx.assets[name] = Path(current.get("file"))
             if "urls" in current:
                 ctx.assets[f"{name}_urls"] = current.get("urls")
+            if "url" in current:
+                ctx.assets[f"{name}_url"] = current.get("url")
             if name == "voice" and "duration" in current:
                 ctx.assets["voice_info"] = {"sub_maker": None, "duration": current.get("duration")}
             continue

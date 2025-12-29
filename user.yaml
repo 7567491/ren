@@ -35,9 +35,10 @@ image_model: 4  # 4 = kling-image-o1
 # 主角一致性配置
 # ============================================================
 character:
-  enabled: 0  # 0=关闭, 1=开启
-  description: ""  # 中文角色描述
-  reference_image: ""  # 参考图URL或本地路径
+  enabled: 1  # 0=关闭, 1=开启
+  description: "银行客户经理，职业正装，黑色短发的专业女性"  # 中文角色描述
+  reference_image: "./resource/pic/mai.jpg"  # 参考图URL或本地路径（也支持 character_image 字段）
+  dna: "A professional East Asian woman in her late 20s, 168cm tall with a lean build. She has sleek chin-length black hair tucked behind one ear, warm beige skin, and attentive dark brown eyes behind thin silver-rimmed glasses. She wears a tailored charcoal-gray blazer with a single-button closure, matching straight-fit trousers, and a crisp white silk blouse with a narrow collar. Accessories include a subtle silver lapel pin and a black smart watch. Her demeanor is calm, reliable, and tech-savvy."  # 可选：直接粘贴角色DNA，可跳过自动提取
 
 # ============================================================
 # 品牌Logo配置

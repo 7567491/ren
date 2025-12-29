@@ -16,8 +16,11 @@ async def run(ctx: RunContext, output_dir: Path) -> List[Path]:
         ctx.logger.warning("无分镜提示，跳过图像生成")
         return []
 
+    background_url = ctx.assets.get("background_image_url") or ctx.state.get("steps", {}).get("background_image", {}).get("url")
+    reference_images = [background_url] if background_url else None
+
     client = ctx.clients.get("media")
-    results: List[Dict] = await client.generate_images(prompts, output_dir) if client else []
+    results: List[Dict] = await client.generate_images(prompts, output_dir, reference_images=reference_images) if client else []
     images = [item.get("path") for item in results if item.get("path")]
     urls = [item.get("url") for item in results if item.get("url")]
 

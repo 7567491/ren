@@ -78,7 +78,39 @@ except FileNotFoundError:
     print(f"⚠️ 警告: 配置文件 {CONFIG_FILE} 不存在，使用默认配置")
     CONFIG = {}
 
-WAVESPEED_API_KEY = os.getenv('Wavespeed_API_KEY') or CONFIG.get('api', {}).get('wavespeed_key', '')
+WAVESPEED_API_KEY = (CONFIG.get('api', {}) or {}).get('wavespeed_key', '') or ''
+
+
+def set_wavespeed_api_key(value, source="配置文件"):
+    """设置 Wavespeed API 密钥"""
+    global WAVESPEED_API_KEY
+    if value:
+        cleaned = value.strip()
+        if cleaned:
+            WAVESPEED_API_KEY = cleaned
+            print(f"   🔐 已载入 Wavespeed API 密钥（来自{source}）")
+            return True
+    return False
+
+
+def prompt_wavespeed_api_key():
+    """在交互模式下要求用户输入 Wavespeed API 密钥"""
+    global WAVESPEED_API_KEY
+    if not sys.stdin.isatty():
+        return False
+
+    print("\n" + "=" * 60)
+    print("🔑 Wavespeed API 密钥")
+    print("=" * 60)
+    while not WAVESPEED_API_KEY:
+        try:
+            key = input("请输入 Wavespeed API 密钥: ").strip()
+        except EOFError:
+            key = ""
+        if set_wavespeed_api_key(key, source="交互输入"):
+            break
+        print("❌ Wavespeed API 密钥不能为空，请重新输入。")
+    return True
 
 # 初始化API限流器
 rate_limits = CONFIG.get('rate_limits', {})
@@ -655,7 +687,7 @@ def get_wavespeed_balance():
         log(f"⚠️  解析余额数据失败: {str(e)}", "WARN")
         return None
 
-def display_balance(before_balance=None, after_balance=None, cost=None, operation="API调用"):
+def display_balance(before_balance=None, after_balance=None, cost=None, operation="API调用", show_cost_detail=True):
     """显示余额信息
 
     Args:
@@ -672,7 +704,7 @@ def display_balance(before_balance=None, after_balance=None, cost=None, operatio
     print(f"💰 账户余额信息 - {operation}")
     print("-" * 60)
 
-    if before_balance is not None and cost is not None:
+    if show_cost_detail and before_balance is not None and cost is not None:
         actual_cost = before_balance - after_balance
         print(f"   调用前余额: ${before_balance:.4f}")
         print(f"   预计成本:   ${cost:.4f}")
@@ -683,7 +715,11 @@ def display_balance(before_balance=None, after_balance=None, cost=None, operatio
         if abs(actual_cost - cost) > 0.001:
             print(f"   ⚠️  实际成本与预计不符，差异: ${abs(actual_cost - cost):.4f}")
     else:
-        print(f"   当前余额: ${after_balance:.4f}")
+        if before_balance is not None:
+            print(f"   调用前余额: ${before_balance:.4f}")
+            print(f"   调用后余额: ${after_balance:.4f}")
+        else:
+            print(f"   当前余额: ${after_balance:.4f}")
 
     print("=" * 60)
     print()
@@ -768,6 +804,11 @@ def load_config_from_yaml(config_path='user.yaml'):
             config_data = yaml.safe_load(f)
         print(f"\n✅ 已从 {config_path} 加载配置\n")
 
+        api_section = config_data.get('api', {})
+        if isinstance(api_section, dict):
+            key_from_config = api_section.get('wavespeed_key') or api_section.get('wavespeed_api_key')
+            set_wavespeed_api_key(key_from_config, source=str(config_path))
+
         # 验证必需字段
         required_fields = ['topic', 'style', 'shot_count', 'shot_duration', 'resolution']
         for field in required_fields:
@@ -805,8 +846,8 @@ def load_config_from_yaml(config_path='user.yaml'):
             return None
 
         # 验证数值范围
-        if not (2 <= config_data['shot_count'] <= 10):
-            print(f"❌ 镜头数量必须在 2-10 之间，当前值: {config_data['shot_count']}")
+        if not (1 <= config_data['shot_count'] <= 10):
+            print(f"❌ 镜头数量必须在 1-10 之间，当前值: {config_data['shot_count']}")
             return None
 
         if not (3 <= config_data['shot_duration'] <= 5):
@@ -835,13 +876,25 @@ def load_config_from_yaml(config_path='user.yaml'):
             character['enabled'] = BOOL_NUMBER_MAP.get(character['enabled'], False)
 
         if character.get('enabled', False):
-            # 优先级：character_image > default_character_image > description生成
-            has_image = character.get('character_image')
+            # 优先级：character_image/reference_image > default_character_image/default_reference_image > description生成
+            def normalize_str(value):
+                if isinstance(value, str):
+                    value = value.strip()
+                    return value or None
+                return None
+
+            has_image = normalize_str(character.get('character_image'))
+            alias_image = normalize_str(character.get('reference_image'))
+            if not has_image and alias_image:
+                print(f"   ℹ️  检测到 reference_image 字段，已自动使用: {alias_image}")
+                has_image = alias_image
+
             has_description = character.get('description', '').strip()
 
             # 如果没有明确指定character_image，尝试使用默认图片
             if not has_image:
-                default_image = character.get('default_character_image')
+                default_image = normalize_str(character.get('default_character_image')) \
+                    or normalize_str(character.get('default_reference_image'))
                 if default_image:
                     # 如果是 URL，直接使用；如果是本地文件，检查是否存在
                     if default_image.startswith(('http://', 'https://')):
@@ -861,12 +914,14 @@ def load_config_from_yaml(config_path='user.yaml'):
                 print("   3. description（用于AI生成）")
                 return None
 
+            provided_dna = normalize_str(character.get('dna'))
+
             user_config['character'] = {
                 'enabled': True,
                 'description': character.get('description', '主角角色'),
                 'character_image': has_image,
                 'reference': None,
-                'dna': None
+                'dna': provided_dna
             }
         else:
             user_config['character'] = {'enabled': False}
@@ -911,7 +966,7 @@ def load_config_from_yaml(config_path='user.yaml'):
         audio = config_data.get('audio', {})
         if audio:
             # 转换音色：支持数字（1-13）或字符串（zh-CN-XiaoxiaoNeural等）
-            voice = audio.get('voice', 1)
+            voice = audio.get('voice', 6)
             if isinstance(voice, int):
                 if voice in VOICE_NUMBER_MAP:
                     voice_name = VOICE_NUMBER_MAP[voice]
@@ -1090,7 +1145,7 @@ def interactive_setup():
     style = select_style()
 
     # 3. 配置镜头数
-    shot_count = input_number("📹 镜头数量", default=2, min_val=2, max_val=10)
+    shot_count = input_number("📹 镜头数量", default=2, min_val=1, max_val=10)
 
     # 4. 配置时长
     duration = input_number("⏱️  每镜头时长(秒)", default=5, min_val=3, max_val=5)
@@ -1258,7 +1313,7 @@ def validate_config():
         errors.append(f"缺少 {default_llm} 的API密钥 (可在环境变量或 config.yaml 配置)")
 
     if not WAVESPEED_API_KEY:
-        errors.append("缺少环境变量 Wavespeed_API_KEY")
+        errors.append("缺少 Wavespeed API 密钥（请在前端输入或 user.yaml 的 api.wavespeed_key 中配置）")
 
     # 检查模型配置
     if not USE_DIRECT_T2V and CURRENT_IMAGE_MODEL not in IMAGE_MODEL_CONFIG:
@@ -1395,6 +1450,56 @@ def save_checkpoint(checkpoint):
     """
     checkpoint_file = WORK_DIR / '00_checkpoint.json'
     checkpoint['last_update'] = datetime.now().isoformat()
+
+    # ========== 兼容API服务器：生成completed_steps格式 ==========
+    # 根据stages字段生成completed_steps数组（供api_server.py的进度条使用）
+    # 阶段权重（阶段开始进度）：
+    #   assets(0%) → story(10%) → images(20%) → videos(50%) → audio_subtitle(90%) → composition/发布(100%)
+    completed_steps = []
+    stages = checkpoint.get('stages', {})
+
+    # 映射关系：stages -> completed_steps
+    if stages.get('character_reference'):
+        completed_steps.append('assets')
+
+    if stages.get('shots_script'):
+        completed_steps.append('story')
+
+    if stages.get('images_generated'):
+        completed_steps.append('images')
+
+    if stages.get('videos_generated'):
+        completed_steps.append('videos')
+
+    if stages.get('audio_subtitle'):
+        completed_steps.append('audio_subtitle')
+
+    if stages.get('final_composition'):
+        completed_steps.append('composition')
+
+    checkpoint['completed_steps'] = completed_steps
+
+    # 添加images和videos的详细进度（用于子任务进度计算）
+    completed_shots = checkpoint.get('completed_shots', [])
+    total_shots = checkpoint.get('total_shots', 0)
+
+    # 只在有总镜头数时才计算子任务进度
+    if total_shots > 0:
+        # 图像生成进度（当story完成但images未完成时）
+        if 'story' in completed_steps and 'images' not in completed_steps:
+            checkpoint['images'] = {
+                'completed': len(completed_shots),
+                'total': total_shots
+            }
+
+        # 视频生成进度（当images完成但videos未完成时）
+        if 'images' in completed_steps and 'videos' not in completed_steps:
+            checkpoint['videos'] = {
+                'completed': len(completed_shots),
+                'total': total_shots
+            }
+    # ============================================================
+
     try:
         with open(checkpoint_file, 'w', encoding='utf-8') as f:
             json.dump(checkpoint, f, indent=2, ensure_ascii=False)
@@ -2246,6 +2351,10 @@ def generate_coherent_shots(outline, config, narration_framework=None):
         second_requirement = "体现与前一镜头的连续性" if prev_beat else "开场要吸引人"
         third_requirement = "为下一镜头做铺垫" if next_beat else "结尾要有升华"
 
+        # 准备背景一致性信息（当前版本未实现背景功能，传空字符串）
+        background_note = ""
+        # TODO: 未来如果需要实现背景一致性功能，可以参考ad-aka.py中的实现
+
         prompt = get_prompt(
             'shot_prompt',
             shot_index=i + 1,
@@ -2254,6 +2363,7 @@ def generate_coherent_shots(outline, config, narration_framework=None):
             visual_colors=visual_colors_str,
             visual_mood=visual_theme.get('mood'),
             character_section=character_section,
+            background_note=background_note,  # 修复：添加缺少的参数
             scene_summary=beat['scene_summary'],
             key_action=beat['key_action'],
             previous_line=previous_line,
@@ -2543,7 +2653,7 @@ def is_transient_video_error(error_message: str) -> bool:
     return any(marker in msg for marker in transient_markers)
 
 
-def generate_videos_parallel(shots_with_images, shot_count, resolution="720p"):
+def generate_videos_parallel(shots_with_images, shot_count, resolution="720p", progress_callback=None):
     """并发生成所有视频（支持429错误重试）
 
     Args:
@@ -2620,6 +2730,11 @@ def generate_videos_parallel(shots_with_images, shot_count, resolution="720p"):
 
                 if video_file:
                     results[shot_id] = video_file
+                    if progress_callback:
+                        try:
+                            progress_callback(shot_id, len(results), len(shots_with_images))
+                        except Exception as callback_err:
+                            log(f"   ⚠️  进度回调异常: {callback_err}", "WARN")
                     log(f"   ✅ 镜头 {shot_id} 视频生成完成 ({len(results)}/{len(shots_with_images)})")
                 else:
                     failed.append((shot_id, error))
@@ -3077,7 +3192,13 @@ def generate_video(image_url, prompt, shot_id, shot_count, resolution="720p", ca
     # 查询调用后余额并显示
     after_balance = get_wavespeed_balance()
     if before_balance is not None and after_balance is not None:
-        display_balance(before_balance, after_balance, api_cost, f"视频生成 (镜头{shot_id})")
+        display_balance(
+            before_balance,
+            after_balance,
+            api_cost,
+            f"视频生成 (镜头{shot_id})",
+            show_cost_detail=False,
+        )
 
     show_progress_bar(shot_id, shot_count, "📊 总体进度")
     log("-" * 30)
@@ -3739,29 +3860,6 @@ def main():
 
     LOG_FILE = WORK_DIR / '01_log.txt'
 
-    # 验证配置
-    try:
-        validate_config()
-    except ValueError as e:
-        print(str(e))
-        print("\n请检查 .env 文件并确保所有必需的配置正确")
-        return 1
-
-    # 显示初始余额
-    print()
-    print("=" * 60)
-    print("💰 账户余额查询")
-    print("=" * 60)
-    initial_balance = get_wavespeed_balance()
-    if initial_balance is not None:
-        print(f"{Colors.GREEN}✅ WavespeedAI 账户余额: ${initial_balance:.4f}{Colors.RESET}")
-        if initial_balance < 1.0:
-            print(f"{Colors.YELLOW}⚠️  余额较低，建议充值以确保任务顺利完成{Colors.RESET}")
-    else:
-        print(f"{Colors.YELLOW}⚠️  无法查询余额，将继续执行（可能是网络问题）{Colors.RESET}")
-    print("=" * 60)
-    print()
-
     # 尝试从YAML配置文件加载配置
     config_file = args.config_file if args.config_file else 'user.yaml'
     config_result = load_config_from_yaml(config_file)
@@ -3784,7 +3882,7 @@ def main():
             print(f"{Colors.RED}无法进入交互式配置模式{Colors.RESET}\n")
             print(f"{Colors.YELLOW}请检查配置文件：{config_file}{Colors.RESET}")
             print(f"{Colors.YELLOW}常见问题：{Colors.RESET}")
-            print(f"  - 镜头数量必须在 2-10 之间")
+            print(f"  - 镜头数量必须在 1-10 之间")
             print(f"  - 每镜头时长必须在 3-5秒 之间")
             print(f"  - 分辨率必须是 480p/720p/1080p 之一")
             print(f"  - 风格必须在支持的列表中\n")
@@ -3800,6 +3898,32 @@ def main():
 
         # 询问并发线程数
         MAX_CONCURRENT_WORKERS = ask_concurrent_workers()
+
+    if not WAVESPEED_API_KEY and sys.stdin.isatty():
+        prompt_wavespeed_api_key()
+
+    # 验证配置
+    try:
+        validate_config()
+    except ValueError as e:
+        print(str(e))
+        print("\n请检查配置文件或前端输入，确保已提供有效的 Wavespeed API 密钥。")
+        return 1
+
+    # 显示初始余额
+    print()
+    print("=" * 60)
+    print("💰 账户余额查询")
+    print("=" * 60)
+    initial_balance = get_wavespeed_balance()
+    if initial_balance is not None:
+        print(f"{Colors.GREEN}✅ WavespeedAI 账户余额: ${initial_balance:.4f}{Colors.RESET}")
+        if initial_balance < 1.0:
+            print(f"{Colors.YELLOW}⚠️  余额较低，建议充值以确保任务顺利完成{Colors.RESET}")
+    else:
+        print(f"{Colors.YELLOW}⚠️  无法查询余额，将继续执行（可能是网络问题）{Colors.RESET}")
+    print("=" * 60)
+    print()
 
     # 清空旧日志
     if LOG_FILE.exists():
@@ -3840,6 +3964,19 @@ def main():
 
         # 阶段0: 一致性资产生成（如果启用）
         if user_config.get('character', {}).get('enabled'):
+            def use_provided_dna_if_available():
+                """如果用户预先提供了DNA，则直接使用，并写入缓存文件。"""
+                dna_value = user_config['character'].get('dna')
+                if isinstance(dna_value, str):
+                    dna_text = dna_value.strip()
+                    if dna_text:
+                        dna_file = WORK_DIR / '10_character_dna.txt'
+                        with open(dna_file, 'w', encoding='utf-8') as f:
+                            f.write(dna_text)
+                        log(f"   ✓ 使用用户提供的角色DNA ({len(dna_text)} 字符)")
+                        return dna_text
+                return None
+
             # 检查checkpoint，看是否已生成参考图
             if checkpoint['stages'].get('character_reference', False):
                 log("")
@@ -3894,36 +4031,10 @@ def main():
                         return dest_path
 
                     if character_image_path.startswith(('http://', 'https://')):
-                        # URL 图片，下载到项目运行目录（仅用于本地查看进度）
-                        log(f"   📥 检测到在线图片（URL），正在下载到本地...")
+                        # URL 图片直接引用远程地址，避免重复下载
+                        log(f"   🌐 检测到在线图片（URL），跳过本地下载，直接引用链接")
 
-                        # 确定文件扩展名
-                        url_lower = character_image_path.lower()
-                        if '.png' in url_lower:
-                            ext = '.png'
-                        elif '.jpg' in url_lower or '.jpeg' in url_lower:
-                            ext = '.jpg'
-                        elif '.webp' in url_lower:
-                            ext = '.webp'
-                        else:
-                            ext = '.jpg'  # 默认jpg
-
-                        # 生成文件名（12开头）
-                        downloaded_filename = f'12_character_reference{ext}'
-                        downloaded_path = WORK_DIR / downloaded_filename
-
-                        # 下载文件到本地（仅用于查看）
-                        try:
-                            download_file(character_image_path, downloaded_path)
-                            log(f"   ✓ 图片已下载到项目目录: {downloaded_filename}")
-                            try:
-                                copy_reference_to_resource(downloaded_path, ext)
-                            except Exception as e:
-                                log(f"   ⚠️  拷贝到资源目录失败: {e}", "WARN")
-                        except Exception as e:
-                            log(f"   ⚠️  下载失败（不影响使用）: {e}", "WARN")
-
-                        # API使用原始URL（不需要上传图床）
+                        # API 使用原始 URL（不需要上传图床或创建本地副本）
                         character_ref_image_path = character_image_path
                         log(f"   ✓ API将直接使用原始URL")
                     else:
@@ -3951,7 +4062,9 @@ def main():
                         'prompt_en': user_config['character']['description'],
                         'image_url': character_ref_image_path
                     }
-                    character_dna = extract_character_dna(character_ref)
+                    character_dna = use_provided_dna_if_available()
+                    if not character_dna:
+                        character_dna = extract_character_dna(character_ref)
 
                     user_config['character']['reference'] = character_ref
                     user_config['character']['dna'] = character_dna
@@ -3961,7 +4074,9 @@ def main():
                     character_ref = generate_character_reference(
                         user_config['character']['description']
                     )
-                    character_dna = extract_character_dna(character_ref)
+                    character_dna = use_provided_dna_if_available()
+                    if not character_dna:
+                        character_dna = extract_character_dna(character_ref)
 
                     # 更新config
                     user_config['character']['reference'] = character_ref
@@ -3989,6 +4104,7 @@ def main():
                     with open(script_file, 'r', encoding='utf-8') as f:
                         shots_data = json.load(f)
                     shot_count = len(shots_data['shots'])
+                    checkpoint['total_shots'] = shot_count  # 保存总镜头数（用于进度条）
                     log(f"   已加载 {shot_count} 个镜头")
                     log(f"✓ 阶段1完成（从缓存加载）\n")
                 except Exception as e:
@@ -4001,6 +4117,7 @@ def main():
         if not checkpoint['stages'].get('shots_script', False):
             shots_data = generate_shots_script(config=user_config)
             shot_count = user_config['shot_count']
+            checkpoint['total_shots'] = shot_count  # 保存总镜头数（用于进度条）
 
             # 标记阶段完成
             checkpoint['stages']['story_outline'] = True
@@ -4038,6 +4155,10 @@ def main():
             log(f"预计每个镜头: {video_config['speed']}")
             log(f"单镜头成本: ${video_cost:.2f} ({resolution})")
             log(f"总成本: ${video_cost * shot_count:.2f}")
+
+            if not checkpoint['stages'].get('images_generated'):
+                checkpoint['stages']['images_generated'] = True
+                save_checkpoint(checkpoint)
         else:
             log("🎬 阶段 2: 生成图像和视频（I2V两步流程）")
             log("-" * 60)
@@ -4060,7 +4181,17 @@ def main():
 
         # 记录成功和失败的镜头
         successful_shots = list(completed_ids)  # 已完成的镜头
+        successful_shot_ids = set(successful_shots)
         failed_shots = checkpoint.get('failed_shots', [])
+
+        def mark_video_success(shot_id, *_):
+            """视频成功后实时落盘，驱动进度条刷新"""
+            if shot_id in successful_shot_ids:
+                return
+            successful_shot_ids.add(shot_id)
+            successful_shots.append(shot_id)
+            checkpoint['completed_shots'] = sorted(successful_shot_ids)
+            save_checkpoint(checkpoint)
 
         if USE_DIRECT_T2V:
             # 方案2: 直接T2V - 并发处理
@@ -4068,17 +4199,18 @@ def main():
 
             if shots_with_images:
                 # 并发生成所有视频（T2V，无需图像）
-                video_results, video_failures = generate_videos_parallel(shots_with_images, shot_count, user_config['resolution'])
-
-                # 更新成功列表
-                for shot_id in video_results.keys():
-                    successful_shots.append(shot_id)
+                video_results, video_failures = generate_videos_parallel(
+                    shots_with_images,
+                    shot_count,
+                    user_config['resolution'],
+                    progress_callback=mark_video_success
+                )
 
                 # 更新失败列表
                 failed_shots.extend(video_failures)
 
                 # 保存检查点
-                checkpoint['completed_shots'] = successful_shots
+                checkpoint['completed_shots'] = sorted(successful_shot_ids)
                 checkpoint['failed_shots'] = failed_shots
                 save_checkpoint(checkpoint)
                 log(f"   💾 检查点已保存")
@@ -4123,6 +4255,10 @@ def main():
             else:
                 log("✓ 所有图像都已存在，跳过图像生成")
 
+            if not checkpoint['stages'].get('images_generated'):
+                checkpoint['stages']['images_generated'] = True
+                save_checkpoint(checkpoint)
+
             log("\n🎬 阶段 3b: 并发生成视频")
             log("-" * 60)
 
@@ -4137,17 +4273,18 @@ def main():
                 log("⚠️  没有可用的图像，跳过视频生成", "WARN")
             else:
                 # 并发生成所有视频
-                video_results, video_failures = generate_videos_parallel(shots_with_images, shot_count, user_config['resolution'])
-
-                # 更新成功列表
-                for shot_id in video_results.keys():
-                    successful_shots.append(shot_id)
+                video_results, video_failures = generate_videos_parallel(
+                    shots_with_images,
+                    shot_count,
+                    user_config['resolution'],
+                    progress_callback=mark_video_success
+                )
 
                 # 更新失败列表
                 failed_shots.extend(video_failures)
 
                 # 保存检查点
-                checkpoint['completed_shots'] = successful_shots
+                checkpoint['completed_shots'] = sorted(successful_shot_ids)
                 checkpoint['failed_shots'] = failed_shots
                 save_checkpoint(checkpoint)
                 log(f"   💾 检查点已保存")
@@ -4275,7 +4412,7 @@ def main():
             sub_maker, audio_duration = voice_service.generate_audio(
                 text=full_text,
                 output_file=str(global_audio),
-                voice_name=audio_config.get('voice_name', 'zh-CN-XiaoxiaoNeural')
+                voice_name=audio_config.get('voice_name', 'zh-CN-YunyangNeural')
             )
 
             if not sub_maker:

@@ -37,16 +37,6 @@ class TestShotCountValidation:
             )
         assert "镜头数" in str(exc_info.value) or "shot" in str(exc_info.value).lower()
 
-        # 测试非法值（等于1，应该被拒绝）
-        with pytest.raises(ValueError) as exc_info:
-            validate_config_params(
-                topic="test",
-                shot_count=1,
-                shot_duration=5,
-                resolution="720p"
-            )
-        assert "镜头数" in str(exc_info.value) or "shot" in str(exc_info.value).lower()
-
         # 测试非法值（大于最大值）
         with pytest.raises(ValueError) as exc_info:
             validate_config_params(
@@ -61,12 +51,12 @@ class TestShotCountValidation:
         try:
             validate_config_params(
                 topic="test",
-                shot_count=2,
+                shot_count=1,
                 shot_duration=5,
                 resolution="720p"
             )
         except ValueError:
-            pytest.fail("shot_count=2 应该通过验证（最小合法值）")
+            pytest.fail("shot_count=1 应该通过验证（最小合法值）")
 
         # 测试合法值（中间值）
         try:
@@ -108,7 +98,7 @@ class TestShotCountValidation:
         )
 
         assert config['shot_count'] == 3
-        assert 2 <= config['shot_count'] <= 10, "生成的配置应该在合法范围内"
+        assert 1 <= config['shot_count'] <= 10, "生成的配置应该在合法范围内"
 
     def test_invalid_config_generation(self):
         """测试生成非法配置时应该抛出异常"""
@@ -116,7 +106,7 @@ class TestShotCountValidation:
             generate_config_from_preset(
                 topic="测试主题",
                 preset_name="科技",
-                num_shots=1,  # 非法值
+                num_shots=0,  # 非法值
                 shot_duration=5,
                 resolution="720p",
                 llm_provider=1,
@@ -137,41 +127,20 @@ class TestAPIIntegration:
 
     def test_api_reject_invalid_shot_count(self):
         """测试API拒绝非法的镜头数"""
-        # 测试 shot_count = 0
-        response = self.client.post("/api/jobs", json={
-            "topic": "测试视频",
-            "preset_name": "科技",
-            "num_shots": 0,
-            "shot_duration": 5,
-            "resolution": "720p"
-        })
-        assert response.status_code == 400 or response.status_code == 422
-
-        # 测试 shot_count = 1 (核心测试用例)
-        response = self.client.post("/api/jobs", json={
-            "topic": "测试视频",
-            "preset_name": "科技",
-            "num_shots": 1,
-            "shot_duration": 5,
-            "resolution": "720p"
-        })
-        assert response.status_code == 400 or response.status_code == 422
-        error_detail = response.json().get('detail', '')
-        assert "镜头" in error_detail or "shot" in error_detail.lower()
-
-        # 测试 shot_count = 11
-        response = self.client.post("/api/jobs", json={
-            "topic": "测试视频",
-            "preset_name": "科技",
-            "num_shots": 11,
-            "shot_duration": 5,
-            "resolution": "720p"
-        })
-        assert response.status_code == 400 or response.status_code == 422
+        for invalid_count in [0, 11]:
+            response = self.client.post("/api/jobs", json={
+                "topic": "测试视频",
+                "preset_name": "科技",
+                "num_shots": invalid_count,
+                "shot_duration": 5,
+                "resolution": "720p"
+            })
+            assert response.status_code in [400, 422], \
+                f"num_shots={invalid_count} 应该被拒绝"
 
     def test_api_accept_valid_shot_count(self):
         """测试API接受合法的镜头数"""
-        for valid_count in [2, 3, 5, 10]:
+        for valid_count in [1, 2, 3, 5, 10]:
             response = self.client.post("/api/jobs", json={
                 "topic": "测试视频",
                 "preset_name": "科技",
@@ -187,14 +156,14 @@ class TestAPIIntegration:
         """测试API返回的错误消息是否清晰"""
         response = self.client.post("/api/jobs", json={
             "topic": "测试视频",
-            "num_shots": 1
+            "num_shots": 0
         })
 
         if response.status_code in [400, 422]:
             error_data = response.json()
             # 验证错误消息包含有用信息
             error_msg = str(error_data)
-            assert any(keyword in error_msg for keyword in ["镜头", "shot", "2", "10"]), \
+            assert any(keyword in error_msg for keyword in ["镜头", "shot", "1", "10"]), \
                 f"错误消息应包含验证范围信息，实际消息：{error_msg}"
 
 
@@ -209,7 +178,7 @@ class TestBackendValidation:
         config_file = tmp_path / "test_config.yaml"
         config_file.write_text("""
 topic: 测试主题
-shot_count: 1
+shot_count: 0
 shot_duration: 5
 resolution: 720p
 style: 4
@@ -227,7 +196,7 @@ style: 4
         config_file = tmp_path / "test_config.yaml"
         config_file.write_text("""
 topic: 测试主题
-shot_count: 3
+shot_count: 1
 shot_duration: 5
 resolution: 720p
 style: 4
@@ -237,7 +206,7 @@ style: 4
         result = load_config_file(str(config_file))
         assert result is not None, "包含合法镜头数的配置应该验证成功"
         config, _ = result
-        assert config['shot_count'] == 3
+        assert config['shot_count'] == 1
 
 
 class TestErrorHandling:
@@ -253,7 +222,7 @@ class TestErrorHandling:
         with tempfile.NamedTemporaryFile(mode='w', suffix='.yaml', delete=False) as f:
             f.write("""
 topic: 测试主题
-shot_count: 1
+shot_count: 0
 shot_duration: 5
 resolution: 720p
 style: 4
@@ -296,11 +265,11 @@ class TestThreeLayerConsistency:
     def test_validation_range_consistency(self):
         """验证三层使用相同的验证范围"""
         # API层的验证范围
-        MIN_SHOTS_API = 2
+        MIN_SHOTS_API = 1
         MAX_SHOTS_API = 10
 
         # 后端的验证范围（从代码中提取）
-        MIN_SHOTS_BACKEND = 2
+        MIN_SHOTS_BACKEND = 1
         MAX_SHOTS_BACKEND = 10
 
         # 前端的验证范围（需要从HTML中提取或通过API测试推断）
@@ -331,8 +300,8 @@ class TestThreeLayerConsistency:
         default_shots = request.num_shots
 
         # 默认值应该在合法范围内
-        assert 2 <= default_shots <= 10, \
-            f"默认镜头数 {default_shots} 应该在合法范围 2-10 内"
+        assert 1 <= default_shots <= 10, \
+            f"默认镜头数 {default_shots} 应该在合法范围 1-10 内"
 
         # 默认值应该是推荐值（3或5）
         assert default_shots in [3, 5], \
@@ -348,17 +317,16 @@ class TestRegressionRCA20251227:
         """
         回归测试：验证问题 aka-12271649 已修复
 
-        问题描述：
+        历史问题：
         - 前端默认选择1个镜头
         - API层验证允许1个镜头
         - 后端验证拒绝1个镜头
         - 导致回退到交互式模式并产生EOFError
 
-        预期修复：
-        - 前端默认值改为3
-        - API层验证改为2-10
-        - 后端保持2-10验证
-        - 不再回退到交互式模式
+        现有要求：
+        - 所有层统一允许 1-10 个镜头
+        - 仍然禁止 0 或超过10的值
+        - API模式下不回退交互
         """
         client = TestClient(app)
 
@@ -372,20 +340,27 @@ class TestRegressionRCA20251227:
         assert response.status_code in [200, 201, 202], \
             "使用默认镜头数应该成功创建任务"
 
-        # 2. 测试API层拒绝shot_count=1
+        # 2. 测试API层接受shot_count=1
         response = client.post("/api/jobs", json={
             "topic": "测试视频",
             "preset_name": "科技",
             "num_shots": 1
         })
-        assert response.status_code in [400, 422], \
-            "API层应该拒绝 num_shots=1"
+        assert response.status_code in [200, 201, 202], \
+            "API层应该接受 num_shots=1"
 
-        # 3. 验证错误消息包含范围信息
+        # 3. 验证shot_count=0被拒绝且提示范围1-10
+        response = client.post("/api/jobs", json={
+            "topic": "测试视频",
+            "preset_name": "科技",
+            "num_shots": 0
+        })
+        assert response.status_code in [400, 422], \
+            "API层应该拒绝 num_shots=0"
         error_data = response.json()
         error_msg = str(error_data)
-        assert "2" in error_msg and "10" in error_msg, \
-            f"错误消息应该明确指出合法范围2-10，实际消息：{error_msg}"
+        assert "1" in error_msg and "10" in error_msg, \
+            f"错误消息应该明确指出合法范围1-10，实际消息：{error_msg}"
 
 
 if __name__ == "__main__":

@@ -28,6 +28,7 @@ class TaskManager:
 
         # 加载现有任务
         self._load_tasks()
+        self._recover_stale_tasks()
 
     def create_task(
         self,
@@ -194,3 +195,19 @@ class TaskManager:
         except IOError as e:
             # 保存失败不应中断程序，记录错误
             print(f"警告：任务保存失败 - {e}")
+
+    def _recover_stale_tasks(self):
+        """
+        修复异常退出后仍处于 running 状态的任务
+
+        FastAPI 重启或进程异常退出后，jobs.json 中的 running 状态无法体现真实情况，
+        需要在 TaskManager 初始化时将这些任务标记为 failed，避免前端持续显示进度条。
+        """
+        updated = False
+        for job in self.tasks.values():
+            if job.get('status') == 'running':
+                job['status'] = 'failed'
+                job['message'] = '服务已重启，任务已中断，请重新开始或断点续传'
+                updated = True
+        if updated:
+            self._save_tasks()

@@ -31,7 +31,7 @@ def test_api_validation():
     except ValueError as e:
         print(f"✅ 测试通过：shot_count=0 被正确拒绝 ({e})")
 
-    # 测试2：shot_count = 1 应该失败（核心修复验证）
+    # 测试2：shot_count = 1 应该通过（新的最小合法值）
     try:
         validate_config({
             'topic': 'test',
@@ -40,15 +40,12 @@ def test_api_validation():
             'resolution': '720p',
             'style': 4
         })
-        print("❌ 测试失败：shot_count=1 应该被拒绝")
-        return False
+        print("✅ 测试通过：shot_count=1 被正确接受（最小值）")
     except ValueError as e:
-        print(f"✅ 测试通过：shot_count=1 被正确拒绝 ({e})")
-        # 验证错误消息包含正确范围
-        if "2" not in str(e) or "10" not in str(e):
-            print(f"⚠️  警告：错误消息应包含范围 2-10，实际：{e}")
+        print(f"❌ 测试失败：shot_count=1 应该被接受，但被拒绝 ({e})")
+        return False
 
-    # 测试3：shot_count = 2 应该通过（最小合法值）
+    # 测试3：shot_count = 2 应该通过
     try:
         validate_config({
             'topic': 'test',
@@ -57,7 +54,7 @@ def test_api_validation():
             'resolution': '720p',
             'style': 4
         })
-        print("✅ 测试通过：shot_count=2 被正确接受（最小值）")
+        print("✅ 测试通过：shot_count=2 被正确接受")
     except ValueError as e:
         print(f"❌ 测试失败：shot_count=2 应该被接受，但被拒绝 ({e})")
         return False
@@ -138,12 +135,12 @@ def test_config_generation():
         print(f"❌ 测试失败：配置生成抛出异常 ({e})")
         return False
 
-    # 测试2：尝试生成非法配置（shot_count=1）
+    # 测试2：生成shot_count=1的配置也应合法
     try:
         config = generate_config_from_preset(
             topic="测试",
             preset_name="科技",
-            num_shots=1,  # 非法值
+            num_shots=1,
             shot_duration=5,
             resolution="720p",
             llm_provider=1,
@@ -153,10 +150,14 @@ def test_config_generation():
             concurrent_workers=3,
             job_id="test-002"
         )
-        print("❌ 测试失败：shot_count=1 应该导致异常")
-        return False
+        if config['shot_count'] == 1:
+            print("✅ 测试通过：shot_count=1 的配置生成成功")
+        else:
+            print(f"❌ 测试失败：期望 shot_count=1，实际 {config['shot_count']}")
+            return False
     except ValueError as e:
-        print(f"✅ 测试通过：非法配置被正确拒绝 ({e})")
+        print(f"❌ 测试失败：shot_count=1 应该被接受 ({e})")
+        return False
 
     print()
     return True

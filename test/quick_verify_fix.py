@@ -26,7 +26,7 @@ request_data = {
     "llm_provider": 1,
     "image_model": 4,
     "video_model": 1,
-    "voice": 1,
+    "voice": 6,
     "concurrent_workers": 1,
     "wavespeed_api_key": "test-key-quick-verify-123"
 }

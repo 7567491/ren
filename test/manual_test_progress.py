@@ -30,56 +30,65 @@ def test_calculate_progress():
     assert progress == 0.0, f"失败：期望0.0，得到{progress}"
     print("  ✅ 通过")
 
-    # 测试2：只完成故事
-    print("\n测试2：只完成故事生成")
-    checkpoint = {'completed_steps': ['story']}
+    # 测试2：资产准备完成
+    print("\n测试2：资产准备完成")
+    checkpoint = {'completed_steps': ['assets']}
     progress = calculate_progress_from_checkpoint(checkpoint)
-    print(f"  完成步骤: ['story']")
-    print(f"  进度: {progress} (期望: 0.25)")
-    assert progress == 0.25, f"失败：期望0.25，得到{progress}"
+    print(f"  完成步骤: ['assets']")
+    print(f"  进度: {progress} (期望: 0.10)")
+    assert abs(progress - 0.10) < 1e-6, f"失败：期望0.10，得到{progress}"
     print("  ✅ 通过")
 
-    # 测试3：完成故事和图像
-    print("\n测试3：完成故事和图像")
-    checkpoint = {'completed_steps': ['story', 'images']}
+    # 测试3：完成剧本生成
+    print("\n测试3：完成剧本生成")
+    checkpoint = {'completed_steps': ['assets', 'story']}
     progress = calculate_progress_from_checkpoint(checkpoint)
-    print(f"  完成步骤: ['story', 'images']")
-    print(f"  进度: {progress} (期望: 0.5)")
-    assert progress == 0.5, f"失败：期望0.5，得到{progress}"
+    print(f"  完成步骤: ['assets', 'story']")
+    print(f"  进度: {progress} (期望: 0.20)")
+    assert abs(progress - 0.20) < 1e-6, f"失败：期望0.20，得到{progress}"
     print("  ✅ 通过")
 
-    # 测试4：完成三步
-    print("\n测试4：完成前三步")
-    checkpoint = {'completed_steps': ['story', 'images', 'videos']}
+    # 测试4：完成图像阶段
+    print("\n测试4：完成图像阶段")
+    checkpoint = {'completed_steps': ['assets', 'story', 'images']}
     progress = calculate_progress_from_checkpoint(checkpoint)
-    print(f"  完成步骤: ['story', 'images', 'videos']")
-    print(f"  进度: {progress} (期望: 0.75)")
-    assert progress == 0.75, f"失败：期望0.75，得到{progress}"
+    print(f"  完成步骤: ['assets', 'story', 'images']")
+    print(f"  进度: {progress} (期望: 0.50)")
+    assert abs(progress - 0.50) < 1e-6, f"失败：期望0.50，得到{progress}"
     print("  ✅ 通过")
 
-    # 测试5：全部完成
-    print("\n测试5：全部完成")
+    # 测试5：完成视频阶段
+    print("\n测试5：完成视频阶段")
+    checkpoint = {'completed_steps': ['assets', 'story', 'images', 'videos']}
+    progress = calculate_progress_from_checkpoint(checkpoint)
+    print(f"  完成步骤: ['assets', 'story', 'images', 'videos']")
+    print(f"  进度: {progress} (期望: 0.90)")
+    assert abs(progress - 0.90) < 1e-6, f"失败：期望0.90，得到{progress}"
+    print("  ✅ 通过")
+
+    # 测试6：全部完成
+    print("\n测试6：全部完成")
     checkpoint = {
-        'completed_steps': ['story', 'images', 'videos', 'composition']
+        'completed_steps': ['assets', 'story', 'images', 'videos', 'audio_subtitle', 'composition']
     }
     progress = calculate_progress_from_checkpoint(checkpoint)
-    print(f"  完成步骤: ['story', 'images', 'videos', 'composition']")
+    print(f"  完成步骤: ['assets', 'story', 'images', 'videos', 'audio_subtitle', 'composition']")
     print(f"  进度: {progress} (期望: 1.0)")
     assert progress == 1.0, f"失败：期望1.0，得到{progress}"
     print("  ✅ 通过")
 
-    # 测试6：带有详细进度
-    print("\n测试6：带有详细进度（正在生成图像）")
+    # 测试7：带有详细进度
+    print("\n测试7：带有详细进度（正在生成图像）")
     checkpoint = {
-        'completed_steps': ['story'],
+        'completed_steps': ['assets', 'story'],
         'images': {'completed': 3, 'total': 6},
         'videos': {'completed': 0, 'total': 6}
     }
     progress = calculate_progress_from_checkpoint(checkpoint, detailed=True)
-    print(f"  完成步骤: ['story']")
+    print(f"  完成步骤: ['assets', 'story']")
     print(f"  图像进度: 3/6")
-    print(f"  进度: {progress} (期望: 0.25 + 0.125 = 0.375)")
-    assert 0.37 <= progress <= 0.38, f"失败：期望约0.375，得到{progress}"
+    print(f"  进度: {progress} (期望: 0.20 + 0.15 = 0.35)")
+    assert 0.34 <= progress <= 0.36, f"失败：期望约0.35，得到{progress}"
     print("  ✅ 通过")
 
     print("\n" + "=" * 60)
@@ -93,18 +102,18 @@ def test_generate_message():
     print("测试：进度消息生成")
     print("=" * 60)
 
-    # 测试1：故事生成阶段
-    print("\n测试1：故事生成阶段")
-    checkpoint = {'completed_steps': []}
+    # 测试1：资产准备阶段
+    print("\n测试1：资产准备阶段")
+    checkpoint = {'completed_steps': ['assets']}
     message = generate_progress_message(checkpoint)
     print(f"  消息: {message}")
-    assert '故事' in message or '脚本' in message
+    assert '资产' in message or '角色' in message
     print("  ✅ 通过")
 
     # 测试2：图像生成阶段
     print("\n测试2：图像生成阶段")
     checkpoint = {
-        'completed_steps': ['story'],
+        'completed_steps': ['assets', 'story'],
         'images': {'completed': 3, 'total': 6}
     }
     message = generate_progress_message(checkpoint)
@@ -115,7 +124,7 @@ def test_generate_message():
     # 测试3：视频生成阶段
     print("\n测试3：视频生成阶段")
     checkpoint = {
-        'completed_steps': ['story', 'images'],
+        'completed_steps': ['assets', 'story', 'images'],
         'videos': {'completed': 2, 'total': 6}
     }
     message = generate_progress_message(checkpoint)
@@ -123,14 +132,24 @@ def test_generate_message():
     assert '视频' in message and '2' in message
     print("  ✅ 通过")
 
-    # 测试4：合成阶段
-    print("\n测试4：合成阶段")
+    # 测试4：音频/合成阶段
+    print("\n测试4：音频/合成阶段")
     checkpoint = {
-        'completed_steps': ['story', 'images', 'videos', 'composition']
+        'completed_steps': ['assets', 'story', 'images', 'videos', 'audio_subtitle']
     }
     message = generate_progress_message(checkpoint)
     print(f"  消息: {message}")
-    assert '完成' in message or '合成' in message
+    assert '合成' in message or '音频' in message
+    print("  ✅ 通过")
+
+    # 测试5：全部完成阶段
+    print("\n测试5：全部完成阶段")
+    checkpoint = {
+        'completed_steps': ['assets', 'story', 'images', 'videos', 'audio_subtitle', 'composition']
+    }
+    message = generate_progress_message(checkpoint)
+    print(f"  消息: {message}")
+    assert '完成' in message or '成片' in message
     print("  ✅ 通过")
 
     print("\n" + "=" * 60)

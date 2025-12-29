@@ -28,7 +28,7 @@ class VoiceService:
         self,
         text: str,
         output_file: str,
-        voice_name: str = "zh-CN-XiaoxiaoNeural"
+        voice_name: str = "zh-CN-YunyangNeural"
     ) -> Tuple[Optional[object], float]:
         """
         使用Edge TTS生成配音
@@ -153,4 +153,4 @@ class VoiceService:
                 return voice["name"]
 
         # 如果没找到，返回第一个
-        return voices[0]["name"] if voices else "zh-CN-XiaoxiaoNeural"
+        return voices[0]["name"] if voices else "zh-CN-YunyangNeural"

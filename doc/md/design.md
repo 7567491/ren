@@ -27,7 +27,7 @@ def interactive_setup():
     style = select_style()  # 返回风格名称
 
     # 4. 配置镜头数
-    shot_count = input_number("镜头数量", default=3, min=3, max=10)
+    shot_count = input_number("镜头数量", default=3, min=1, max=10)
 
     # 5. 配置时长
     duration = input_number("每镜头时长(秒)", default=5, min=3, max=5)

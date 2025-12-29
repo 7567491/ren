@@ -5,10 +5,34 @@
  * 如需更改后端API地址，请修改此文件并重新部署。
  */
 
-// 后端API基础地址（固定配置）
+// 计算后端API基础地址
+function resolveApiBase() {
+    const FALLBACK = 'http://127.0.0.1:18000';
+
+    if (typeof window === 'undefined') {
+        return FALLBACK;
+    }
+
+    try {
+        const params = new URLSearchParams(window.location.search);
+        if (params.has('api_base')) {
+            return params.get('api_base');
+        }
+
+        const origin = window.location.origin;
+        if (origin && origin !== 'null' && origin !== 'file://') {
+            return origin;
+        }
+    } catch (err) {
+        console.warn('⚠️  解析 URL 参数失败，使用默认 API 地址', err);
+    }
+
+    return FALLBACK;
+}
+
+// 前端配置
 const APP_CONFIG = {
-    // Linode服务器固定IP + 后端API端口
-    API_BASE: 'http://139.162.52.158:18000',
+    API_BASE: resolveApiBase(),
 
     // API配置
     API_TIMEOUT: 30000,  // 请求超时时间（毫秒）

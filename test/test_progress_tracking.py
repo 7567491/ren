@@ -17,42 +17,57 @@ class TestProgressTracking:
         progress = calculate_progress_from_checkpoint(checkpoint)
         assert progress == 0.0
 
-    def test_calculate_progress_story_only(self):
-        """测试：只完成故事生成，进度应为0.25"""
-        checkpoint = {'completed_steps': ['story']}
+    def test_calculate_progress_assets_only(self):
+        """测试：资产准备完成，进度应为10%"""
+        checkpoint = {'completed_steps': ['assets']}
         progress = calculate_progress_from_checkpoint(checkpoint)
-        assert progress == 0.25  # 1/4
+        assert progress == pytest.approx(0.10, rel=0, abs=1e-6)
+
+    def test_calculate_progress_story_stage(self):
+        """测试：资产+剧本完成，进度应为20%"""
+        checkpoint = {'completed_steps': ['assets', 'story']}
+        progress = calculate_progress_from_checkpoint(checkpoint)
+        assert progress == pytest.approx(0.20, rel=0, abs=1e-6)
+
+    def test_calculate_progress_story_without_assets_but_character_reference(self):
+        """测试：旧checkpoint缺少assets但已完成角色参考，仍应算20%"""
+        checkpoint = {
+            'completed_steps': ['story'],
+            'stages': {'character_reference': True}
+        }
+        progress = calculate_progress_from_checkpoint(checkpoint)
+        assert progress == pytest.approx(0.20, rel=0, abs=1e-6)
 
     def test_calculate_progress_story_and_images(self):
-        """测试：完成故事和图像，进度应为0.5"""
-        checkpoint = {'completed_steps': ['story', 'images']}
+        """测试：完成图像阶段，进度应为50%"""
+        checkpoint = {'completed_steps': ['assets', 'story', 'images']}
         progress = calculate_progress_from_checkpoint(checkpoint)
-        assert progress == 0.5  # 2/4
+        assert progress == pytest.approx(0.50, rel=0, abs=1e-6)
 
     def test_calculate_progress_all_but_composition(self):
-        """测试：完成前三步，进度应为0.75"""
-        checkpoint = {'completed_steps': ['story', 'images', 'videos']}
+        """测试：完成到视频阶段，进度应为90%"""
+        checkpoint = {'completed_steps': ['assets', 'story', 'images', 'videos']}
         progress = calculate_progress_from_checkpoint(checkpoint)
-        assert progress == 0.75  # 3/4
+        assert progress == pytest.approx(0.90, rel=0, abs=1e-6)
 
     def test_calculate_progress_complete(self):
         """测试：全部完成，进度应为1.0"""
         checkpoint = {
-            'completed_steps': ['story', 'images', 'videos', 'composition']
+            'completed_steps': ['assets', 'story', 'images', 'videos', 'audio_subtitle', 'composition']
         }
         progress = calculate_progress_from_checkpoint(checkpoint)
-        assert progress == 1.0  # 4/4
+        assert progress == pytest.approx(1.0, rel=0, abs=1e-6)
 
     def test_calculate_progress_with_details(self):
         """测试：带有详细信息的checkpoint"""
         checkpoint = {
-            'completed_steps': ['story', 'images'],
+            'completed_steps': ['assets', 'story'],
             'images': {'completed': 3, 'total': 6},
             'videos': {'completed': 0, 'total': 6}
         }
-        # 基础进度0.5 + 图像子进度0.5*(3/6) = 0.5 + 0.125 = 0.625
+        # 基础进度0.20 + 图像子进度0.30*(3/6) = 0.20 + 0.15 = 0.35
         progress = calculate_progress_from_checkpoint(checkpoint, detailed=True)
-        assert 0.60 <= progress <= 0.65
+        assert 0.34 <= progress <= 0.36
 
     def test_calculate_progress_invalid_checkpoint(self):
         """测试：无效checkpoint返回0"""
@@ -62,11 +77,12 @@ class TestProgressTracking:
     def test_calculate_progress_unknown_steps(self):
         """测试：包含未知步骤的checkpoint"""
         checkpoint = {
-            'completed_steps': ['story', 'unknown_step', 'images']
+            'completed_steps': ['story', 'unknown_step', 'images'],
+            'stages': {'character_reference': True}
         }
-        # 应该只计数已知步骤: story, images
+        # 应该只计数已知步骤: assets(来自stages), story, images
         progress = calculate_progress_from_checkpoint(checkpoint)
-        assert progress == 0.5  # 2/4
+        assert progress == pytest.approx(0.50, rel=0, abs=1e-6)
 
 
 class TestCheckpointParsing:
@@ -121,7 +137,7 @@ class TestProgressMessage:
         checkpoint = {'completed_steps': ['story']}
         message = generate_progress_message(checkpoint)
 
-        assert '故事' in message or 'story' in message.lower()
+        assert ('剧本' in message) or ('故事' in message) or ('story' in message.lower())
 
     def test_generate_progress_message_images(self):
         """测试：图像生成阶段的消息"""
@@ -146,7 +162,7 @@ class TestProgressMessage:
         }
         message = generate_progress_message(checkpoint)
 
-        assert '视频' in message or 'video' in message.lower()
+        assert ('旁白' in message) or ('字幕' in message) or ('audio' in message.lower())
 
     def test_generate_progress_message_composition(self):
         """测试：合成阶段的消息"""

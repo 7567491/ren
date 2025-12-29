@@ -5,7 +5,6 @@
 from __future__ import annotations
 
 import asyncio
-import os
 import shutil
 import time
 from pathlib import Path
@@ -35,9 +34,10 @@ class WavespeedClient:
         self.retry_initial_delay = retry_cfg.get("initial_delay", 5)
         self.retry_backoff = retry_cfg.get("backoff_multiplier", 2)
 
-        self.api_key = os.getenv("Wavespeed_API_KEY") or (config.merged.get("api", {}) if isinstance(config.merged, dict) else {}).get("wavespeed_key", "")
+        api_section = (config.merged.get("api", {}) if isinstance(config.merged, dict) else {})
+        self.api_key = api_section.get("wavespeed_key", "")
         if not self.api_key and not self.dry_run:
-            raise ValueError("缺少 Wavespeed API key")
+            raise ValueError("缺少 Wavespeed API key，请通过前端输入或 user.yaml 配置 api.wavespeed_key。")
 
         self.headers = {"Authorization": f"Bearer {self.api_key}", "Content-Type": "application/json"}
 
@@ -141,7 +141,7 @@ class VoiceClient:
             return output, None, 0.0
 
         voice_cfg = self.config.merged.get("audio", {}) if isinstance(self.config.merged, dict) else {}
-        voice_name = voice_cfg.get("voice_name", "zh-CN-XiaoxiaoNeural")
+        voice_name = voice_cfg.get("voice_name", "zh-CN-YunyangNeural")
         sub_maker, duration = await asyncio.to_thread(self.voice_service.generate_audio, text, str(output), voice_name)
         self.logger.info(f"生成旁白音频: {output}")
         return output, sub_maker, duration
@@ -203,7 +203,7 @@ class MediaGenClient:
         self.dry_run = dry_run
         self.ws_client = WavespeedClient(config, logger, dry_run=dry_run)
 
-    async def generate_images(self, prompts: List[str], output_dir: Path) -> List[Dict[str, Any]]:
+    async def generate_images(self, prompts: List[str], output_dir: Path, reference_images: Optional[List[str]] = None) -> List[Dict[str, Any]]:
         output_dir.mkdir(parents=True, exist_ok=True)
 
         if self.dry_run:
@@ -226,10 +226,26 @@ class MediaGenClient:
                 model_name, model_cfg = fallback
 
         params = model_cfg.get("params", {})
+        support_reference = bool(model_cfg.get("support_reference"))
+        max_refs = model_cfg.get("max_reference_images")
+        ref_payload: Optional[List[str]] = None
+        if reference_images:
+            ref_payload = reference_images[:]
+            if max_refs:
+                try:
+                    max_refs_int = int(max_refs)
+                except (TypeError, ValueError):
+                    max_refs_int = None
+                if max_refs_int:
+                    ref_payload = ref_payload[:max_refs_int]
+
         results = []
         for idx, prompt in enumerate(prompts, start=1):
             payload = {"prompt": prompt}
             payload.update(params)
+            if support_reference and ref_payload:
+                payload["images"] = ref_payload
+
             task_id = await self.ws_client.submit(model_cfg.get("endpoint"), payload)
             url = await self.ws_client.wait_for_result(task_id, "图像", max_wait=model_cfg.get("max_wait"))
             path = output_dir / f"img_{idx:03d}.png"

@@ -872,6 +872,10 @@
         let highestStageIndex = -1;// 已确认的最高阶段索引
         let lastKnownJobStatus = '';
 
+        const MIN_PROGRESS_INCREMENT = 0.001; // 虚拟进度最小步进（0.1%）
+        const MAX_VIRTUAL_PROGRESS = 0.99;    // 虚拟进度封顶百分比
+        const VIRTUAL_STAGE_LIMIT_FALLBACK = { start: 0, end: 1.0 };
+
         const resumeInput = document.getElementById('resume-id');
         const submitButton = document.getElementById('submit-button');
         const resumeHint = document.getElementById('resume-hint');
@@ -954,6 +958,21 @@
         }
 
         const STAGE_SEQUENCE = ['story', 'images', 'videos', 'audio_subtitle', 'composition'];
+
+        function getActiveStageBounds() {
+            if (currentStage && STAGE_CONFIG[currentStage]) {
+                return STAGE_CONFIG[currentStage];
+            }
+            const serverStage = stageFromProgress(Math.round(serverProgress * 100));
+            if (serverStage && STAGE_CONFIG[serverStage]) {
+                return STAGE_CONFIG[serverStage];
+            }
+            const displayStage = stageFromProgress(Math.round(displayedProgress * 100));
+            if (displayStage && STAGE_CONFIG[displayStage]) {
+                return STAGE_CONFIG[displayStage];
+            }
+            return VIRTUAL_STAGE_LIMIT_FALLBACK;
+        }
 
         // 阶段时间估算配置（秒）
         const STAGE_ESTIMATES = {
@@ -1483,8 +1502,20 @@
                     localProgress = serverProgress;
                 }
 
-                // 展示进度单调递增
-                displayedProgress = Math.max(displayedProgress, localProgress, serverProgress);
+                // 展示进度：真实进度优先，其次用虚拟增量保持最少0.1%/秒
+                const targetProgress = Math.max(serverProgress, localProgress);
+                if (targetProgress > displayedProgress) {
+                    displayedProgress = targetProgress;
+                } else {
+                    const stageBounds = getActiveStageBounds();
+                    const stageEnd = stageBounds ? stageBounds.end : 1;
+                    const virtualLimit = data.status === 'succeeded'
+                        ? 1
+                        : Math.min(stageEnd, MAX_VIRTUAL_PROGRESS);
+                    if (displayedProgress < virtualLimit) {
+                        displayedProgress = Math.min(virtualLimit, displayedProgress + MIN_PROGRESS_INCREMENT);
+                    }
+                }
                 displayedProgress = Math.min(1, displayedProgress);
 
                 const progressPercent = Math.round(displayedProgress * 100);
@@ -1553,9 +1584,23 @@
             }
         }
 
+        function stageFromProgress(progress) {
+            if (typeof progress !== 'number' || Number.isNaN(progress)) {
+                return null;
+            }
+            if (progress < 20) return 'story';
+            if (progress < 40) return 'images';
+            if (progress < 60) return 'videos';
+            if (progress < 80) return 'audio_subtitle';
+            if (progress < 100) return 'composition';
+            return 'composition';
+        }
+
         // 检测当前阶段（根据消息和进度）
         function detectStage(message, progress) {
-            if (!message) return null;
+            if (!message) {
+                return stageFromProgress(progress);
+            }
 
             const msg = message.toLowerCase();
 
@@ -1572,14 +1617,7 @@
                 return 'composition';
             }
 
-            // 根据进度推断（每20%一个阶段）
-            if (progress < 20) return 'story';
-            if (progress < 40) return 'images';
-            if (progress < 60) return 'videos';
-            if (progress < 80) return 'audio_subtitle';
-            if (progress < 100) return 'composition';
-
-            return null;
+            return stageFromProgress(progress);
         }
 
         // 更新milestone标记

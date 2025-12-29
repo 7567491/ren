@@ -50,6 +50,7 @@ task_manager = TaskManager(storage_dir=TEMP_DIR)
 
 # 并发限制（从配置读取）
 MAX_CONCURRENT_TASKS = 1
+PROGRESS_POLL_INTERVAL = 1  # seconds between checkpoint inspections
 running_tasks = {}  # {job_id: subprocess}
 WAVESPEED_BALANCE_URL = "https://api.wavespeed.ai/api/v3/balance"
 
@@ -777,8 +778,8 @@ async def run_video_generation(job_id: str, config_file: Path, resume_mode: bool
                     task_manager.update_progress(job_id, progress, message)
                     last_progress = progress
 
-            # 等待2秒后再次检查
-            await asyncio.sleep(2)
+            # 等待下一次检查
+            await asyncio.sleep(PROGRESS_POLL_INTERVAL)
 
         # 获取退出码
         returncode = process.returncode

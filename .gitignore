@@ -1,0 +1,61 @@
+# Python
+venv/
+__pycache__/
+*.pyc
+*.pyo
+*.pyd
+.Python
+*.so
+*.egg
+*.egg-info/
+dist/
+build/
+
+# 环境变量和密钥
+.env
+*.key
+*.pem
+
+# 输出文件
+output/
+temp/
+*.mp4
+*.mp3
+*.png
+*.jpg
+*.jpeg
+
+# 用户配置
+.bash_history
+.cache/
+.config/
+.npm/
+.ssh/
+.sudo_as_admin_successful
+.claude/
+.claudecode/
+.codex/
+.claude.json
+.claude.json.backup
+
+# IDE
+.vscode/
+.idea/
+*.swp
+*.swo
+*~
+
+# 系统文件
+.DS_Store
+Thumbs.db
+
+# 日志
+*.log
+log.txt
+
+# 资源文件（可能很大）
+resource/songs/
+resource/music_features.json
+
+# Codex
+codex-*/

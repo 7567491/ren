@@ -1,0 +1,965 @@
+# AI视频生成系统配置文件
+# 修改此文件可调整模型、限流等参数，无需修改代码
+
+# ============================================================
+# 视觉风格配置 - 专注科技产品广告（10种精选风格）
+# 基于AI视频生成最佳实践优化（2025版）
+# ============================================================
+visual_styles:
+  # ==================== 故事/创意类 ====================
+
+  cartoon_adventure:
+    name: "卡通冒险"
+    visual_style: "colorful stylized 3D animation, lively animal-inspired characters without licensed names, playful city sets, exaggerated squash-and-stretch action, bright signage and props"
+    color_palette: "vibrant teal, sunshine yellow, coral orange, lilac purple, warm brown"
+    lighting: "soft bounce light with saturated rims, gentle area lights, glossy highlights, motivated neon signs"
+    camera_movement: "whip pan transitions, dynamic dolly with parallax, low-angle hero reveal, playful crane downs"
+    mood: "optimistic, witty, energetic, heartwarming"
+    music_keywords: ["cartoon", "playful", "bright"]
+    agent_prompt: "作为动画电影导演与分镜摄影指导，请用儿童向大片的节奏与幽默调度镜头，确保角色表情夸张、动作流畅，避免提及任何具体IP名称。"
+
+  luxury_fashion:
+    name: "时尚奢华"
+    visual_style: "luxury fashion aesthetic, high-end tech products, elegant sophistication, premium brand presentation, glossy surfaces"
+    color_palette: "gold, black, champagne, pearl white, rose gold"
+    lighting: "soft key light with fill, rim lighting for glamour, glamorous highlights, luxury boutique ambiance"
+    camera_movement: "smooth dolly push in, elegant pan across product, slow luxury reveal, crane down from above"
+    mood: "elegant, sophisticated, aspirational, exclusive"
+    music_keywords: ["elegant", "luxury", "sophisticated"]
+    agent_prompt: "作为时尚大片导演与高级摄影师，请以奢侈品陈列节奏推拉镜头，强调材质光泽与优雅姿态，保持高级留白。"
+
+  ink_xianxia:
+    name: "水墨仙侠"
+    visual_style: "Chinese ink-wash wuxia fantasy, brushstroke textures, floating peaks and ancient pavilions, swirling mist, flowing robes and swords, aura glow" 
+    color_palette: "ink black, rice paper white, jade green, indigo, cinnabar red"
+    lighting: "soft diffused skylight, rim glow through mist, lantern highlights, moonlit backlight"
+    camera_movement: "crane across mountains, slow-motion glide with robes, parallax push through bamboo forest, orbit around duel" 
+    mood: "elegant, mystical, heroic, poetic"
+    music_keywords: ["guqin", "erhu", "oriental"]
+    agent_prompt: "作为武侠奇幻导演与摄影指导，请用诗意运镜与留白呈现水墨层次，突出飘带衣袂、轻功腾跃与古风器物，不提及具体IP名称。"
+
+  realistic_3d:
+    name: "3D写实"
+    visual_style: "photorealistic 3D rendering, physically accurate materials, product visualization, detailed textures, CGI perfection"
+    color_palette: "natural color grading, cinematic tones, realistic material colors"
+    lighting: "three-point lighting setup, realistic shadows, global illumination, bounce light, subsurface scattering"
+    camera_movement: "cinematic dolly move, steady cam tracking, rack focus transition, crane shot reveal"
+    mood: "realistic, cinematic, immersive, professional"
+    music_keywords: ["epic", "heroic", "majestic"]
+    agent_prompt: "作为CG电影级总监和摄影师，请以真实物理光线与机位呈现材质细节，保证镜头稳定、景深合理。"
+
+  cinematic:
+    name: "电影写实"
+    visual_style: "cinematic film look, shallow depth of field, narrative storytelling, human-centric scenes, lifestyle integration"
+    color_palette: "cinematic color grading, warm-cool contrast, natural skin tones, film emulation"
+    lighting: "natural sunlight, golden hour glow, soft window light, motivated lighting, dramatic shadows"
+    camera_movement: "steady cam handheld feel, gimbal smooth tracking, focus pull between subjects, slow dolly reveal"
+    mood: "cinematic, artistic, emotional, authentic"
+    music_keywords: ["epic", "heroic", "dramatic"]
+    agent_prompt: "作为电影导演与摄影指导，请以情感驱动的景别与调度讲故事，使用景深与光影塑造人物关系。"
+
+  # ==================== 未来科技概念类 ====================
+
+  technology:
+    name: "科技/未来风"
+    visual_style: "futuristic high-tech environment, digital data streams, holographic interfaces, glowing circuit patterns, sci-fi UI elements"
+    color_palette: "electric blue, neon purple, cyan glow, deep black, white highlights"
+    lighting: "neon accent lighting, digital glow effects, volumetric fog lights, particle light trails"
+    camera_movement: "fly through data streams, smooth tracking along circuits, orbital rotation around tech, dolly zoom effect"
+    mood: "innovative, cutting-edge, advanced, futuristic"
+    music_keywords: ["tech", "electronic", "futuristic"]
+    agent_prompt: "作为未来科技导演与技术摄影师，请用流畅的轨道与环绕镜头展现光迹和全息界面，突出前景中景背景的科技层次。"
+
+  cyberpunk:
+    name: "赛博朋克"
+    visual_style: "neon-lit dystopian cityscape, cyberpunk aesthetics, high-tech low-life contrast, holographic billboards, rain-soaked streets"
+    color_palette: "neon pink, electric blue, toxic green, deep purple, black, chrome"
+    lighting: "neon signs glow, holographic projections, volumetric fog, rim lighting on subjects, lens flares from lights"
+    camera_movement: "push in on product through neon, fast tracking through city, vertical crane down skyscraper, orbit around subject"
+    mood: "edgy, futuristic, rebellious, tech-forward, urban"
+    music_keywords: ["electronic", "synthwave", "cyberpunk"]
+    agent_prompt: "作为夜景动作片导演与摄影指导，请用湿地反射、霓虹逆光与快速移动车轨，营造都市赛博张力。"
+
+  space_exploration:
+    name: "太空探险"
+    visual_style: "cinematic space odyssey, starships and orbital stations, luminous nebulas, planet surfaces with dust storms, cockpit HUDs, EVA astronauts"
+    color_palette: "deep space black, starlight white, plasma blue, burnt orange, metallic silver"
+    lighting: "rim light from stars, console glow, volumetric shafts through cockpit, hard sun backlight on suits"
+    camera_movement: "zero-g drift shots, slow roll reveal of planets, POV from cockpit HUD, exterior orbit pans"
+    mood: "awe-inspiring, adventurous, disciplined, vast"
+    music_keywords: ["orchestral", "space", "epic"]
+    agent_prompt: "作为硬科幻航天导演与摄影指导，请用失重漂移、星球揭示与舱内HUD视角设计镜头，不提及具体影片名称。"
+
+  outdoor_adventure:
+    name: "户外探险"
+    visual_style: "wide natural landscapes, alpine ridges, rivers and forests, hikers with gear, dust and wind details, practical survival props"
+    color_palette: "forest green, sky blue, sunrise amber, slate gray, earth brown"
+    lighting: "natural golden hour, backlit dust particles, campfire warm fill, cloud-soft diffused light"
+    camera_movement: "drone-style sweep over cliffs, steadycam follow on trails, slider close-ups on gear, tilt up to reveal peaks"
+    mood: "brave, free, grounded, hopeful"
+    music_keywords: ["acoustic", "folk", "adventure"]
+    agent_prompt: "作为纪录片式探险导演与摄影指导，请以广角与跟随镜头展示地形层次，突出人物与自然尺度对比。"
+
+  magical_fantasy:
+    name: "魔幻史诗"
+    visual_style: "majestic wizarding fantasy without named franchises, ancient castles and candle-lit halls, enchanted forests, glowing runes and spells, flying creatures"
+    color_palette: "emerald green, royal navy, silver moonlight, candle gold, deep burgundy"
+    lighting: "mystic rim lights, volumetric beams through windows, torch and candle accents, moonlit fog"
+    camera_movement: "heroic crane reveals of castles, arc tracking during spell casting, glide through enchanted halls, POV wand casting"
+    mood: "mysterious, grand, wondrous, adventurous"
+    music_keywords: ["orchestral", "choir", "fantasy"]
+    agent_prompt: "作为魔幻史诗导演与摄影指导，请用庄重的运镜与光束描绘魔法氛围，强调场景规模与仪式感，避免提及具体电影名称。"
+
+# ============================================================
+# API配置（留空则从.env文件读取）
+# ============================================================
+api:
+  deepseek_key: ""  # 留空从环境变量读取
+  kimi_key: ""      # 月之暗面Kimi API Key（可选，留空从环境变量读取）
+  wavespeed_key: ""  # 留空从环境变量读取
+
+# ============================================================
+# API限流配置
+# ============================================================
+rate_limits:
+  # DeepSeek API限流（故事生成）
+  deepseek:
+    max_requests_per_minute: 50  # 每分钟最多50次
+    max_requests_per_day: null   # 不限制每天次数（null表示不限制）
+
+  # Kimi (Moonshot) API限流（故事生成）
+  kimi:
+    max_requests_per_minute: 30  # 每分钟最多30次
+    max_requests_per_day: null   # 不限制每天次数
+
+  # WavespeedAI 图像生成限流
+  image_generation:
+    max_requests_per_minute: 10  # 每分钟最多10次（建议值）
+    max_requests_per_day: 500    # 每天最多500次
+
+  # WavespeedAI 视频生成限流
+  video_generation:
+    max_requests_per_minute: 3   # 每分钟最多3次（较保守）
+    max_requests_per_day: 100    # 每天最多100次
+
+# ============================================================
+# 工作流配置
+# ============================================================
+workflow:
+  # 视频生成模式：false=T2I+I2V（稳定）, true=直接T2V（快速）
+  use_direct_t2v: false
+
+  # 并发配置
+  max_concurrent_workers: 3  # 图像生成并发数（建议2-4，过高可能触发限流）
+
+  # 输出目录
+  output_base: "./output"
+
+# ============================================================
+# 运行参数与默认值
+# ============================================================
+runtime:
+  # 图像生成默认参数
+  image_generation:
+    duration_seconds: 5
+    seed: -1
+    enable_prompt_expansion: false
+
+  # 视频生成默认参数
+  video_generation:
+    duration_seconds: 5
+    seed: -1
+    enable_prompt_expansion: false
+
+  # 结果轮询配置
+  polling:
+    check_interval_seconds: 10
+    max_wait_seconds:
+      image: 120
+      video: 600
+    max_network_retries: 10
+    backoff_seconds: 5
+    max_backoff_seconds: 30
+
+  # 图床上传（多图床自动容错）
+  image_upload:
+    # 旧配置（向后兼容）
+    endpoint: "https://api.imgbb.com/1/upload"
+    api_key: "d139be0b91a49610f8c8b2a5c07d3cd7"  # 公共测试key（已失效，仅用于备用）
+    timeout_seconds: 30
+
+    # 多图床配置（按优先级排序，失败自动切换）
+    hosts:
+      - name: "catbox.moe"
+        type: "catbox"
+        # 特点：匿名上传，最稳定，单文件<200MB，永久保存
+      - name: "sm.ms"
+        type: "smms"
+        # 特点：国内稳定，免费5GB，单文件<5MB
+      - name: "telegraph"
+        type: "telegraph"
+        # 特点：Telegram官方，完全免费，单文件<5MB
+      - name: "imgbb"
+        type: "imgbb"
+        api_key: "d139be0b91a49610f8c8b2a5c07d3cd7"
+        # 特点：需要API key，仅作备用（当前key已失效）
+
+# ============================================================
+# 模型配置
+# ============================================================
+models:
+  # 图像生成模型配置
+  image:
+    # 当前使用的模型（在下面的可用模型列表中选择）
+    current: "kling-image-o1"
+
+    # 数字映射（方便 user.yaml 中选择）
+    number_map:
+      1: "flux-dev-lora"           # 最便宜 $0.006
+      2: "seedream-v4"             # 推荐，高质量 $0.027
+      3: "seedream-v4.5"           # 最高质量（4K）$0.04
+      4: "kling-image-o1"          # 支持参考图 $0.028（默认）
+      5: "vidu-reference-q2"       # 多参考图 $0.04
+      6: "nano-banana-pro"         # Google I2I图像编辑（14张参考图）$0.14-0.24
+
+    # 可用模型列表
+    available:
+      flux-dev-lora:
+        endpoint: "/api/v3/wavespeed-ai/flux-dev-lora"
+        cost: 0.006
+        speed: "快"
+        quality: "中"
+        support_reference: false
+        params:
+          output_format: "png"
+
+      seedream-v4:
+        endpoint: "/api/v3/bytedance/seedream-v4"
+        cost: 0.027
+        speed: "快"
+        quality: "高"
+        support_reference: false
+        params:
+          size: "1024*1024"
+
+      seedream-v4.5:
+        endpoint: "/api/v3/bytedance/seedream-v4.5"
+        cost: 0.04
+        speed: "快"
+        quality: "最高（4K）"
+        support_reference: false
+        params:
+          size: "2048*2048"
+
+      kling-image-o1:
+        endpoint: "/api/v3/kwaivgi/kling-image-o1"
+        cost: 0.028
+        speed: "快"
+        quality: "高（支持参考图）"
+        support_reference: true
+        max_reference_images: 10
+        # 参考图使用说明:
+        # - 支持公开URL: 如 https://你的存储桶.com/image.jpg（推荐）
+        # - 支持本地文件: 如 ./resource/pic/character.jpg（需上传图床，可能不稳定）
+        params:
+          aspect_ratio: "1:1"
+          resolution: "1k"  # Kling使用1k/2k，不是1080p
+          num_images: 1
+
+      vidu-reference-q2:
+        endpoint: "/api/v3/vidu/reference-to-image-q2"
+        cost: 0.04
+        speed: "快"
+        quality: "高（1-3参考图）"
+        support_reference: true
+        max_reference_images: 7
+        params:
+          aspect_ratio: "auto"
+          resolution: "1080p"
+
+      nano-banana-pro:
+        endpoint: "/api/v3/google/nano-banana-pro/edit"
+        cost: 0.14  # 1K/2K基础价格，4K为$0.24
+        speed: "快"
+        quality: "极高（4K I2I图像编辑）"
+        support_reference: true  # I2I模式需要输入参考图
+        max_reference_images: 14  # 最多支持14张参考图
+        params:
+          resolution: "2k"  # 可选: 1k, 2k, 4k
+          aspect_ratio: "1:1"  # 支持多种比例: 1:1, 16:9, 9:16, 等
+          output_format: "png"
+
+  # 视频生成模型配置
+  video:
+    # 当前使用的模型（在下面的可用模型列表中选择）
+    current: "wan-2.5-i2v"
+
+    # 数字映射（方便 user.yaml 中选择）
+    number_map:
+      1: "wan-2.5-i2v"         # 性价比最高 $0.30-2.00（默认）
+      2: "wan-2.6-i2v"         # 音频同步 $0.50-3.00
+      3: "wan-2.6-t2v"         # 直接T2V（快速）$0.50-3.00
+      4: "hailuo-2.3-pro"      # 最高质量（1080p）$0.50-3.00
+      5: "veo-3.1-i2v"         # Google 原生1080p+音频 $3.20/8秒
+
+    # 可用模型列表
+    available:
+      wan-2.5-i2v:
+        endpoint: "/api/v3/alibaba/wan-2.5/image-to-video"
+        cost: 0.30  # 基础价格（480p）
+        cost_by_resolution:  # 按分辨率定价
+          "480p": 0.30
+          "720p": 1.00
+          "1080p": 2.00
+        speed: "127秒"
+        quality: "高（720p）"
+        type: "i2v"
+        # API参数配置
+        params:
+          # 必需参数（代码中处理）: image, prompt
+          # 可选参数及其默认值
+          audio: null  # 音频URL（可选）
+          negative_prompt: null
+          resolution: "720p"  # 480p/720p/1080p
+          duration: 5  # 3-10秒
+          enable_prompt_expansion: false
+          seed: -1  # -1为随机
+        # 参数约束
+        constraints:
+          resolution_options: ["480p", "720p", "1080p"]
+          duration_range: [3, 10]
+          duration_type: "range"  # range=范围, fixed=固定值
+
+      wan-2.6-i2v:
+        endpoint: "/api/v3/alibaba/wan-2.6/image-to-video"
+        cost: 0.50  # 基础价格（480p）
+        cost_by_resolution:  # 按分辨率定价
+          "480p": 0.50
+          "720p": 1.50
+          "1080p": 3.00
+        speed: "171秒"
+        quality: "最高（音频同步）"
+        type: "i2v"
+        # API参数配置
+        params:
+          # 必需参数: image, prompt
+          audio: null
+          negative_prompt: null
+          resolution: "720p"  # 720p/1080p (注意：不支持480p)
+          duration: 5  # 5/10/15秒
+          shot_type: "single"  # single/multi (WAN 2.6特有)
+          enable_prompt_expansion: false
+          seed: -1
+        constraints:
+          resolution_options: ["720p", "1080p"]  # 不支持480p
+          duration_options: [5, 10, 15]
+          duration_type: "fixed"  # 只能选择5/10/15
+
+      wan-2.6-t2v:
+        endpoint: "/api/v3/alibaba/wan-2.6/text-to-video"
+        cost: 0.50  # 基础价格（480p）
+        cost_by_resolution:  # 按分辨率定价
+          "480p": 0.50
+          "720p": 1.50
+          "1080p": 3.00
+        speed: "95秒"
+        quality: "高（单步）"
+        type: "t2v"
+        # API参数配置
+        params:
+          # 必需参数: prompt
+          # 注意：此模型使用size而非resolution!
+          audio: null
+          negative_prompt: null
+          size: "1280*720"  # 注意：不是resolution!
+          duration: 5  # 5/10/15秒
+          shot_type: "single"  # single/multi
+          enable_prompt_expansion: false
+          seed: -1
+        constraints:
+          size_options: ["1280*720", "720*1280", "1920*1080", "1080*1920"]
+          # size映射到分辨率
+          size_to_resolution:
+            "1280*720": "720p"
+            "720*1280": "720p"
+            "1920*1080": "1080p"
+            "1080*1920": "1080p"
+          duration_options: [5, 10, 15]
+          duration_type: "fixed"
+
+      hailuo-2.3-pro:
+        endpoint: "/api/v3/minimax/hailuo-2.3/i2v-pro"
+        cost: 0.50  # 基础价格（480p）
+        cost_by_resolution:  # 按分辨率定价
+          "480p": 0.50
+          "720p": 1.50
+          "1080p": 3.00
+        speed: "87秒"
+        quality: "最高（1080p）"
+        type: "i2v"
+        # API参数配置
+        params:
+          # 必需参数: image
+          # 注意：prompt是可选的！duration和resolution由API自动处理
+          prompt: null  # 可选（特殊！）
+          enable_prompt_expansion: true  # 默认true（与其他模型不同）
+        constraints:
+          # Hailuo没有resolution/duration参数，由API自动决定
+          auto_resolution: true
+          auto_duration: true
+          output_resolution: "1080p"  # 固定输出1080p
+
+      veo-3.1-i2v:
+        endpoint: "/api/v3/google/veo3.1/image-to-video"
+        cost: 3.20  # 8秒视频+音频的价格（$0.40/秒）
+        cost_by_duration:  # 按时长定价（视频+音频）
+          4: 1.60   # 4秒
+          6: 2.40   # 6秒
+          8: 3.20   # 8秒
+        cost_video_only:  # 仅视频（无音频）
+          4: 0.80   # $0.20/秒
+          6: 1.20
+          8: 1.60
+        speed: "120-180秒"
+        quality: "极高（原生1080p+音频同步）"
+        type: "i2v"
+        # API参数配置
+        params:
+          # 必需参数: prompt, image
+          last_image: null  # 可选，用于转场
+          aspect_ratio: "16:9"  # 16:9/9:16
+          duration: 8  # 4/6/8秒
+          resolution: "1080p"  # 720p/1080p
+          generate_audio: true  # 是否生成音频
+          negative_prompt: null
+          seed: -1
+        constraints:
+          aspect_ratio_options: ["16:9", "9:16"]
+          duration_options: [4, 6, 8]
+          duration_type: "fixed"
+          resolution_options: ["720p", "1080p"]
+          frame_rate: 24  # 固定24fps
+
+# ============================================================
+# 运镜模板（用于镜头选择）
+# ============================================================
+camera_movements:
+  M1:
+    name: "推进特写"
+    description: "Smooth camera push-in movement starting from medium shot and gradually zooming into extreme close-up of the main subject. The camera slowly tracks forward with steady dolly motion, maintaining sharp focus on the main subject while background gently blurs with shallow depth of field. Cinematic focus pulling technique creates professional depth separation. The movement is fluid and controlled, emphasizing subject details with elegant approach. Speed is medium-slow for dramatic effect, taking approximately 3-4 seconds to complete the full push-in motion. IMPORTANT: Keep the scene composition exactly as shown in the reference image - only move the camera closer to the subject. Do not add new elements. Lighting remains consistent throughout the movement, highlighting key features as camera advances."
+    suitable_for: "开场钩子、核心功能强调、重点展示"
+    duration: "3-4s"
+  M2:
+    name: "俯视展开"
+    description: "Overhead crane shot beginning from high bird-eye view angle, descending gracefully to reveal architectural layout and spatial relationships. Camera starts at 80-90 degree top-down perspective, then smoothly cranes down to 45-degree angle while maintaining center framing. The descending motion reveals different viewing angles of the existing scene, from macro overview to detailed mid-level view. Movement is slow and majestic, spanning 3-5 seconds, allowing viewers to comprehend spatial structure. IMPORTANT: Maintain all subjects and elements exactly as shown in the reference image - only the camera angle changes from overhead to angled view. Do not add new objects or elements during the descent. This aerial-to-angled transition creates sense of scale and grandeur, perfect for showcasing complex systems, data centers, or global network visualizations."
+    suitable_for: "云架构、数据中心、全局视角、宏观展示"
+    duration: "3-5s"
+  M3:
+    name: "平移扫过"
+    description: "Lateral tracking shot with smooth horizontal camera movement panning across the existing scene from left to right. Camera glides on steady rails maintaining constant distance and angle, creating elegant parallax effect between foreground and background elements. The pan motion is fluid and continuous, revealing different perspectives and details of the same scene composition. Speed is medium-paced, completing the sweep in 4-5 seconds. IMPORTANT: Keep all subjects and elements exactly as shown in the reference image - do not add new objects, products, or people. Only the camera angle changes as it pans horizontally across the scene. Camera height remains constant throughout the lateral motion."
+    suitable_for: "多场景应用、功能列表、并列展示"
+    duration: "4-5s"
+  M4:
+    name: "旋转环绕"
+    description: "Dynamic 360-degree orbital camera movement circling around the central subject shown in the reference image. Camera maintains fixed distance while rotating smoothly in circular path, revealing subject from all angles. The rotation speed is steady and controlled, completing full or partial orbit in 3-4 seconds. As camera circles, different perspectives and details of the same subject are progressively revealed, creating dimensional understanding. IMPORTANT: Keep all subjects and scene elements exactly as shown in the reference image - only the camera rotates around the central subject. Do not add new objects or people during rotation. Lighting adjusts dynamically to maintain subject visibility from all angles. This rotation creates sense of three-dimensionality and showcases product design, AI model complexity, or architectural features comprehensively. Perfect for highlighting innovation and technological sophistication."
+    suitable_for: "产品展示、AI模型可视化、立体呈现"
+    duration: "3-4s"
+  M5:
+    name: "拉出揭示"
+    description: "Reverse zoom movement pulling camera back from intimate close-up detail to reveal expansive wide shot. Starting with focused detail filling the frame, camera smoothly dollies backward while simultaneously zooming out, maintaining subject in frame while revealing surrounding context. The pull-back motion is deliberate and measured, taking 4-5 seconds to complete full reveal. As camera retreats, more of the existing scene becomes visible in the frame, showing how individual element fits into larger ecosystem. IMPORTANT: All elements should already exist in the reference image - the camera movement only reveals what is already there by pulling back. Do not add new objects, people, or scene elements during the pull-back. This movement creates powerful storytelling effect, transitioning from micro to macro perspective, ideal for concluding sequences and grand finale moments."
+    suitable_for: "从单点到整体价值、结尾升华、全局揭示"
+    duration: "4-5s"
+  M6:
+    name: "分屏对比"
+    description: "Split-screen composition with side-by-side or top-bottom layout presenting contrasting scenarios simultaneously. Camera remains relatively static on both sides, with subtle push-in or drift movements to maintain visual interest. The split can be vertical (left-right) or horizontal (top-bottom), with clean dividing line or soft gradient transition. Each side presents distinct scenario: before/after, traditional/modern, manual/automated, or competing solutions. Within each frame, gentle camera movements highlight key differences. Duration is 3-4 seconds, allowing viewers to comprehend both scenarios and their contrast. This layout creates immediate visual comparison impact, perfect for demonstrating improvements, ROI, or competitive advantages."
+    suitable_for: "Before/After对比、多场景并行、效果证明"
+    duration: "3-4s"
+
+# ============================================================
+# LLM 配置（多提供商支持）
+# ============================================================
+llm:
+  # 默认提供商（可在 user.yaml 中用数字或名称覆盖）
+  default: "deepseek"
+
+  # 数字映射（方便 user.yaml 中选择）
+  number_map:
+    1: "deepseek"  # DeepSeek 直连（推荐，最便宜）
+    2: "kimi"      # Kimi (Moonshot) 中文体验更好
+
+  # 提供商配置
+  providers:
+    deepseek:
+      name: "DeepSeek Chat"
+      endpoint: "https://api.deepseek.com/v1/chat/completions"
+      model: "deepseek-chat"
+      api_key_env: "DeepSeek_API_KEY"  # 从 .env 读取
+      temperature: 0.7
+      max_tokens: null  # null 表示不限制
+      timeout_seconds: 60
+      rate_limits:
+        max_requests_per_minute: 50
+        max_requests_per_day: null
+    kimi:
+      name: "Kimi (Moonshot)"
+      endpoint: "https://api.moonshot.cn/v1/chat/completions"
+      model: "moonshot-v1-8k"
+      api_key_env: "Moonshot_Kimi_API_KEY"      # 从 .env 读取
+      api_key_config: "api.kimi_key"             # 或在 config.yaml > api.kimi_key 配置
+      temperature: 0.7
+      max_tokens: null
+      timeout_seconds: 60
+      rate_limits:
+        max_requests_per_minute: 30
+        max_requests_per_day: null
+
+# ============================================================
+# DeepSeek API配置（旧版，保留向后兼容）
+# ============================================================
+deepseek:
+  base_url: "https://api.deepseek.com"
+  model: "deepseek-chat"
+  temperature: 0.7
+
+# ============================================================
+# WavespeedAI API配置
+# ============================================================
+wavespeed:
+  base_url: "https://api.wavespeed.ai"
+
+  # 轮询配置
+  polling:
+    interval: 5      # 轮询间隔（秒）
+    max_wait: 600    # 最大等待时间（秒）
+
+  # 重试配置
+  retry:
+    max_attempts: 3          # 最大重试次数
+    initial_delay: 5         # 初始延迟（秒）
+    backoff_multiplier: 2    # 退避倍数
+
+# ============================================================
+# 音频配置（方案A - Edge TTS + 本地音乐库）
+# ============================================================
+audio:
+  # 语音合成设置
+  voice_provider: "edge"  # 选项: edge（推荐，免费）
+  voice_name: "zh-CN-XiaoxiaoNeural"  # 默认Edge TTS音色（晓晓-女声）
+  voice_volume: 1.0  # 配音音量 (0.0-1.0)
+
+  # Edge TTS音色映射表（用于user.yaml的数字选择）
+  voices:
+    1:
+      name: "zh-CN-XiaoxiaoNeural"
+      gender: "Female"
+      scene: "新闻、小说"
+      style: "温柔"
+      description: "晓晓（女）- 温柔女声，适合新闻、小说旁白"
+    2:
+      name: "zh-CN-XiaoyiNeural"
+      gender: "Female"
+      scene: "卡通、小说"
+      style: "活泼"
+      description: "晓伊（女）- 活泼女声，适合卡通、小说"
+    3:
+      name: "zh-CN-YunjianNeural"
+      gender: "Male"
+      scene: "体育、小说"
+      style: "热情"
+      description: "云健（男）- 热情男声，适合体育、小说"
+    4:
+      name: "zh-CN-YunxiNeural"
+      gender: "Male"
+      scene: "小说"
+      style: "活泼、阳光"
+      description: "云希（男）- 活泼阳光男声，适合小说"
+    5:
+      name: "zh-CN-YunxiaNeural"
+      gender: "Male"
+      scene: "卡通、小说"
+      style: "可爱"
+      description: "云夏（男）- 可爱男声，适合卡通、小说"
+    6:
+      name: "zh-CN-YunyangNeural"
+      gender: "Male"
+      scene: "新闻"
+      style: "专业、可靠"
+      description: "云扬（男）- 专业可靠，适合新闻播音"
+    7:
+      name: "zh-CN-liaoning-XiaobeiNeural"
+      gender: "Female"
+      scene: "方言（辽宁）"
+      style: "幽默"
+      description: "晓北（女/辽宁）- 幽默方言"
+    8:
+      name: "zh-HK-HiuGaaiNeural"
+      gender: "Female"
+      scene: "通用"
+      style: "友好、积极"
+      description: "晓佳（女/香港）- 友好积极粤语"
+    9:
+      name: "zh-HK-HiuMaanNeural"
+      gender: "Female"
+      scene: "通用"
+      style: "友好、积极"
+      description: "晓曼（女/香港）- 友好积极粤语"
+    10:
+      name: "zh-HK-WanLungNeural"
+      gender: "Male"
+      scene: "通用"
+      style: "友好、积极"
+      description: "云龙（男/香港）- 友好积极粤语"
+    11:
+      name: "zh-TW-HsiaoChenNeural"
+      gender: "Female"
+      scene: "通用"
+      style: "友好、积极"
+      description: "晓臻（女/台湾）- 友好积极国语"
+    12:
+      name: "zh-TW-HsiaoYuNeural"
+      gender: "Female"
+      scene: "通用"
+      style: "友好、积极"
+      description: "晓雨（女/台湾）- 友好积极国语"
+    13:
+      name: "zh-TW-YunJheNeural"
+      gender: "Male"
+      scene: "通用"
+      style: "友好、积极"
+      description: "云哲（男/台湾）- 友好积极国语"
+
+  # 旁白速度设置
+  chars_per_second: 4.0  # 旁白速度（字/秒）
+                         # 推荐值：4.0（精确匹配，后续加速控制）
+                         # 参考值：3.5-4.0（较快），2.5-3.0（慢速清晰）
+                         # Edge TTS实测最快约4.6字/秒
+
+  # 背景音乐设置
+  enable_background_music: true  # 是否启用背景音乐
+  music_source: "local"  # 选项: local（本地音乐库）
+  music_dir: "./resource/songs"  # 本地音乐目录
+  music_volume: 0.25  # 背景音乐音量 (0.0-1.0)
+
+  # 智能音乐匹配（新功能！）
+  use_intelligent_music_matching: true  # 是否启用基于旁白音频的智能匹配
+                                        # true: 5维度算法分析（节奏/能量/情绪/频谱/时长）
+                                        # false: 使用传统的关键词匹配
+  prefer_style_match: true  # 传统模式下是否优先匹配视觉风格
+
+# ============================================================
+# 字幕配置（方案A - SubMaker）
+# ============================================================
+subtitle:
+  # 字幕生成设置
+  subtitle_provider: "submaker"  # 选项: submaker（推荐，免费且精确）
+  language: "zh"  # 语言代码
+
+  # 字幕样式
+  font_name: "STHeiti"  # 字体（macOS: STHeiti, Windows: Microsoft YaHei, Linux: WenQuanYi Zen Hei）
+  font_size: 24  # 字号（默认24，原来是48）
+  font_color: "white"  # 字体颜色
+  outline_color: "black"  # 描边颜色
+  outline_width: 2  # 描边宽度
+  position: "bottom"  # 位置: top, center, bottom
+
+# ============================================================
+# 视频写入与字幕样式（MoviePy参数）
+# ============================================================
+video_encoding:
+  codec: "libx264"
+  audio_codec: "aac"
+  preset: "medium"
+  logger: null
+  threads: 4
+  ffmpeg_params: ['-pix_fmt', 'yuv420p']
+
+subtitles:
+  default_style:
+    font_candidates:
+      - '/System/Library/Fonts/STHeiti Medium.ttc'
+      - '/System/Library/Fonts/PingFang.ttc'
+      - '/System/Library/Fonts/Hiragino Sans GB.ttc'
+      - 'C:\\Windows\\Fonts\\msyh.ttc'
+      - '/usr/share/fonts/truetype/wqy/wqy-zenhei.ttc'
+      - '/System/Library/Fonts/Supplemental/Arial Unicode.ttf'
+    fallback_font: 'Arial'
+    fontsize: 48
+    color: 'white'
+    stroke_color: 'black'
+    stroke_width: 2
+    bottom_margin: 60
+
+# ============================================================
+# 提示词模板（可编辑文案，减少硬编码）
+# ============================================================
+prompt_templates:
+  character_translation: |
+    请将以下中文角色描述翻译成适合AI图像生成的英文prompt：
+
+    中文描述：{description_cn}
+
+    要求：
+    1. 翻译成专业的英文prompt
+    2. 添加必要的视觉细节（如材质、光效、姿态）
+    3. 添加"character design sheet, front view, full body, white background"
+    4. 80-120词
+
+    只返回英文prompt，不要其他内容。
+
+  character_dna: |
+    基于以下角色描述，生成一个**极其详细**的英文外观描述（Character DNA），用于AI图像/视频生成时保持角色一致性。
+
+    原始描述：{description_cn}
+    参考prompt：{prompt_en}
+    {reference_note}
+
+    请生成一个70-100词的详细英文描述，**必须包含以下关键视觉特征**：
+    1. 性别、年龄、身高体型
+    2. **最显著的**面部特征（眼睛、发型、肤色）
+    3. **🎨 服装细节（重点！至少20-30词）**：
+       - 具体款式（如：长袖/短袖、领口样式、裙长/裤长）
+       - 精确颜色（主色调+辅助色，如"深红色"而非"红色"）
+       - 材质质感（如：丝绸、棉质、皮革、针织）
+       - 关键细节（纽扣、图案、装饰、配件）
+    4. **最独特的**标识（如有纹身、logo、特殊配饰）
+    5. 整体气质（1-2个形容词）
+
+    ⚠️ **服装一致性是角色识别的关键！必须详细描述服装的颜色、款式、材质和细节。**
+
+    格式要求：
+    - 用英文
+    - 第三人称描述（如"She has..."、"He wears...")
+    - 适合作为AI视频生成prompt的一部分
+    - 具体、详细、专业
+    - 重点描述关键视觉特征
+
+    示例1（东方女性，约90词，强调服装）：
+    "An East Asian woman in her early 20s, approximately 165cm tall with a slender graceful build. She has shoulder-length straight jet-black hair with subtle layers, warm porcelain complexion, and almond-shaped dark brown eyes. **CLOTHING DETAILS**: She wears a vibrant crimson red long-sleeve silk qipao dress with a fitted bodice. The dress features a high mandarin collar with delicate golden frog button closures, knee-length hem with elegant side slits revealing black silk stockings. Gold floral embroidery patterns adorn the right shoulder area. She pairs this with simple white pearl earrings and black low-heeled shoes. Overall demeanor: elegant and graceful."
+
+    示例2（商务女性，约85词，强调服装）：
+    "A professional woman in her mid-30s, 170cm tall with an athletic build. She has short, neat dark brown bob-cut hair styled with professional precision, fair complexion, and sharp hazel eyes behind thin-rimmed glasses. **CLOTHING DETAILS**: She wears a tailored navy blue wool blazer with notched lapels and two front buttons, paired with a crisp white cotton button-down shirt underneath. The outfit includes matching navy blue slim-fit trousers with a subtle pinstripe pattern and black leather belt. Silver wristwatch on left wrist. Black leather oxford shoes. Confident, authoritative presence."
+
+    只返回英文描述，不要其他内容。
+
+  story_outline: |
+    你是一位专业的视频脚本策划师。请为以下主题创作一个{shot_count}镜头的短视频故事大纲。
+
+    主题：{topic}
+    视觉风格：{style_name}
+    镜头数：{shot_count}个
+
+    故事结构要求（起承转合）：
+    1. 每个镜头是故事的有机组成部分，不是独立的片段
+    2. 镜头之间有明确的因果关系或时间推进
+    3. 视觉风格统一：{visual_style}
+    4. 色彩基调：{color_palette}
+
+    请以JSON格式输出故事大纲：
+    {{
+      "title": "故事标题",
+      "theme": "核心主题（一句话）",
+      "visual_theme": {{
+        "primary_colors": ["{primary_color_1}", "{primary_color_2}"],
+        "mood": "{mood}"
+      }},
+      "shot_breakdown": [
+        {{
+          "shot_number": 1,
+          "scene_summary": "镜头内容概要（20字内）",
+          "key_action": "关键动作或视觉重点",
+          "transition_to_next": "与下一镜头的连接点"
+        }}
+        // ... {shot_count}个镜头
+      ]
+    }}
+
+  narration_framework: |
+    你是一位资深广告文案大师。请为以下故事创作广告词整体框架。
+
+    主题：{topic}
+    故事标题：{title}
+    核心主题：{theme}
+    视频总时长：{total_duration}秒（{shot_count}个镜头，每镜头{shot_duration}秒）
+    配音语速：{chars_per_second}字/秒
+
+    故事分镜概要：
+    {shot_summaries}
+
+    创作要求：
+    1. **整体定位**：确定广告词的主线（一句话，如"探索未知，点燃激情"）
+    2. **语言风格**：定义文案的语言特色，要求：
+       - ❌ 禁止四字成语堆砌
+       - ✅ 必须长短句结合（短句冲击+长句铺陈）
+       - 自然流畅，像真实的广告配音
+       - 风格示例："诗意叙事型"、"悬念递进型"、"情感共鸣型"
+    3. **分段要点**：为每个镜头分配核心表达要点，确保：
+       - 全片叙事连贯递进（引入→展开→高潮→升华）
+       - 每段要点不重复、不跳跃
+       - 与画面内容紧密呼应
+
+    注意事项：
+    - 不要生成具体文案，只需框架性指导
+    - 确保情感递进自然（平和→激昂→震撼）
+    - 避免空洞词汇（创新、强大、完美等）
+    - 强调长短句交替的节奏感
+
+    请以JSON格式输出：
+    {{
+      "overall_tagline": "整体主线（一句话）",
+      "narration_style": "语言风格描述",
+      "emotion_arc": "情感曲线（如：平静→好奇→振奋→震撼）",
+      "shot_points": [
+        {{
+          "shot_number": 1,
+          "core_message": "本镜头核心要传达的信息",
+          "emotion": "本镜头的情感基调",
+          "connection": "与上下镜头的关系"
+        }}
+        // ... {shot_count}个镜头
+      ]
+    }}
+
+  shot_prompt: |
+    基于故事大纲，生成第{shot_index}个镜头的详细英文prompt（用于AI视频生成）。
+
+    整体故事：{story_theme}
+    视觉主题：色调{visual_colors}，氛围{visual_mood}
+    {character_section}
+    {background_note}
+    当前镜头（{shot_index}/{shot_total}）：
+    - 场景概要：{scene_summary}
+    - 关键动作：{key_action}
+
+    {previous_line}
+    {next_line}
+
+    风格要求：
+    - 视觉风格：{visual_style}
+    - 色彩方案：{color_palette}
+    - 光影：{lighting}
+    - 镜头运动（必须严格遵守）：{camera_description}
+
+    请生成一个80-120词的详细英文prompt，要求：
+    1. {first_requirement}
+    2. {second_requirement}
+    3. {third_requirement}
+    4. 严格遵守上述风格模板
+    5. 使用cinematic专业术语
+
+    只返回prompt文本，不要其他内容。
+
+  narration_shot: |
+    为这个广告视频镜头创作配音文案（中文）。
+
+    【镜头信息】
+    场景：{scene_summary}
+    位置：第{shot_index}/{shot_total}个镜头
+    实际视频时长：{actual_duration}秒
+    {framework_guidance}{previous_context}
+
+    【核心要求】
+    1. **字数精确**：严格{target_chars}字左右（±2字），对应{actual_duration}秒配音
+    2. **长短句结合**（最重要！）：
+       - ❌ 严禁：纯四字成语（如"破碎凝视，数据涌动"）
+       - ✅ 必须：短句(3-6字) + 长句(8-15字)交替
+       - 好示例："光影交织。数据在云端流转，智慧在指尖绽放。"（17字）
+       - 好示例："这是开始。当第一行代码运行，未来就在眼前。"（18字）
+       - 差示例："破碎凝视，数据涌动，智慧觉醒，未来可期。"（16字，全是四字）
+    3. **连贯递进**：与前文{continuity}，情感逐步{emotion_arc}
+    4. **有感染力**：使用具体意象、动词和细节，避免空洞形容词
+    5. **纯文本**：不要markdown符号，直接输出文案
+
+    【创作规范】
+    - 必须至少包含一个长句（≥8字），不能全是短句
+    - 使用比喻、排比等修辞（但不要过度）
+    - 自然口语化，像真人在讲广告故事
+    - {ending_requirement}
+
+    请直接输出{target_chars}字的旁白文案：
+
+  condense_narration: |
+    请精简以下广告文案，保留核心信息和感染力：
+
+    原文（{original_chars}字）：
+    {original_text}
+
+    要求：
+    1. **字数**: 严格控制在{target_chars}字左右（±5字）
+    2. **保留**: 核心信息、情感基调、修辞手法
+    3. **删减**: 重复内容、过度修饰、不必要的细节
+    4. **风格**: 保持原有的语言风格和节奏感
+    5. **流畅**: 精简后依然通顺自然，不生硬
+
+    请直接输出精简后的文案，不要其他内容：
+
+  full_narration: |
+    为这个广告视频创作一段完整的配音文案（中文）。
+
+    【视频信息】
+    全片时长：{total_duration}秒
+    镜头数量：{shot_count}个
+    分镜概览：
+    {story_context}
+    {framework_info}
+
+    【核心要求】
+    1. **完整连贯**：生成一段完整的旁白文案，覆盖整个视频故事
+    2. **字数限制**：必须严格控制在{min_chars}到{max_chars}字之间（对应{total_duration}秒配音，语速{chars_per_second}字/秒）。这是硬性要求，超出范围的文案将被截断。
+    3. **自然流畅**：像讲故事一样，有起承转合，有情感递进
+    4. **不要分段**：直接输出完整文案，不要分镜头或分段标记
+    5. **有感染力**：使用具体意象、动词和细节，避免空洞形容词
+    6. **纯文本**：不要markdown符号、不要分段序号，直接输出文案
+
+    【创作规范】
+    - 长短句结合，富有节奏感
+    - 使用比喻、排比等修辞手法
+    - 自然口语化，像真人在讲广告故事
+    - 结尾要有升华和余味
+
+    请直接输出完整的旁白文案（约{suggested_chars}字）：
+
+  rewrite_narration: |
+    请将以下广告文案精简到{target_chars}字以内，保持核心信息和感染力：
+
+    原文案（{original_chars}字）：
+    {original_text}
+
+    要求：
+    1. 必须控制在{target_chars}字以内
+    2. 保留核心卖点和情感
+    3. 保持语言的流畅和感染力
+    4. 直接输出精简后的文案，不要任何说明
+
+# ============================================================
+# 视频合成配置
+# ============================================================
+composer:
+  video_codec: "libx264"  # 视频编码
+  audio_codec: "aac"  # 音频编码
+  bitrate: "5000k"  # 码率
+  transition_duration: 0.5  # 转场时长（秒）
+
+# ============================================================
+# Logo动画配置
+# ============================================================
+logo:
+  # 是否启用logo动画
+  enabled: true  # 设为true启用
+
+  # Logo文件路径（支持PNG/JPG，推荐透明PNG）
+  logo_file: "./resource/logo/aka.jpg"
+
+  # Logo显示位置: 固定片尾
+  position: "end"
+
+  # Logo展示总时长（秒）
+  duration: 2.0
+
+  # 淡入时长（秒）
+  fadein_time: 1.0
+
+  # 淡出时长（秒，已停用）
+  fadeout_time: 0.0
+
+  # Logo缩放比例（相对视频宽度，0.3=视频宽度的30%）
+  logo_scale: 0.3

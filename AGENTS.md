@@ -3,7 +3,7 @@
 中文对话
 
 ## Project Structure & Module Organization
-- 主代码在 `py/`，其中 `ad-aka.py` 是故事化视频生成入口；`services/` 存放语音、字幕、合成等子模块。
+- 主代码在 `py/`，其中 `ad-aka.py` 是故事化视频生成入口，`ad-back.py` 作为 API 后端副本，任何影响主流程的逻辑要么同时同步两者，要么抽公共函数复用；`services/` 存放语音、字幕、合成等子模块。
 - 资源文件放于 `resource/`，输出成品位于自动创建的 `output/aka-*/`；不要手动提交输出产物。
 - 配置文件 `config.yaml`、环境变量 `.env` 位于根目录；测试与示例脚本在 `test/` 与 `py/test-*.py`。
 

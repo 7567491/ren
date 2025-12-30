@@ -1,412 +1,240 @@
-# 详细设计文档 v2.0 - AI视频生成系统（故事化增强版）
+# 数字人生成 Web 项目设计文档 v3.0
 
-## 系统架构
+> 更新日期：2025-12-30  
+> 适用范围：`frontend/`、`ad-back.py`、`py/`、Nginx @ `ren.linapp.fun`
 
-### 1. 整体流程（更新）
+本设计文档重构自 v2.0 故事化视频方案，聚焦于“数字人（Digital Human）”生成 Web 项目。内容包括对旧方案的批判性审视、全新架构设计、模块职责、数据流、接口约定及部署要求。
+
+---
+
+## 1. 现有方案问题（批判性建议）
+
+1. **业务目标错位**：v2.0 围绕“多镜头故事 + DeepSeek + MoviePy”，与当前“头像+语音+唇同步”主线不符，导致开发人员无法按新需求实现。
+2. **模块缺失**：文档未描述 Web 前端、任务状态 API、Nginx 反代 (`ren.linapp.fun → 18005`) 等关键组件，难以指导部署。
+3. **API 过时**：仍引用 DeepSeek/Edge TTS，多镜头 I2V；未引用 `doc/数字人.md` 的 WaveSpeed API（Seedream、MiniMax、Infinitetalk）。
+4. **数据结构不符**：继续强调 `story_outline.json / shots_script.json / shot_X.mp4`，无 `avatar.png / speech.mp3 / digital_human.mp4 / task.json` 等真实产物。
+5. **错误处理与成本策略缺失**：未描述任务状态机、重试策略、调试模式、成本约束，容易造成浪费。
+
+> **结论**：旧版设计已无法支撑当前目标，必须整体替换为数字人架构，并将 `doc/数字人.md` 视为 API 真正契约。
+
+---
+
+## 2. 设计目标
+
+1. **Web 低门槛**：用户在浏览器填写提示词/脚本 → 后端 orchestrate WaveSpeed API → 返回视频 URL。
+2. **三阶段流水线**：头像（Seedream/上传）→ 语音（MiniMax）→ 唇同步（Infinitetalk/Multitalk）。
+3. **任务可观测性**：前端可轮询任务状态，看到每个阶段的进展、日志、成本估算。
+4. **安全与成本控制**：密钥存于 `.env`，默认调试模式限制 10 秒语音，重试与限流策略内建。
+5. **部署一体化**：Nginx 负责 SSL 与静态资源，后端监听 `0.0.0.0:18005`，域名 `ren.linapp.fun`。
+
+---
+
+## 3. 总体架构
+
 ```
-用户交互 → 风格配置 → 故事大纲生成 → 分镜脚本生成 →
-并发图像生成 → 串行视频生成 → 视频合成 → 输出成品
-```
+Browser (frontend/) ──HTTPS──> Nginx (ren.linapp.fun)
+                               ├─ /          -> frontend/dist
+                               └─ /api       -> 127.0.0.1:18005
 
-### 2. 核心模块设计
-
-#### 2.1 用户交互模块（新增✨）
-**功能**：收集用户输入，配置生成参数
-
-**交互流程**：
-```python
-def interactive_setup():
-    """交互式配置向导"""
-    # 1. 欢迎界面
-    print_welcome()
-
-    # 2. 输入主题
-    topic = input("请输入视频主题: ")
-
-    # 3. 选择风格
-    style = select_style()  # 返回风格名称
-
-    # 4. 配置镜头数
-    shot_count = input_number("镜头数量", default=3, min=1, max=10)
-
-    # 5. 配置时长
-    duration = input_number("每镜头时长(秒)", default=5, min=3, max=5)
-
-    # 6. 确认配置
-    confirm_config(topic, style, shot_count, duration)
-
-    return ProjectConfig(topic, style, shot_count, duration)
-```
-
-**输出**：ProjectConfig对象
-```python
-@dataclass
-class ProjectConfig:
-    topic: str           # 主题
-    style: str           # 风格名称
-    shot_count: int      # 镜头数
-    shot_duration: int   # 单镜头时长
-    timestamp: str       # 运行时间戳
+ad-back.py (Flask/FastAPI)
+ ├─ py/api/routes_digital_human.py      REST
+ ├─ py/function/task_runner.py          状态机 & 调度
+ ├─ py/services/digital_human_service   WaveSpeed API 封装
+ ├─ py/services/storage_service         输出资产 & CDN
+ └─ py/services/logging/retry/...       公共基础设施
 ```
 
-#### 2.2 风格模板系统（新增✨）
-**功能**：管理10种预定义视觉风格
+关键依赖：`doc/数字人.md`（API 说明）、`README.md`（快速开始）、`AGENTS.md`/`CLAUDE.md`（协作规范）。
 
-**风格数据结构**：
-```python
-STYLE_TEMPLATES = {
-    "technology": {
-        "name": "科技/未来风",
-        "name_en": "Technology/Futuristic",
-        "description": "未来科技感，强调数据可视化和AI元素",
-        "visual_style": "futuristic, high-tech, digital, holographic",
-        "color_palette": "blue, purple, neon, cyan",
-        "lighting": "neon lighting, digital glow, volumetric light",
-        "camera_movement": "smooth tracking, orbital rotation, dolly zoom",
-        "typical_elements": [
-            "data streams", "holographic displays",
-            "circuit boards", "server rooms", "AI visualization"
-        ],
-        "mood": "innovative, cutting-edge, advanced",
-        "reference_style": "cyberpunk 2077, tron, blade runner 2049"
-    },
+---
 
-    "xianxia": {
-        "name": "仙侠/东方奇幻",
-        "name_en": "Xianxia/Oriental Fantasy",
-        "description": "中国风仙侠，飘逸灵动",
-        "visual_style": "ethereal, Chinese mythology, martial arts fantasy",
-        "color_palette": "jade green, gold, misty white, crimson",
-        "lighting": "soft volumetric fog, divine glow, moonlight",
-        "camera_movement": "floating crane shot, slow motion, spiral ascent",
-        "typical_elements": [
-            "flying swords", "misty mountains", "celestial palaces",
-            "martial arts", "mystical creatures", "flowing robes"
-        ],
-        "mood": "transcendent, mystical, elegant",
-        "reference_style": "Chinese wuxia films, genshin impact"
-    },
+## 4. 模块设计
 
-    "cyberpunk": {
-        "name": "赛博朋克",
-        "name_en": "Cyberpunk",
-        "description": "霓虹都市，反乌托邦科技",
-        "visual_style": "dystopian, neon-noir, urban decay, high-tech low-life",
-        "color_palette": "neon pink, electric blue, toxic green, dark purple",
-        "lighting": "neon signs, rain reflections, volumetric fog",
-        "camera_movement": "handheld gritty, rain soaked tracking, dutch angle",
-        "typical_elements": [
-            "neon signs", "rainy streets", "megacorporations",
-            "cybernetic implants", "flying cars", "dark alleyways"
-        ],
-        "mood": "gritty, rebellious, dystopian",
-        "reference_style": "blade runner, ghost in the shell, cyberpunk 2077"
-    },
+### 4.1 前端 `frontend/`
+- 表单：`avatar_mode (upload/prompt)`, `avatar_prompt`, `speech_text`, `voice_id/speed/pitch/emotion`, `resolution`, `seed`, `mask_image`。
+- 交互：`POST /api/tasks` 创建任务，轮询 `GET /api/tasks/<id>` 获得状态、日志、视频 URL。
+- 播放卡片：展示头像预览、音频试听、视频播放、成本估算。
+- 技术栈：Vite + Vue/React 或纯静态资源；`npm run build` 输出 `frontend/dist`。
 
-    # ... 其他7种风格类似结构
+### 4.2 后端入口 `ad-back.py`
+- 负责启动 Flask/FastAPI 服务（默认 `0.0.0.0:18005`），加载 `.env`、`config.yaml`。
+- 提供 CLI 参数 `--port` / `--config` / `--debug`。
+- 将请求分发到 `py/api` 蓝图，并注入日志/追踪上下文。
+
+### 4.3 API 层 `py/api/`
+- `routes_digital_human.py`：`POST /api/tasks`，`GET /api/tasks/<id>`，`POST /api/assets/upload`，`GET /api/health`。
+- 请求体验证（Pydantic/Marshmallow），响应体包含 `status`, `links`, `cost`, `error_code`, `trace_id`。
+- 将任务推送给 `task_runner`，返回 `task_id`。
+
+### 4.4 任务调度 `py/function/task_runner.py`
+- 状态机：`pending -> avatar_generating -> avatar_ready -> speech_ready -> video_rendering -> finished/failed`。
+- 保存 `task.json`（含配置、状态、WaveSpeed task_id、成本、时间戳）。
+- 按阶段调用 `services/digital_human_service`，并根据配置控制并发（Seedream <=2, Infinitetalk=1）。
+- 支持“调试模式”限制语音 <= 10s，生成完成后更新 `output/aka-{task}/digital_human.mp4`。
+
+### 4.5 服务层 `py/services/`
+- `digital_human_service.py`：封装 WaveSpeed API（MiniMax 语音同样通过 WaveSpeed 提供的 `/minimax/speech-02-hd` 代理）：
+  - `generate_avatar(prompt | upload_url)`
+  - `generate_voice(text, voice_options)`
+  - `animate_avatar(image_url, audio_url, mode=infinitetalk)`
+  - 内含统一重试（3 次、指数 5s/10s/15s）与 trace 日志。
+- `storage_service.py`：负责将生成文件存入 `output/` 或对象存储（如 `https://s.linapp.fun/digital-human/<task>.mp4`），并返回可访问 URL。
+- 可选：`music_service`, `subtitle_service` 供后续增强。
+
+### 4.6 配置
+- `.env`: `WAVESPEED_API_KEY`, `MINIMAX_API_KEY`, `STORAGE_BUCKET_URL`, `DEBUG_MODE` 等。
+- `config.yaml`: port、输出目录、并发/重试、Nginx public_url、调试限制。
+- `user.yaml`: 本地预设测试参数，生产不读取。
+
+---
+
+## 5. 数据与文件结构
+
+```
+output/aka-{task_id}/
+├── task.json             # 状态、配置、成本、trace
+├── avatar.png            # Seedream 或上传头像副本
+├── speech.mp3            # MiniMax 输出
+├── digital_human.mp4     # Infinitetalk 视频
+└── log.txt               # 本任务日志
+```
+
+除此之外，服务器挂载的 `/mnt/www`（已由运维映射到 `https://s.linapp.fun/`）下新建 `ren/` 目录，TaskRunner 会在生成完成时创建 `ren_{MMDDHHMM}` 子目录（例如 `ren_12301845`），并将最终视频复制为 `/mnt/www/ren/ren_{MMDDHHMM}/digital_human.mp4`。这样用户即可通过 `https://s.linapp.fun/ren/ren_{MMDDHHMM}/digital_human.mp4` 访问成果，无需额外 CDN 配置。
+
+`task.json` 示例：
+```json
+{
+  "task_id": "aka-123456",
+  "status": "video_rendering",
+  "config": { "voice_id": "Wise_Woman", "resolution": "720p" },
+  "stages": {
+    "avatar": { "state": "completed", "image_url": "https://..." },
+    "speech": { "state": "completed", "audio_url": "https://..." },
+    "video":  { "state": "running",   "wavespeed_task_id": "abc123" }
+  },
+  "cost_estimate_usd": 0.045,
+  "created_at": "2025-12-30T05:30:00Z",
+  "updated_at": "2025-12-30T05:31:20Z"
 }
 ```
 
-**风格应用函数**：
-```python
-def apply_style_to_prompt(base_prompt: str, style: dict) -> str:
-    """将风格模板应用到基础提示词"""
-    enhanced = f"{base_prompt}, "
-    enhanced += f"{style['visual_style']}, "
-    enhanced += f"color palette: {style['color_palette']}, "
-    enhanced += f"{style['lighting']}, "
-    enhanced += f"{style['camera_movement']}, "
-    enhanced += f"mood: {style['mood']}"
-    return enhanced
+---
+
+## 6. 工作流（阶段）
+
+1. **阶段0：任务创建**
+   - 前端提交配置 → 后端校验参数、写入 `task.json`、返回 `task_id`。
+2. **阶段1：形象生成**
+   - `avatar_mode=upload`：校验文件 → 存储 → 更新状态。
+   - `avatar_mode=prompt`：调用 Seedream v4（`doc/数字人.md`）→ 保存 `avatar.png` → 状态 `avatar_ready`。
+3. **阶段2：语音生成**
+   - 调用 MiniMax speech-02-hd，参数：`text/voice_id/speed/pitch/emotion/sample_rate`。
+   - 保存 `speech.mp3` 与 `audio_url`。
+4. **阶段3：唇同步**
+   - 调 Infinitetalk（或 Multi）→ 返回 `task_id` → 轮询 `/api/v3/tasks/<id>`，直至 `completed`。
+   - 下载 `video_url`，写入 `digital_human.mp4`。
+5. **阶段4：发布**
+   - 资产上传至对象存储（或保留在 output + 提供本地 URL）。
+   - 状态标记为 `finished`，记录成本，通知前端。
+
+---
+
+## 7. API 契约
+
+### POST `/api/tasks`
+请求：
+```json
+{
+  "avatar_mode": "prompt",
+  "avatar_prompt": "25岁职业女性...",
+  "speech_text": "大家好...",
+  "voice": { "voice_id": "Wise_Woman", "speed": 1.0, "emotion": "neutral" },
+  "resolution": "720p",
+  "seed": 42,
+  "debug_mode": true
+}
+```
+响应：
+```json
+{ "task_id": "aka-123456", "status": "pending", "links": { "poll": "/api/tasks/aka-123456" } }
 ```
 
-#### 2.3 故事生成模块（核心改进✨）
-**功能**：两阶段生成连贯故事
-
-**阶段1：故事大纲生成**
-```python
-def generate_story_outline(config: ProjectConfig) -> StoryOutline:
-    """生成完整故事大纲"""
-
-    style_template = STYLE_TEMPLATES[config.style]
-
-    prompt = f"""
-你是一位专业的视频脚本策划师。请为以下主题创作一个{config.shot_count}镜头的短视频故事大纲。
-
-主题：{config.topic}
-视觉风格：{style_template['name']}（{style_template['description']})
-镜头数：{config.shot_count}个
-总时长：{config.shot_count * config.shot_duration}秒
-
-故事结构要求：
-1. 起承转合结构清晰
-2. 每个镜头是故事的有机组成部分
-3. 镜头之间有明确的因果关系或时间推进
-4. 视觉风格统一：{style_template['visual_style']}
-5. 色彩基调：{style_template['color_palette']}
-6. 典型元素：{', '.join(style_template['typical_elements'][:3])}
-
-请以JSON格式输出故事大纲：
-{{
-  "title": "故事标题",
-  "theme": "核心主题",
-  "story_arc": {{
-    "setup": "开场设定（30字内）",
-    "development": "情节发展（30字内）",
-    "climax": "高潮转折（30字内）",
-    "resolution": "结局升华（30字内）"
-  }},
-  "visual_theme": {{
-    "primary_colors": ["主色调1", "主色调2"],
-    "key_elements": ["核心视觉元素1", "核心视觉元素2"],
-    "lighting_mood": "整体光影氛围"
-  }},
-  "shot_breakdown": [
-    {{
-      "shot_number": 1,
-      "story_beat": "起",
-      "scene_summary": "镜头内容概要（20字内）",
-      "key_action": "关键动作",
-      "transition_to_next": "与下一镜头的连接"
-    }},
-    // ... 其他镜头
-  ]
-}}
-"""
-
-    response = call_deepseek_api(prompt)
-    return parse_story_outline(response)
+### GET `/api/tasks/<task_id>`
+返回：
+```json
+{
+  "task_id": "aka-123456",
+  "status": "speech_ready",
+  "avatar_url": "https://...",
+  "audio_url": "https://...",
+  "video_url": null,
+  "stages": { "avatar": {...}, "speech": {...}, "video": {...} },
+  "cost_estimate_usd": 0.045,
+  "trace_id": "req-789",
+  "logs": ["2025-12-30 13:30 avatar ready", "..."]
+}
 ```
 
-**阶段2：分镜脚本生成**
-```python
-def generate_shot_scripts(outline: StoryOutline, config: ProjectConfig) -> List[ShotScript]:
-    """基于故事大纲生成详细分镜"""
+### POST `/api/assets/upload`
+- 供前端上传头像或字幕，可返回临时 URL。
 
-    shots = []
-    style_template = STYLE_TEMPLATES[config.style]
+---
 
-    for i, beat in enumerate(outline.shot_breakdown):
-        # 获取前后镜头信息用于连贯性
-        prev_shot = outline.shot_breakdown[i-1] if i > 0 else None
-        next_shot = outline.shot_breakdown[i+1] if i < len(outline.shot_breakdown)-1 else None
+## 8. 错误处理与重试
 
-        prompt = f"""
-基于以下故事大纲，生成第{i+1}个镜头的详细英文prompt（用于AI视频生成）。
+- `services/digital_human_service` 抛 `ExternalAPIError(code, message, provider_trace)`，API 层转换为 HTTP 4xx/5xx。
+- 重试策略：指数退避 (5s/10s/15s)，超过次数标记任务失败并透传错误信息。
+- 网络/限流错误 → 自动重试；参数错误 → 直接失败并返回可诊断信息。
+- 所有阶段记录 trace id 与 provider task id，便于对接 WaveSpeed 官方支持。
 
-整体故事：{outline.theme}
-视觉主题：主色调{outline.visual_theme['primary_colors']},
-          核心元素{outline.visual_theme['key_elements']},
-          光影氛围{outline.visual_theme['lighting_mood']}
+---
 
-当前镜头：
-- 镜头编号：{beat['shot_number']}/{config.shot_count}
-- 故事节拍：{beat['story_beat']}
-- 场景概要：{beat['scene_summary']}
-- 关键动作：{beat['key_action']}
+## 9. 部署拓扑（Nginx + 后端）
 
-前一镜头连接：{prev_shot['transition_to_next'] if prev_shot else '开场'}
-下一镜头铺垫：{beat['transition_to_next']}
+1. 后端服务：
+   ```bash
+   source venv/bin/activate
+   python3 ad-back.py --port 18005 --config config.yaml
+   ```
+2. 前端构建：`npm run build` → 部署 `frontend/dist` 至 `/var/www/digital-human`.
+3. Nginx（关键点）：
+   - `server_name ren.linapp.fun;`
+   - `location /api/ { proxy_pass http://127.0.0.1:18005/; proxy_read_timeout 120s; }`
+   - `location / { try_files $uri /index.html; }`
+   - HTTPS 证书由 Certbot 管理。
 
-风格要求：
-- 视觉风格：{style_template['visual_style']}
-- 色彩方案：{style_template['color_palette']}
-- 光影：{style_template['lighting']}
-- 镜头运动：{style_template['camera_movement']}
-- 氛围：{style_template['mood']}
+---
 
-请生成一个80-120词的详细英文prompt，要求：
-1. 包含具体的视觉描述（场景、主体、动作）
-2. 体现与前一镜头的连续性
-3. 为下一镜头做铺垫
-4. 严格遵守风格模板
-5. 描述要cinemat ic和专业
+## 10. 成本与调试
 
-只返回prompt文本，不要其他内容。
-"""
+| 阶段 | 服务 | 成本估算 |
+|------|------|---------|
+| 形象 | Seedream v4 | \$0.02–0.05 / 张 |
+| 语音 | MiniMax speech-02-hd | \$0.01–0.03 / 分钟 |
+| 唇同步 | Infinitetalk | \$0.10–0.20 / 分钟 |
 
-        response = call_deepseek_api(prompt)
-        shot_prompt = response.strip()
+- **调试模式**（默认开启）：限制语音 <= 10s，预计总成本 < \$0.05。
+- **生产模式**：取消限制，但需在任务创建时显式 `debug_mode=false`。
+- `py/test_network.py --digital-human`：按顺序调用三阶段 API，验证 Key、网络、限流配置。
 
-        shots.append(ShotScript(
-            id=beat['shot_number'],
-            story_beat=beat['story_beat'],
-            summary_cn=beat['scene_summary'],
-            prompt_en=shot_prompt,
-            visual_continuity={
-                'from_previous': prev_shot['key_action'] if prev_shot else None,
-                'to_next': beat['transition_to_next']
-            }
-        ))
+---
 
-    return shots
-```
+## 11. 测试策略
 
-**数据结构**：
-```python
-@dataclass
-class StoryOutline:
-    title: str
-    theme: str
-    story_arc: dict      # {setup, development, climax, resolution}
-    visual_theme: dict   # {primary_colors, key_elements, lighting_mood}
-    shot_breakdown: list # 每个镜头的概要
+1. **Mock 单测**：`PYTEST_WAVESPEED_MOCK=1 pytest test/test-digital-human.py`。
+2. **真实冒烟**：准备 8-10 秒文案，运行 `python3 py/test_network.py --digital-human`。
+3. **前后端联调**：`npm run dev` + `python3 ad-back.py --port 18005`，从浏览器创建任务，观察状态转换。
+4. **部署验证**：上线后访问 `https://ren.linapp.fun/api/health`，并生成一条 10 秒视频，确认 CDN URL 可播放。
 
-@dataclass
-class ShotScript:
-    id: int
-    story_beat: str              # 起/承/转/合
-    summary_cn: str              # 中文概要
-    prompt_en: str               # 英文prompt（用于生成）
-    visual_continuity: dict      # 连贯性信息
-```
+---
 
-#### 2.2 视频素材生成模块（使用WavespeedAI API）
-- **图像生成**：根据prompt生成关键帧
-- **视频生成**：基于图像或prompt生成3秒视频片段
-- **音频生成**：生成科技感背景音乐（电子、氛围音乐）
-- **参数配置**：
-  - 分辨率：1080p或4K
-  - 帧率：30fps或60fps
-  - 视频时长：3秒/镜头
+## 12. 后续优化方向
 
-#### 2.3 视频合成模块
-- **工具**：使用FFmpeg或moviepy库
-- **功能**：
-  - 拼接多个视频片段
-  - 添加背景音乐
-  - 可选：添加淡入淡出转场效果
-  - 音视频同步
-- **输出格式**：MP4（H.264编码）
+- **多角色对话**：扩展 Infinitetalk Multi，支持左右角色、轮流说话。
+- **字幕/水印**：复用 `services/subtitle_service` 将文本渲染到视频。
+- **BGM 引擎**：整合 `music/` 工具，自动匹配场景氛围音乐。
++- **任务排队/优先级**：增加 Redis 队列或云函数以支撑大规模请求。
 
-### 3. 数据流设计（更新）
+---
 
-```
-阶段0: 配置与验证
-├─ 验证API密钥
-├─ 用户交互获取配置
-└─ 创建工作目录
-
-阶段1: 故事策划（新增✨）
-├─ 调用DeepSeek生成故事大纲
-│  └─ 输出：story_outline.json
-├─ 显示故事结构给用户确认
-└─ 调用DeepSeek生成分镜脚本
-   └─ 输出：shots_script.json（包含连贯的镜头描述）
-
-阶段2: 并发图像生成
-├─ 并发调用WavespeedAI（3个并发）
-│  └─ 输入：每个镜头的prompt
-│  └─ 输出：shot_1_image.png, shot_2_image.png, ...
-└─ 保存检查点
-
-阶段3: 串行视频生成
-├─ 遍历每个镜头（带检查点恢复）
-│  └─ 调用WavespeedAI I2V API
-│  └─ 输出：shot_1.mp4, shot_2.mp4, ...
-│  └─ 保存检查点
-└─ 进度显示
-
-阶段4: 视频合成
-├─ 使用FFmpeg拼接所有镜头
-└─ 输出：final_video.mp4
-```
-
-### 4. 关键算法设计
-
-#### 4.1 连贯性提示词生成算法
-```python
-def enhance_prompt_with_continuity(
-    shot: ShotScript,
-    prev_shot: Optional[ShotScript],
-    next_hint: str,
-    style: dict
-) -> str:
-    """增强提示词的连贯性"""
-
-    # 基础prompt
-    prompt = shot.prompt_en
-
-    # 添加前一镜头的视觉延续
-    if prev_shot:
-        continuity_prefix = f"Continuing from previous scene with {prev_shot.visual_continuity['to_next']}, "
-        prompt = continuity_prefix + prompt
-
-    # 添加风格一致性描述
-    style_suffix = f", {style['visual_style']}, "
-    style_suffix += f"color grading: {style['color_palette']}, "
-    style_suffix += f"{style['lighting']}, "
-    style_suffix += f"{style['camera_movement']}, "
-    style_suffix += f"{style['mood']} atmosphere"
-
-    prompt += style_suffix
-
-    # 添加为下一镜头的过渡
-    if next_hint:
-        transition_suffix = f", transitioning towards {next_hint}"
-        prompt += transition_suffix
-
-    return prompt
-```
-
-#### 4.2 故事节拍分配算法
-```python
-def assign_story_beats(shot_count: int) -> List[str]:
-    """根据镜头数分配起承转合"""
-
-    if shot_count == 3:
-        return ['起', '承转', '合']
-    elif shot_count == 4:
-        return ['起', '承', '转', '合']
-    elif shot_count == 5:
-        return ['起', '承', '承转', '转', '合']
-    else:  # 6-10个镜头
-        beats = ['起']
-        development_count = (shot_count - 3) // 2
-        climax_count = (shot_count - 3) - development_count
-
-        beats.extend(['承'] * development_count)
-        beats.extend(['转'] * climax_count)
-        beats.append('合')
-
-        return beats
-```
-
-### 4. 错误处理
-- API调用失败重试机制（最多3次）
-- 超时处理（设置合理timeout）
-- 文件生成验证（检查文件大小和完整性）
-- 日志记录（记录关键步骤和错误）
-
-### 5. 配置文件设计
-**.env文件**：
-```
-DEEPSEEK_API_KEY=your_key
-WAVESPEED_API_KEY=your_key
-WAVESPEED_API_URL=api_endpoint
-```
-
-### 6. 输出目录结构
-```
-./akamAI/
-  ├── shots_script.json      # 镜头脚本
-  ├── shot_1.mp4             # 镜头1
-  ├── shot_2.mp4             # 镜头2
-  ├── shot_3.mp4             # 镜头3
-  ├── background_music.mp3   # 背景音乐
-  ├── final_video.mp4        # 最终成品
-  └── logs.txt               # 日志文件
-```
-
-### 7. 技术选型
-- **Python 3.8+**
-- **依赖库**：
-  - `requests`：API调用
-  - `python-dotenv`：环境变量管理
-  - `moviepy`或`ffmpeg-python`：视频处理
-  - `openai`或`requests`：DeepSeek API调用
-
-### 8. 性能考虑
-- 异步处理可以加快多个镜头的并行生成
-- 但考虑到简单性，初版使用同步顺序处理
-- 预计总耗时：5-10分钟（取决于API响应速度）
+> 如需修改数字人 API 参数或新增模型，请先更新 `doc/数字人.md`，再同步 README/AGENTS/CLAUDE/本设计文档，确保全体成员可遵循最新架构实施。***

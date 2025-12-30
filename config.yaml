@@ -115,7 +115,6 @@ visual_styles:
 # ============================================================
 api:
   deepseek_key: ""  # 留空从环境变量读取
-  kimi_key: ""      # 月之暗面Kimi API Key（可选，留空从环境变量读取）
   wavespeed_key: ""  # 留空从环境变量读取
 
 # ============================================================
@@ -126,11 +125,6 @@ rate_limits:
   deepseek:
     max_requests_per_minute: 50  # 每分钟最多50次
     max_requests_per_day: null   # 不限制每天次数（null表示不限制）
-
-  # Kimi (Moonshot) API限流（故事生成）
-  kimi:
-    max_requests_per_minute: 30  # 每分钟最多30次
-    max_requests_per_day: null   # 不限制每天次数
 
   # WavespeedAI 图像生成限流
   image_generation:
@@ -151,6 +145,12 @@ workflow:
 
   # 并发配置
   max_concurrent_workers: 3  # 图像生成并发数（建议2-4，过高可能触发限流）
+  task_runner:
+    max_parallel_tasks: 2
+    retry:
+      max_attempts: 3
+      initial_delay: 5  # seconds
+      backoff_multiplier: 2
 
   # 输出目录
   output_base: "./output"
@@ -181,6 +181,9 @@ runtime:
     backoff_seconds: 5
     max_backoff_seconds: 30
 
+frontend:
+  public_url: "https://ren.linapp.fun"
+  assets_cdn: null
   # 图床上传（多图床自动容错）
   image_upload:
     # 旧配置（向后兼容）
@@ -204,6 +207,12 @@ runtime:
         api_key: "d139be0b91a49610f8c8b2a5c07d3cd7"
         # 特点：需要API key，仅作备用（当前key已失效）
 
+storage:
+  local_mount: "/mnt/www"
+  public_base_url: "https://s.linapp.fun"
+  namespace: "ren"
+  final_video_name: "digital_human.mp4"
+  task_dir_pattern: "ren_%m%d%H%M"
 # ============================================================
 # 模型配置
 # ============================================================
@@ -402,6 +411,7 @@ models:
           # 必需参数: image
           # 注意：prompt是可选的！duration和resolution由API自动处理
           prompt: null  # 可选（特殊！）
+          duration: 5   # Hailuo 2.3需要显式duration，否则返回400
           enable_prompt_expansion: true  # 默认true（与其他模型不同）
         constraints:
           # Hailuo没有resolution/duration参数，由API自动决定
@@ -485,7 +495,6 @@ llm:
   # 数字映射（方便 user.yaml 中选择）
   number_map:
     1: "deepseek"  # DeepSeek 直连（推荐，最便宜）
-    2: "kimi"      # Kimi (Moonshot) 中文体验更好
 
   # 提供商配置
   providers:
@@ -499,18 +508,6 @@ llm:
       timeout_seconds: 60
       rate_limits:
         max_requests_per_minute: 50
-        max_requests_per_day: null
-    kimi:
-      name: "Kimi (Moonshot)"
-      endpoint: "https://api.moonshot.cn/v1/chat/completions"
-      model: "moonshot-v1-8k"
-      api_key_env: "Moonshot_Kimi_API_KEY"      # 从 .env 读取
-      api_key_config: "api.kimi_key"             # 或在 config.yaml > api.kimi_key 配置
-      temperature: 0.7
-      max_tokens: null
-      timeout_seconds: 60
-      rate_limits:
-        max_requests_per_minute: 30
         max_requests_per_day: null
 
 # ============================================================

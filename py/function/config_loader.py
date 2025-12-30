@@ -70,6 +70,9 @@ class LoadedConfig:
     runtime: Dict[str, Any] = field(default_factory=dict)
     rate_limits: Dict[str, Any] = field(default_factory=dict)
     models: Dict[str, Any] = field(default_factory=dict)
+    frontend: Dict[str, Any] = field(default_factory=dict)
+    storage: Dict[str, Any] = field(default_factory=dict)
+    frontend: Dict[str, Any] = field(default_factory=dict)
 
 
 def build_mappings(config: Dict[str, Any]) -> MappingConfig:
@@ -111,6 +114,8 @@ def load_config() -> LoadedConfig:
     runtime_cfg = merged.get("runtime", {})
     rate_limits = merged.get("rate_limits", {})
     models_cfg = merged.get("models", {})
+    frontend_cfg = merged.get("frontend", {})
+    storage_cfg = merged.get("storage", {})
 
     return LoadedConfig(
         project_root=PROJECT_ROOT,
@@ -125,6 +130,8 @@ def load_config() -> LoadedConfig:
         runtime=runtime_cfg,
         rate_limits=rate_limits,
         models=models_cfg,
+        frontend=frontend_cfg,
+        storage=storage_cfg,
     )
 
 

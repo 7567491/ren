@@ -56,9 +56,15 @@ class TaskRequest:
     emotion: str
     seed: int
     mask_image: Optional[str] = None
+    character: Optional[Dict[str, Any]] = None
 
     def as_dict(self) -> Dict[str, Any]:
-        return asdict(self)
+        payload = asdict(self)
+        character = payload.get("character")
+        if character:
+            allowed_keys = ["id", "name", "appearance", "voice", "image_url", "image_path", "tags", "source"]
+            payload["character"] = {k: character.get(k) for k in allowed_keys if character.get(k) is not None}
+        return payload
 
 
 @dataclass
@@ -151,6 +157,14 @@ class TaskRunner:
             paths=self.storage.prepare_task_paths(job_id),
             record=self._init_record(job_id, request),
         )
+        if ctx.request.character:
+            sanitized = self._sanitize_character(ctx.request.character)
+            ctx.record.assets["character"] = sanitized
+            ctx.record.assets["character_id"] = sanitized.get("id")
+            self._log(
+                ctx,
+                f"🎭 使用角色 {sanitized.get('name') or sanitized.get('id')}",
+            )
         try:
             self._validate_config_hash(job_id)
             self._set_status(ctx, TaskStatus.PENDING, "任务已创建，等待执行")
@@ -275,6 +289,7 @@ class TaskRunner:
             ctx.record.duration = video_result.get("duration")
             ctx.record.assets["duration"] = video_result.get("duration")
 
+        video_stage_end = datetime.now(timezone.utc)
         self._update_stage(
             ctx,
             "video",
@@ -283,6 +298,16 @@ class TaskRunner:
             output_url=ctx.record.assets["video_url"],
             artifact_path=str(local_path),
         )
+        ctx.record.assets["video_stage_completed_at"] = video_stage_end.isoformat()
+        start_at = ctx.record.assets.get("video_stage_started_at")
+        if start_at:
+            try:
+                start_dt = datetime.fromisoformat(start_at)
+                elapsed = (video_stage_end - start_dt).total_seconds()
+                ctx.record.assets["video_stage_seconds"] = max(elapsed, 0.0)
+            except ValueError:
+                pass
+        self._persist(ctx)
 
     # ------------------------------------------------------------------ #
     # 内部辅助方法
@@ -298,6 +323,8 @@ class TaskRunner:
             trace_id=f"trace-{uuid4().hex[:12]}",
             config_hash=self.config_hash,
         )
+        speech_text = request.speech_text or ""
+        record.assets["text_length"] = len(speech_text)
         return record
 
     def _increase_cost(self, ctx: TaskContext, stage: str, value: float) -> None:
@@ -322,6 +349,8 @@ class TaskRunner:
             )
         ctx.record.status = status
         ctx.record.updated_at = datetime.now(timezone.utc).isoformat()
+        if status == TaskStatus.VIDEO_RENDERING and not ctx.record.assets.get("video_stage_started_at"):
+            ctx.record.assets["video_stage_started_at"] = datetime.now(timezone.utc).isoformat()
         if message:
             self._log(ctx, message, level=level)
         self.task_manager.update_status(ctx.job_id, status.value, message)
@@ -385,6 +414,17 @@ class TaskRunner:
             raise RuntimeError(
                 "配置文件已更新，无法继续使用旧任务。请重新创建任务以加载最新配置。"
             )
+
+    @staticmethod
+    def _sanitize_character(character: Dict[str, Any]) -> Dict[str, Any]:
+        """移除内部字段，仅保留对外可见信息。"""
+        allowed_keys = ["id", "name", "appearance", "voice", "image_url", "image_path", "tags", "source"]
+        sanitized: Dict[str, Any] = {}
+        for key in allowed_keys:
+            value = character.get(key)
+            if value is not None:
+                sanitized[key] = value
+        return sanitized
 
 
 __all__ = [

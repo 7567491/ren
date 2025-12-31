@@ -44,6 +44,9 @@ const APP_CONFIG = {
 
 // 冻结配置对象，防止运行时修改
 Object.freeze(APP_CONFIG);
+if (typeof window !== 'undefined') {
+    window.APP_CONFIG = APP_CONFIG;
+}
 
 // 调试信息
 if (APP_CONFIG.DEBUG) {

@@ -64,22 +64,50 @@
         </template>
         <section class="task-list-section">
           <div v-if="!taskHistory.length" class="empty-state">暂无任务，快来创建第一个任务。</div>
-          <ul v-else class="task-list">
-            <li v-for="task in taskHistory" :key="task.id" :class="{ active: task.id === currentJobId }">
-              <div class="task-meta">
-                <strong>{{ task.id }}</strong>
-                <span class="status-badge" :class="task.status">{{ describeStatus(task.status) }}</span>
-              </div>
-              <div class="task-info-row">
-                <span>{{ formatTimestamp(task.updatedAt) }}</span>
-                <span class="task-message">{{ task.message }}</span>
-              </div>
-              <div class="task-actions">
-                <button type="button" class="btn-text" @click="handleTaskSelection(task.id)">查看</button>
-                <button type="button" class="btn-text danger" @click="removeTaskFromHistory(task.id)">移除</button>
-              </div>
-            </li>
-          </ul>
+          <template v-else>
+            <ul class="task-list">
+              <li v-for="task in latestTasks" :key="task.id" :class="{ active: task.id === currentJobId }">
+                <div class="task-row task-primary">
+                  <div class="task-id">
+                    <strong>{{ task.id }}</strong>
+                    <span class="status-badge" :class="task.status">{{ describeStatus(task.status) }}</span>
+                  </div>
+                  <span class="task-time">{{ formatTimestamp(task.updatedAt) }}</span>
+                </div>
+                <div class="task-row task-secondary">
+                  <span class="task-message" :title="task.message">{{ task.message }}</span>
+                  <div class="task-actions">
+                    <button type="button" class="btn-text" @click="handleTaskSelection(task.id)">查看</button>
+                    <button type="button" class="btn-text danger" @click="removeTaskFromHistory(task.id)">移除</button>
+                  </div>
+                </div>
+              </li>
+            </ul>
+            <details v-if="extraTasks.length" class="task-list-more">
+              <summary>
+                <span>{{ extraTasksSummary }}</span>
+                <span class="summary-hint">点击展开/收起</span>
+              </summary>
+              <ul class="task-list secondary">
+                <li v-for="task in extraTasks" :key="`more-${task.id}`" :class="{ active: task.id === currentJobId }">
+                  <div class="task-row task-primary">
+                    <div class="task-id">
+                      <strong>{{ task.id }}</strong>
+                      <span class="status-badge" :class="task.status">{{ describeStatus(task.status) }}</span>
+                    </div>
+                    <span class="task-time">{{ formatTimestamp(task.updatedAt) }}</span>
+                  </div>
+                  <div class="task-row task-secondary">
+                    <span class="task-message" :title="task.message">{{ task.message }}</span>
+                    <div class="task-actions">
+                      <button type="button" class="btn-text" @click="handleTaskSelection(task.id)">查看</button>
+                      <button type="button" class="btn-text danger" @click="removeTaskFromHistory(task.id)">移除</button>
+                    </div>
+                  </div>
+                </li>
+              </ul>
+            </details>
+          </template>
         </section>
 
         <section class="form-wrapper">
@@ -287,76 +315,37 @@
         <template #actions>
           <a href="/doc/frontend_task_flow.md" target="_blank" rel="noreferrer" class="link">任务流说明</a>
         </template>
-        <div class="progress-headline">
-          <div v-if="currentJobId" class="task-info">任务 ID：<code>{{ currentJobId }}</code></div>
-          <div class="progress-meter" role="progressbar" :aria-valuenow="overallProgressPercent" aria-valuemin="0" aria-valuemax="100">
-            <div class="progress-meter__fill" :style="{ width: overallProgressLabel }"></div>
-            <span class="progress-meter__label">{{ overallProgressLabel }}</span>
-          </div>
-        </div>
-        <ul class="stage-pipeline">
-          <li
-            v-for="definition in stageDefinitions"
-            :key="definition.id"
-            :class="['stage', stageStatus[definition.id].state]"
-          >
-            <div class="stage-icon" :style="{ borderColor: definition.color }">
-              <span class="stage-base">{{ definition.icon }}</span>
-              <span class="stage-state">{{ stageStateIcon(definition.id) }}</span>
-            </div>
-            <div>
-              <p class="stage-text">{{ definition.label }}</p>
-              <p class="stage-desc">{{ stageStatus[definition.id].description }}</p>
-            </div>
-          </li>
-        </ul>
-
-        <div class="status-message" :class="statusAccent">
-          {{ statusMessage }}
-        </div>
-        <div v-if="countdownVisible" class="countdown-hint">
-          ⏱️ 预计剩余 <strong>{{ countdownLabel }}</strong>
-          <span v-if="countdownSource" class="countdown-source">（{{ countdownSource }}）</span>
-        </div>
-
-        <div v-if="costEstimateValue !== null" class="cost-estimate">
-          预计成本：<strong>${{ costEstimateValue?.toFixed(2) }}</strong>
-          <small>{{ costEstimateDesc }}</small>
-        </div>
-
-        <section class="asset-preview">
-          <div v-if="avatarUrl" class="asset-card">
-            <p class="asset-title">头像预览</p>
-            <img :src="avatarUrl" alt="生成头像" class="asset-image" />
-          </div>
-
-          <div v-if="audioUrl" class="asset-card">
-            <p class="asset-title">语音试听</p>
-            <audio :src="audioUrl" controls></audio>
-          </div>
-        </section>
-
-        <section v-if="taskStatus === 'finished' && resultVideoUrl" class="result-container">
-          <p class="asset-title">最终视频</p>
-          <video
-            ref="videoPlayerEl"
-            class="video-player video-js vjs-default-skin"
-            playsinline
-            data-setup="{}"
-          ></video>
-          <div class="cost-display">
-            总成本: ${{ totalCost.toFixed(2) }}
-            <small v-if="billingSummary">{{ billingSummary }}</small>
-          </div>
-          <div class="result-actions">
-            <button class="btn-download" @click="downloadVideo">📥 下载视频</button>
-            <button class="btn-share" @click="copyVideoLink">🔗 复制链接</button>
-          </div>
-        </section>
-
-        <div v-if="taskStatus === 'failed'" class="error-message">
-          <strong>❌ 生成失败</strong>
-          <p>{{ errorMessage }}</p>
+        <ProgressPanel
+          v-if="!isMobile"
+          :current-job-id="currentJobId"
+          :overall-progress-label="overallProgressLabel"
+          :overall-progress-percent="overallProgressPercent"
+          :stage-definitions="stageDefinitions"
+          :stage-status="stageStatus"
+          :stage-state-icon="stageStateIcon"
+          :status-accent="statusAccent"
+          :status-message="statusMessage"
+          :countdown-visible="countdownVisible"
+          :countdown-label="countdownLabel"
+          :countdown-source="countdownSource"
+          :cost-estimate-value="costEstimateValue"
+          :cost-estimate-desc="costEstimateDesc"
+          :avatar-url="avatarUrl"
+          :audio-url="audioUrl"
+          :task-status="taskStatus"
+          :result-video-url="resultVideoUrl"
+          :total-cost="totalCost"
+          :billing-summary="billingSummary"
+          :download-video="downloadVideo"
+          :copy-video-link="copyVideoLink"
+          :error-message="errorMessage"
+          :video-player-ref="videoPlayerEl"
+        />
+        <div v-else class="drawer-summary">
+          <p>移动端通过底部抽屉查看完整进度，当前进度 <strong>{{ overallProgressLabel }}</strong>。</p>
+          <button type="button" class="drawer-launch" @click="toggleMobileDrawer('progress')">
+            查看进度抽屉
+          </button>
         </div>
       </CardContainer>
 
@@ -369,46 +358,97 @@
         persist-key="material-card"
         :error="dashboardStore.errors.material"
       >
-        <div v-if="!currentJobId" class="empty-state">未选择任务，暂无法展示素材。</div>
-        <div v-else>
-          <p class="bucket-path">当前任务目录：<code>{{ currentBucketDir }}</code></p>
-          <section v-if="audioUrl || (taskStatus === 'finished' && resultVideoUrl)" class="material-preview">
-            <div v-if="audioUrl" class="material-audio">
-              <p class="asset-title">语音素材</p>
-              <audio :src="audioUrl" controls></audio>
-            </div>
-            <div v-if="taskStatus === 'finished' && resultVideoUrl" class="material-video">
-              <p class="asset-title">视频素材</p>
-              <video :src="resultVideoUrl" controls playsinline></video>
-            </div>
-          </section>
-          <ul v-if="materialItems.length" class="material-list">
-            <li v-for="item in materialItems" :key="item.id">
-              <div class="material-meta">
-                <strong>{{ item.label }}</strong>
-                <span class="material-tag" :class="item.type">{{ item.type }}</span>
-              </div>
-              <p v-if="item.description" class="material-desc">{{ item.description }}</p>
-              <p v-if="item.localPath" class="material-path">本地：<code>{{ item.localPath }}</code></p>
-              <p v-if="item.publicUrl" class="material-path">公网：<code>{{ item.publicUrl }}</code></p>
-              <div class="material-actions">
-                <button v-if="item.localPath" type="button" class="btn-text" @click="copyLocalPath(item.localPath)">
-                  复制本地
-                </button>
-                <button v-if="item.publicUrl" type="button" class="btn-text" @click="copyPublicLink(item.publicUrl)">
-                  复制公网
-                </button>
-                <button v-if="item.publicUrl" type="button" class="btn-text" @click="openPublicLink(item.publicUrl)">
-                  打开
-                </button>
-              </div>
-            </li>
-          </ul>
-          <div v-else class="empty-state">暂无素材文件，等待任务产出。</div>
+        <MaterialPanel
+          v-if="!isMobile"
+          :current-job-id="currentJobId"
+          :current-bucket-dir="currentBucketDir"
+          :audio-url="audioUrl"
+          :result-video-url="resultVideoUrl"
+          :task-status="taskStatus"
+          :material-items="materialItems"
+          :copy-local-path="copyLocalPath"
+          :copy-public-link="copyPublicLink"
+          :open-public-link="openPublicLink"
+        />
+        <div v-else class="drawer-summary">
+          <p>移动端通过底部抽屉快速浏览素材路径与公网链接。</p>
+          <button type="button" class="drawer-launch" @click="toggleMobileDrawer('material')">
+            打开素材抽屉
+          </button>
         </div>
       </CardContainer>
     </DashboardGrid>
   </main>
+
+  <div v-if="isMobile" class="mobile-drawer-bar">
+    <button
+      v-for="btn in drawerButtons"
+      :key="btn.id"
+      type="button"
+      class="drawer-toggle"
+      :class="{ active: mobileDrawerPanel === btn.id }"
+      @click="toggleMobileDrawer(btn.id)"
+    >
+      <span class="drawer-icon">{{ btn.icon }}</span>
+      <span class="drawer-label">{{ btn.label }}</span>
+      <small v-if="btn.id === 'progress'">{{ overallProgressLabel }}</small>
+      <small v-else>{{ materialItems.length ? `${materialItems.length} 条` : '暂无' }}</small>
+    </button>
+  </div>
+  <transition name="drawer-fade">
+    <div v-if="drawerActive" class="drawer-overlay" @click="closeMobileDrawer"></div>
+  </transition>
+  <transition name="drawer-slide">
+    <section v-if="drawerActive" class="drawer-panel">
+      <header class="drawer-panel__header">
+        <div>
+          <p class="drawer-panel__eyebrow">{{ drawerPanelSubtitle }}</p>
+          <h3>{{ drawerPanelTitle }}</h3>
+        </div>
+        <button type="button" class="drawer-close" @click="closeMobileDrawer">关闭</button>
+      </header>
+      <div class="drawer-panel__body">
+        <ProgressPanel
+          v-if="mobileDrawerPanel === 'progress'"
+          :current-job-id="currentJobId"
+          :overall-progress-label="overallProgressLabel"
+          :overall-progress-percent="overallProgressPercent"
+          :stage-definitions="stageDefinitions"
+          :stage-status="stageStatus"
+          :stage-state-icon="stageStateIcon"
+          :status-accent="statusAccent"
+          :status-message="statusMessage"
+          :countdown-visible="countdownVisible"
+          :countdown-label="countdownLabel"
+          :countdown-source="countdownSource"
+          :cost-estimate-value="costEstimateValue"
+          :cost-estimate-desc="costEstimateDesc"
+          :avatar-url="avatarUrl"
+          :audio-url="audioUrl"
+          :task-status="taskStatus"
+          :result-video-url="resultVideoUrl"
+          :total-cost="totalCost"
+          :billing-summary="billingSummary"
+          :download-video="downloadVideo"
+          :copy-video-link="copyVideoLink"
+          :error-message="errorMessage"
+          :video-player-ref="videoPlayerEl"
+        />
+        <MaterialPanel
+          v-else-if="mobileDrawerPanel === 'material'"
+          :current-job-id="currentJobId"
+          :current-bucket-dir="currentBucketDir"
+          :audio-url="audioUrl"
+          :result-video-url="resultVideoUrl"
+          :task-status="taskStatus"
+          :material-items="materialItems"
+          :copy-local-path="copyLocalPath"
+          :copy-public-link="copyPublicLink"
+          :open-public-link="openPublicLink"
+        />
+      </div>
+    </section>
+  </transition>
 
   <div v-if="toastMessage" class="toast">{{ toastMessage }}</div>
 
@@ -435,7 +475,10 @@ import { useAppConfig } from '@/composables/useAppConfig';
 import { useMediaQuery } from '@/composables/useMediaQuery';
 import DashboardGrid from '@/layout/DashboardGrid.vue';
 import CardContainer from '@/layout/CardContainer.vue';
+import ProgressPanel from '@/components/panels/ProgressPanel.vue';
+import MaterialPanel from '@/components/panels/MaterialPanel.vue';
 import { useDashboardStore } from '@/stores/dashboard';
+import type { MaterialEntry, StageDefinition, StageKey, StageViewState } from '@/types/dashboard';
 
 interface BillingInfo {
   balance_before?: number;
@@ -482,36 +525,13 @@ interface CharacterRecord {
   status?: string;
 }
 
-interface MaterialEntry {
-  id: string;
-  label: string;
-  type: 'avatar' | 'audio' | 'video' | 'input' | 'log' | 'other';
-  localPath: string;
-  publicUrl: string;
-  description?: string;
-}
-
-type StageKey = 'avatar' | 'speech' | 'video';
-
-interface StageDefinition {
-  id: StageKey;
-  label: string;
-  icon: string;
-  color: string;
-  weight: number;
-}
-
-interface StageViewState {
-  state: 'pending' | 'active' | 'done' | 'failed';
-  description: string;
-}
-
 const DEBUG_MAX_DURATION = 10;
 const DEBUG_MAX_CHARS = DEBUG_MAX_DURATION * 5;
 const MAX_AVATAR_SIZE = 5 * 1024 * 1024;
 const MAX_CHARACTER_IMAGE_SIZE = 10 * 1024 * 1024;
 const DEFAULT_CHARACTER_ID = 'char-mai';
 const DEFAULT_VIDEO_SECONDS_PER_CHAR = 1.2;
+const MAX_VISIBLE_TASKS = 3;
 
 const STAGE_PIPELINE: StageDefinition[] = [
   { id: 'avatar', label: '头像生成', icon: '🧑‍🎨', color: '#a855f7', weight: 0.2 },
@@ -532,6 +552,11 @@ const { sortedTasks } = storeToRefs(dashboardStore);
 const BUCKET_PUBLIC_BASE = 'https://s.linapp.fun';
 const API_KEY_PATTERN = /^(?:sk|ws|pk)_[-A-Za-z0-9]{16,}$/i;
 const stageDefinitions = STAGE_PIPELINE;
+type DrawerPanel = 'progress' | 'material';
+const drawerButtons: Array<{ id: DrawerPanel; label: string; icon: string }> = [
+  { id: 'progress', label: '进度', icon: '📈' },
+  { id: 'material', label: '素材', icon: '🗂️' }
+];
 
 const apiKeyInput = ref(dashboardStore.apiKey);
 const apiKeyVisible = ref(false);
@@ -549,8 +574,15 @@ const balanceError = ref('');
 const balanceLoading = ref(false);
 const toastMessage = ref('');
 const toastTimer = ref<number | null>(null);
+const processedAnalytics = new Set<string>();
+let analyticsHydrationRunning = false;
 const latestTaskSnapshot = ref<TaskResponse | null>(null);
 const taskHistory = computed(() => sortedTasks.value);
+const latestTasks = computed(() => taskHistory.value.slice(0, MAX_VISIBLE_TASKS));
+const extraTasks = computed(() => taskHistory.value.slice(MAX_VISIBLE_TASKS));
+const extraTasksSummary = computed(() =>
+  extraTasks.value.length ? `其余 ${extraTasks.value.length} 个任务` : ''
+);
 watch(
   () => dashboardStore.apiKey,
   (value) => {
@@ -704,6 +736,47 @@ const statusAccent = computed(() => ({
   success: taskStatus.value === 'finished',
   danger: taskStatus.value === 'failed'
 }));
+const mobileDrawerPanel = ref<DrawerPanel | ''>('');
+const drawerActive = computed(() => Boolean(mobileDrawerPanel.value));
+const drawerPanelTitle = computed(() => {
+  if (mobileDrawerPanel.value === 'progress') return '任务进度';
+  if (mobileDrawerPanel.value === 'material') return '素材目录';
+  return '';
+});
+const drawerPanelSubtitle = computed(() => {
+  if (mobileDrawerPanel.value === 'progress') return statusMessage.value;
+  if (mobileDrawerPanel.value === 'material') {
+    if (!currentJobId.value) return '未选择任务';
+    return currentBucketDir.value || '等待素材生成';
+  }
+  return '';
+});
+watch(isMobile, (value) => {
+  if (!value) {
+    closeMobileDrawer();
+  }
+});
+watch(
+  () => mobileDrawerPanel.value,
+  (panel) => {
+    if (typeof document === 'undefined') return;
+    if (panel) {
+      document.body.classList.add('drawer-lock');
+    } else {
+      document.body.classList.remove('drawer-lock');
+    }
+  }
+);
+
+function toggleMobileDrawer(panel: DrawerPanel) {
+  if (!isMobile.value) return;
+  mobileDrawerPanel.value = mobileDrawerPanel.value === panel ? '' : panel;
+}
+
+function closeMobileDrawer() {
+  if (!mobileDrawerPanel.value) return;
+  mobileDrawerPanel.value = '';
+}
 
 const overallProgress = computed(() =>
   stageDefinitions.reduce((total, definition) => {
@@ -1603,9 +1676,6 @@ function bucketPathToPublicUrl(localPath: string) {
   }
 }
 
-const processedAnalytics = new Set<string>();
-let analyticsHydrationRunning = false;
-
 function syncCurrentJobMetadata() {
   if (!currentJobId.value) {
     currentJobTextLength.value = null;
@@ -1995,6 +2065,9 @@ onBeforeUnmount(() => {
     videoPlayerInstance.dispose();
     videoPlayerInstance = null;
   }
+  if (typeof document !== 'undefined') {
+    document.body.classList.remove('drawer-lock');
+  }
 });
 </script>
 
@@ -2231,6 +2304,9 @@ onBeforeUnmount(() => {
   border-radius: 12px;
   padding: 0.85rem;
   transition: border-color 0.2s ease, background-color 0.2s ease;
+  display: flex;
+  flex-direction: column;
+  gap: 0.35rem;
 }
 
 .task-list li.active {
@@ -2238,11 +2314,32 @@ onBeforeUnmount(() => {
   background: rgba(37, 99, 235, 0.08);
 }
 
-.task-meta {
+.task-row {
   display: flex;
   align-items: center;
   justify-content: space-between;
   gap: 0.5rem;
+}
+
+.task-row + .task-row {
+  margin-top: 0.15rem;
+}
+
+.task-id {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  min-width: 0;
+}
+
+.task-time {
+  font-size: 0.85rem;
+  color: rgba(226, 232, 240, 0.75);
+  white-space: nowrap;
+}
+
+.task-row.task-secondary {
+  align-items: center;
 }
 
 .status-badge {
@@ -2269,23 +2366,64 @@ onBeforeUnmount(() => {
   border-color: rgba(59, 130, 246, 0.4);
 }
 
-.task-info-row {
-  display: flex;
-  flex-direction: column;
-  gap: 0.3rem;
-  margin: 0.5rem 0;
-  color: rgba(226, 232, 240, 0.8);
-  font-size: 0.9rem;
-}
-
 .task-message {
+  flex: 1;
+  min-width: 0;
   color: rgba(248, 250, 252, 0.85);
+  font-size: 0.9rem;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
 }
 
 .task-actions {
   display: flex;
   justify-content: flex-end;
-  gap: 0.5rem;
+  gap: 0.35rem;
+  flex-shrink: 0;
+}
+
+.task-list-more {
+  margin-top: 0.75rem;
+  border: 1px dashed rgba(148, 163, 184, 0.35);
+  border-radius: 12px;
+  padding: 0.75rem;
+}
+
+.task-list-more summary {
+  list-style: none;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  cursor: pointer;
+  color: rgba(226, 232, 240, 0.85);
+  font-size: 0.9rem;
+}
+
+.task-list-more summary::-webkit-details-marker {
+  display: none;
+}
+
+.task-list-more[open] summary {
+  color: rgba(226, 232, 240, 1);
+}
+
+.task-list-more .summary-hint {
+  font-size: 0.8rem;
+  color: rgba(148, 163, 184, 0.8);
+}
+
+.task-list-more[open] .summary-hint {
+  color: rgba(248, 250, 252, 0.9);
+}
+
+.task-list.secondary {
+  margin-top: 0.75rem;
+  gap: 0.65rem;
+}
+
+.task-list.secondary li {
+  background: rgba(15, 23, 42, 0.3);
 }
 
 .task-card-actions {
@@ -2371,6 +2509,145 @@ onBeforeUnmount(() => {
   color: #f87171;
 }
 
+.drawer-summary {
+  border: 1px dashed rgba(148, 163, 184, 0.35);
+  border-radius: 12px;
+  padding: 0.85rem;
+  background: rgba(15, 23, 42, 0.35);
+  color: rgba(226, 232, 240, 0.85);
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+}
+
+.drawer-summary strong {
+  color: #c4b5fd;
+}
+
+.drawer-launch {
+  align-self: flex-start;
+  border: 1px solid rgba(99, 102, 241, 0.6);
+  border-radius: 999px;
+  padding: 0.35rem 0.9rem;
+  color: #c4b5fd;
+  background: rgba(30, 27, 75, 0.65);
+  cursor: pointer;
+}
+
+.mobile-drawer-bar {
+  position: fixed;
+  bottom: 0;
+  left: 0;
+  right: 0;
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: 0.4rem;
+  padding: 0.5rem;
+  background: rgba(2, 6, 23, 0.92);
+  border-top: 1px solid rgba(148, 163, 184, 0.15);
+  z-index: 30;
+}
+
+.drawer-toggle {
+  border: none;
+  border-radius: 14px;
+  padding: 0.65rem;
+  display: flex;
+  flex-direction: column;
+  gap: 0.1rem;
+  align-items: flex-start;
+  background: rgba(15, 23, 42, 0.65);
+  color: #e2e8f0;
+  cursor: pointer;
+  box-shadow: inset 0 0 0 1px rgba(148, 163, 184, 0.2);
+}
+
+.drawer-toggle.active {
+  background: rgba(99, 102, 241, 0.25);
+  box-shadow: inset 0 0 0 1px rgba(99, 102, 241, 0.45);
+}
+
+.drawer-toggle small {
+  font-size: 0.75rem;
+  color: rgba(226, 232, 240, 0.75);
+}
+
+.drawer-icon {
+  font-size: 1.25rem;
+}
+
+.drawer-overlay {
+  position: fixed;
+  inset: 0;
+  background: rgba(15, 23, 42, 0.55);
+  z-index: 45;
+}
+
+.drawer-panel {
+  position: fixed;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: #020617;
+  border-radius: 24px 24px 0 0;
+  padding: 1rem 1rem 2rem;
+  z-index: 50;
+  max-height: 85vh;
+  overflow-y: auto;
+  box-shadow: 0 -12px 45px rgba(2, 6, 23, 0.85);
+}
+
+.drawer-panel__header {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  gap: 0.75rem;
+}
+
+.drawer-panel__eyebrow {
+  margin: 0 0 0.25rem;
+  font-size: 0.85rem;
+  color: rgba(148, 163, 184, 0.9);
+}
+
+.drawer-panel__body {
+  margin-top: 1rem;
+}
+
+.drawer-close {
+  border: none;
+  background: rgba(15, 23, 42, 0.7);
+  color: #e2e8f0;
+  border-radius: 999px;
+  padding: 0.35rem 0.9rem;
+  cursor: pointer;
+}
+
+.drawer-slide-enter-active,
+.drawer-slide-leave-active {
+  transition: transform 0.25s ease, opacity 0.2s ease;
+}
+
+.drawer-slide-enter-from,
+.drawer-slide-leave-to {
+  transform: translateY(20%);
+  opacity: 0;
+}
+
+.drawer-fade-enter-active,
+.drawer-fade-leave-active {
+  transition: opacity 0.2s ease;
+}
+
+.drawer-fade-enter-from,
+.drawer-fade-leave-to {
+  opacity: 0;
+}
+
+:global(body.drawer-lock) {
+  overflow: hidden;
+}
+
 .toast {
   position: fixed;
   bottom: 1.5rem;
@@ -2391,6 +2668,10 @@ onBeforeUnmount(() => {
 }
 
 @media (max-width: 768px) {
+  .page {
+    padding-bottom: 6rem;
+  }
+
   .dashboard-grid {
     grid-template-columns: 1fr;
   }

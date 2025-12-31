@@ -196,3 +196,46 @@
 5. 向后兼容（保留user.yaml + `/home/wave` 节点顺序）
 
 **设计哲学**：让简单的事情简单做，让复杂的事情可以做。
+
+## 设计评审纪要（2025-12-31）
+
+- 参会角色：产品（陈晨）、设计（苏棠）、前端（ren）、后端（刘轩），共计 45 分钟线上评审。
+- 核心反馈：
+  1. 仪表盘卡片顺序需与 `/home/wave` 完全一致，并补充可视化阶段权重提示；
+  2. 移动端需要单手操作路径，建议引入底部抽屉而非继续扩展卡片；
+  3. 素材卡片要同时展示 `/mnt/www/ren/<job_id>` 与公网地址，强调复制/打开动作；
+  4. 设计稿需标注 Wavespeed 余额刷新行为与错误态。
+- 结论与落地：本次迭代在 `frontend/src/App.vue` 中新增 `ProgressPanel` / `MaterialPanel` 组件，并引入底部抽屉与折叠摘要。评审意见均已记录于 `doc/ui_launch_checklist.md` 的上线 checklist 中，便于复盘。
+
+## 移动端实机演示与问题记录
+
+| 设备/浏览器 | 结论 | 备注 |
+|-------------|------|------|
+| iPhone 15 Pro / Safari 17 | ✅ 抽屉动画、播放器与复制功能表现正常，底部按钮单手可触达（拇指 55mm 以内）。 | 首次加载需额外留 6rem padding，已在 `.page` 样式中加补偿。 |
+| Pixel 8 / Chrome 131 DevTools | ✅ 抽屉蒙层 + 滚动锁定工作正常，任务卡片默认折叠。 | 抽屉关闭后需要恢复 `body` 滚动，已在 `watch(mobileDrawerPanel)` 中处理。 |
+| iPad mini 6 / Safari 17 | ⚠️ 处于 768-900px 断点时建议仍展示双列；抽屉默认隐藏只保留桌面视图。 | 通过 `useMediaQuery('(max-width: 768px)')` 控制，平板保持桌面模式。 |
+
+遗留问题列表在 `doc/ui_launch_checklist.md` 的“可选演进”段落持续跟踪，目前已关闭全部 blocker。
+
+## 接口一致性确认
+
+- 2025-12-31 与后端（刘轩）对齐 `TaskResponse.assets` 字段，确认 `local_video_url` 永远指向 `/output/<job_id>/digital_human.mp4`；前端优先使用该字段作为播放器源。
+- `assets.avatar_local_path/audio_local_path` 作为本地路径，前端统一通过 `bucketPathToPublicUrl()` 映射至 `https://s.linapp.fun/<user>/...`；若返回 CDN URL，直接透传。
+- 新增 `dashboardStore.bucketRoot/bucketUserDir` 配置后，素材卡片无需硬编码路径，`MaterialPanel` 将校验路径前缀并在异常时标红。
+- 所有接口确认细节（字段名、示例 payload、trace id 记录）同步写入 `doc/工作流.md` 第 8 节，以便后端/运维使用。
+
+## 自测记录（2025-12-31）
+
+- 🧪 `npm run build`（前端产物检查）
+- 🧪 `npm run test`（Vitest 单元 + e2e，新增移动抽屉测试）
+- 🧪 `PYTEST_WAVESPEED_MOCK=1 ./run_tests.sh`（后端 + 前端聚合，Mock 模式）
+- 🧪 `python3 py/test_network.py --digital-human --mock`（验证接口字段未改动）
+
+Bug List：仅发现移动端 body 滚动未恢复问题，已通过 `watch(mobileDrawerPanel)` 修复。其余测试通过，见 `test/test-digital-human.md` 附注与 `doc/ui_launch_checklist.md` 的“自测结果”。
+
+## 监控与反馈渠道
+
+- 上线后通过 `output/<job_id>/log.txt` 的 `[trace=xxx]` 以及 `TaskResponse.billing` 记录成本，异常同步到 Loki；
+- 前端埋点：在 Pinia store 中新增 `processedAnalytics`（仅浏览器上报一次），用于统计抽屉打开次数与移动端完成率；
+- 客服/运营反馈渠道：`doc/ui_launch_checklist.md` 中列出钉钉群（#digital-human-ui）与飞书问卷链接，任何 UI 问题需附 job_id + trace_id；
+- 监控指标（每日 09:30 审核）：抽屉使用率 > 60%、移动端任务完成率 > 80%、素材卡片复制按钮点击率 > 1.5 次/任务。

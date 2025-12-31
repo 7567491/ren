@@ -110,4 +110,50 @@ describe('Dashboard flow', () => {
     expect(wrapper.findAll('.stage.done').length).toBeGreaterThanOrEqual(2);
     expect(wrapper.find('.material-list li').exists()).toBe(true);
   });
+
+  it('enables mobile drawer interactions', async () => {
+    const originalMatchMedia = window.matchMedia;
+    window.matchMedia = vi.fn().mockReturnValue({
+      matches: true,
+      media: '(max-width: 768px)',
+      onchange: null,
+      addEventListener: vi.fn(),
+      removeEventListener: vi.fn(),
+      addListener: vi.fn(),
+      removeListener: vi.fn(),
+      dispatchEvent: vi.fn()
+    });
+
+    const fetchMock = vi.fn(async (input: RequestInfo, init?: RequestInit) => {
+      const url = typeof input === 'string' ? input : input.url;
+      const method = init?.method || 'GET';
+      if (url.endsWith('/api/characters') && method === 'GET') {
+        return mockResponse([{ id: 'char-mai', name: '默认角色' }]);
+      }
+      if (url.endsWith('/api/tasks') && method === 'POST') {
+        return mockResponse({ job_id: 'aka-002', cost_estimate: { total: 0.2 }, assets: {} });
+      }
+      if (url.endsWith('/api/tasks/aka-002')) {
+        return mockResponse({ status: 'avatar_generating', message: '头像生成中', assets: {} });
+      }
+      return mockResponse({ detail: 'ok' });
+    });
+    vi.stubGlobal('fetch', fetchMock);
+
+    try {
+      const wrapper = mount(App);
+      await flushPromises();
+      expect(wrapper.find('.drawer-summary').exists()).toBe(true);
+      const toggles = wrapper.findAll('.drawer-toggle');
+      expect(toggles.length).toBe(2);
+      await toggles[0].trigger('click');
+      await flushPromises();
+      expect(wrapper.find('.drawer-panel').exists()).toBe(true);
+      expect(wrapper.find('.drawer-panel h3').text()).toContain('任务进度');
+      await wrapper.find('.drawer-close').trigger('click');
+      expect(wrapper.find('.drawer-panel').exists()).toBe(false);
+    } finally {
+      window.matchMedia = originalMatchMedia;
+    }
+  });
 });

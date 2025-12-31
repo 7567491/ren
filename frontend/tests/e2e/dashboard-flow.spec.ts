@@ -61,10 +61,11 @@ describe('Dashboard flow', () => {
 
     const fetchMock = vi.fn(async (input: RequestInfo, init?: RequestInit) => {
       const url = typeof input === 'string' ? input : input.url;
-      if (url.endsWith('/api/characters') && (!init || init.method === 'GET')) {
+      const method = init?.method || 'GET';
+      if (url.endsWith('/api/characters') && method === 'GET') {
         return mockResponse([{ id: 'char-mai', name: '默认角色' }]);
       }
-      if (url.endsWith('/api/tasks') && init?.method === 'POST') {
+      if (url.endsWith('/api/tasks') && method === 'POST') {
         return mockResponse({ job_id: 'aka-001', cost_estimate: { total: 0.5 }, assets: {} });
       }
       if (url.endsWith('/api/tasks/aka-001')) {
@@ -79,11 +80,25 @@ describe('Dashboard flow', () => {
 
     const wrapper = mount(App);
     await flushPromises();
+    const vm = wrapper.vm as any;
+    expect(vm.characters?.length).toBeGreaterThan(0);
+    expect(vm.characterError || '').toBe('');
+    const selector = wrapper.find('.character-select select');
+    if (selector.exists()) {
+      await selector.setValue('char-mai');
+      await flushPromises();
+    }
 
     // 提交任务
     await wrapper.find('form').trigger('submit.prevent');
     await flushPromises();
-    expect(fetchMock).toHaveBeenCalledWith(expect.stringContaining('/api/tasks'), expect.objectContaining({ method: 'POST' }));
+    const alert = wrapper.find('.form-alert');
+    expect(alert.exists()).toBe(false);
+    expect(fetchMock).toHaveBeenNthCalledWith(
+      2,
+      expect.stringContaining('/api/tasks'),
+      expect.objectContaining({ method: 'POST' })
+    );
 
     // 驱动轮询
     for (let i = 0; i < pollSnapshots.length; i += 1) {

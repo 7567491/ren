@@ -21,7 +21,10 @@ vi.mock('vue-filepond', () => {
       defineComponent({
         name: 'FilePondStub',
         emits: ['updatefiles'],
-        setup(_, { emit }) {
+        setup(_, { emit, expose }) {
+          expose({
+            removeFiles: vi.fn()
+          });
           return () =>
             h('div', {
               class: 'filepond-stub',
@@ -60,4 +63,3 @@ beforeAll(() => {
 afterEach(() => {
   vi.clearAllMocks();
 });
-

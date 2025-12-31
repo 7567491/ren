@@ -18,10 +18,11 @@ describe('CardContainer', () => {
       }
     });
     expect(wrapper.text()).toContain('content');
+    expect(wrapper.classes()).not.toContain('collapsed');
     await wrapper.find('.collapse-btn').trigger('click');
-    expect(wrapper.find('.body').isVisible()).toBe(false);
+    expect(wrapper.classes()).toContain('collapsed');
     await wrapper.find('.collapse-btn').trigger('click');
-    expect(wrapper.find('.body').isVisible()).toBe(true);
+    expect(wrapper.classes()).not.toContain('collapsed');
   });
 
   it('persists collapse state via persistKey', async () => {
@@ -57,4 +58,3 @@ describe('CardContainer', () => {
     expect(wrapper.find('.card-shell__error').exists()).toBe(true);
   });
 });
-

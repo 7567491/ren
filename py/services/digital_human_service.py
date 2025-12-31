@@ -9,6 +9,7 @@ import asyncio
 import logging
 import os
 import time
+from datetime import datetime, timezone
 from pathlib import Path
 from typing import Any, Dict, Optional
 
@@ -21,6 +22,9 @@ from py.function.config_loader import load_config, LoadedConfig
 from py.services.minimax_tts_service import MiniMaxTTSService
 from py.services.storage_service import StorageService
 from py.services.task_manager import TaskManager
+
+
+WAVESPEED_BALANCE_URL = "https://api.wavespeed.ai/api/v3/balance"
 
 
 class DigitalHumanService:
@@ -149,6 +153,7 @@ class DigitalHumanService:
         emotion: str = "neutral",
         seed: int = 42,
         mask_image: Optional[str] = None,
+        character: Optional[Dict[str, Any]] = None,
     ) -> Dict:
         """公开的数字人生成入口，返回最新的 task.json 数据。"""
         request = TaskRequest(
@@ -163,8 +168,19 @@ class DigitalHumanService:
             emotion=emotion,
             seed=seed,
             mask_image=mask_image,
+            character=character,
         )
-        return await self.task_runner.run(job_id, request)
+        before_balance = await self._safe_fetch_balance(job_id, phase="before")
+
+        try:
+            result = await self.task_runner.run(job_id, request)
+        except Exception:
+            after_balance = await self._safe_fetch_balance(job_id, phase="after")
+            self._finalize_billing(job_id, before_balance, after_balance)
+            raise
+
+        after_balance = await self._safe_fetch_balance(job_id, phase="after")
+        return self._finalize_billing(job_id, before_balance, after_balance, base_record=result)
 
     async def _handle_avatar_upload(
         self,
@@ -233,6 +249,132 @@ class DigitalHumanService:
             relative = target_path
         public_path = Path("output") / relative
         return f"https://s.linapp.fun/{public_path.as_posix().lstrip('/')}"
+
+    async def _safe_fetch_balance(self, job_id: str, phase: str) -> Optional[float]:
+        """查询 Wavespeed 余额（带日志，失败不中断主流程）。"""
+        if not self.wavespeed_key:
+            return None
+
+        phase_label = "任务开始前" if phase == "before" else "任务结束后"
+        try:
+            balance = await self._fetch_wavespeed_balance()
+        except Exception as exc:  # noqa: BLE001
+            self.logger.warning("查询 Wavespeed 余额失败（%s）: %s", phase_label, exc)
+            self.storage.append_log(
+                job_id,
+                f"⚠️ 查询 Wavespeed 余额失败（{phase_label}）: {exc}",
+                level="WARN",
+            )
+            return None
+
+        if balance is None:
+            self.storage.append_log(
+                job_id,
+                f"⚠️ Wavespeed 余额响应为空（{phase_label}）",
+                level="WARN",
+            )
+            return None
+
+        self.storage.append_log(
+            job_id,
+            f"💰 Wavespeed 余额（{phase_label}）: ${balance:.4f}",
+        )
+        return balance
+
+    async def _fetch_wavespeed_balance(self, timeout: float = 10.0) -> Optional[float]:
+        """调用 Wavespeed API 查询余额。"""
+        if not self.wavespeed_key:
+            return None
+
+        headers = {"Authorization": f"Bearer {self.wavespeed_key}"}
+        async with httpx.AsyncClient(timeout=timeout) as client:
+            response = await client.get(WAVESPEED_BALANCE_URL, headers=headers)
+        response.raise_for_status()
+        payload = response.json()
+        return self._parse_balance_payload(payload)
+
+    @staticmethod
+    def _parse_balance_payload(payload: Dict[str, Any]) -> Optional[float]:
+        """解析 Wavespeed 余额响应。"""
+        if not isinstance(payload, dict):
+            return None
+
+        containers: list[Dict[str, Any]] = []
+        data = payload.get("data")
+        if isinstance(data, dict):
+            containers.append(data)
+        containers.append(payload)
+
+        for container in containers:
+            for key in ("balance", "credit", "amount"):
+                value = container.get(key)
+                if value is None:
+                    continue
+                try:
+                    return float(value)
+                except (TypeError, ValueError):
+                    continue
+        return None
+
+    def _finalize_billing(
+        self,
+        job_id: str,
+        before_balance: Optional[float],
+        after_balance: Optional[float],
+        base_record: Optional[Dict[str, Any]] = None,
+    ) -> Dict[str, Any]:
+        """写入余额快照以及实际花费。"""
+        updates: Dict[str, Optional[float]] = {}
+        if before_balance is not None:
+            updates["balance_before"] = before_balance
+        if after_balance is not None:
+            updates["balance_after"] = after_balance
+
+        actual_cost: Optional[float] = None
+        if before_balance is not None and after_balance is not None:
+            actual_cost = round(before_balance - after_balance, 4)
+            if actual_cost < 0:
+                actual_cost = 0.0
+            updates["actual_cost"] = actual_cost
+
+        if not updates:
+            return base_record or self.storage.load_metadata(job_id)
+
+        record = self._apply_billing_updates(job_id, base_record, updates)
+        if actual_cost is not None:
+            before_text = f"{before_balance:.4f}" if before_balance is not None else "?"
+            after_text = f"{after_balance:.4f}" if after_balance is not None else "?"
+            self.storage.append_log(
+                job_id,
+                f"💵 实际花费: ${actual_cost:.4f} (余额 {before_text} -> {after_text})",
+            )
+        return record
+
+    def _apply_billing_updates(
+        self,
+        job_id: str,
+        base_record: Optional[Dict[str, Any]],
+        updates: Dict[str, Optional[float]],
+    ) -> Dict[str, Any]:
+        """合并计费信息并回写 task.json。"""
+        record = dict(base_record or self.storage.load_metadata(job_id))
+        if not record:
+            record = {"job_id": job_id}
+        billing = dict(record.get("billing") or {})
+        billing.setdefault("currency", "USD")
+
+        for key, value in updates.items():
+            if value is not None:
+                billing[key] = value
+        billing["updated_at"] = datetime.now(timezone.utc).isoformat()
+        record["billing"] = billing
+
+        actual_cost = updates.get("actual_cost")
+        if actual_cost is not None:
+            record["cost"] = actual_cost
+
+        self.storage.save_metadata(job_id, record)
+        return record
 
     @staticmethod
     def _unwrap_wavespeed_result(payload: Dict[str, Any]) -> Dict[str, Any]:

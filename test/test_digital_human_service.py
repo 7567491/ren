@@ -22,10 +22,12 @@ class TestDigitalHumanService:
     def service(self, api_keys):
         """创建 DigitalHumanService 实例"""
         from py.services.digital_human_service import DigitalHumanService
-        return DigitalHumanService(
+        svc = DigitalHumanService(
             wavespeed_key=api_keys["wavespeed"],
             minimax_key=api_keys["minimax"]
         )
+        svc._safe_fetch_balance = AsyncMock(return_value=None)  # type: ignore[attr-defined]
+        return svc
 
     def test_service_initialization(self, service):
         """测试服务初始化"""
@@ -276,6 +278,45 @@ class TestDigitalHumanService:
             assert result["cost"] == pytest.approx(expected_cost, rel=0.01)
 
     @pytest.mark.asyncio
+    @pytest.mark.mock
+    async def test_actual_cost_uses_balance_difference(self, service, test_output_dir):
+        """测试余额差额作为实际成本写入"""
+        job_id = "test-job-billing"
+        service._safe_fetch_balance = AsyncMock(side_effect=[120.0, 118.4])  # type: ignore[attr-defined]
+
+        with patch.object(service.avatar_client, 'generate_images', new_callable=AsyncMock) as mock_avatar, \
+             patch.object(service.voice_client, 'generate_voice', new_callable=AsyncMock) as mock_voice, \
+             patch.object(service.infinitetalk_client, 'generate_video', new_callable=AsyncMock) as mock_video, \
+             patch.object(service.task_manager, 'update_status'):
+
+            mock_avatar.return_value = [{"url": "https://example.com/avatar.png"}]
+            mock_voice.return_value = {
+                "audio_url": "https://example.com/speech.mp3",
+                "duration": 10.0,
+                "cost": 0.02
+            }
+            mock_video.return_value = {
+                "task_id": "video-task",
+                "video_url": "https://example.com/video.mp4",
+                "video_path": str(test_output_dir / "video.mp4"),
+                "duration": 10.0,
+                "cost": 0.60
+            }
+
+            result = await service.generate_digital_human(
+                job_id=job_id,
+                avatar_mode="prompt",
+                avatar_prompt="测试",
+                speech_text="测试文本"
+            )
+
+        billing = result.get("billing") or {}
+        assert billing.get("balance_before") == pytest.approx(120.0)
+        assert billing.get("balance_after") == pytest.approx(118.4)
+        assert billing.get("actual_cost") == pytest.approx(1.6, rel=0.01)
+        assert result["cost"] == pytest.approx(1.6, rel=0.01)
+
+    @pytest.mark.asyncio
     async def test_handle_avatar_upload_with_local_file(self, api_keys, tmp_path):
         from py.services.digital_human_service import DigitalHumanService
         from py.services.storage_service import StorageService
@@ -352,6 +393,7 @@ class TestDigitalHumanServiceIntegration:
             wavespeed_key=api_keys["wavespeed"],
             minimax_key=api_keys["minimax"]
         )
+        service._safe_fetch_balance = AsyncMock(return_value=None)  # type: ignore[attr-defined]
 
         job_id = "integration-test-001"
 

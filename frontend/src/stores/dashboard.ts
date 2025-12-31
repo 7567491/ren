@@ -29,6 +29,12 @@ interface DashboardState {
 }
 
 const STORAGE_KEY = 'digital-human-dashboard';
+const TERMINAL_STATUSES = new Set(['finished', 'failed']);
+
+function isTaskStillActive(task?: TaskHistoryItem | null) {
+  if (!task) return false;
+  return !TERMINAL_STATUSES.has(task.status);
+}
 
 function loadPersisted(): Partial<DashboardState> {
   if (typeof window === 'undefined') return {};
@@ -53,10 +59,13 @@ function persist(state: Partial<DashboardState>) {
 export const useDashboardStore = defineStore('dashboard', {
   state: (): DashboardState => {
     const persisted = loadPersisted();
+    const tasks = persisted.tasks || [];
+    const selectedFromStorage = persisted.selectedTaskId || null;
+    const selectedTask = tasks.find((task) => task.id === selectedFromStorage);
     return {
       apiKey: persisted.apiKey || '',
-      tasks: persisted.tasks || [],
-      selectedTaskId: persisted.selectedTaskId || null,
+      tasks,
+      selectedTaskId: isTaskStillActive(selectedTask) ? selectedFromStorage : null,
       bucketRoot: '/mnt/www',
       bucketUserDir: 'ren',
       errors: {}

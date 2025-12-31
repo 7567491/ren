@@ -2,9 +2,32 @@
   <main class="page">
     <header class="hero">
       <div class="hero-main">
-        <h1>🎭 数字人空间</h1>
-        <p>Linode+WavespeedAI数字人空间</p>
+        <div class="hero-title">
+          <p class="hero-eyebrow">数字人旅程</p>
+          <h1>🎭 数字人空间</h1>
+          <p class="hero-subtitle">Linode + Wavespeed AI，准备 → 创作 → 监控一站完成</p>
+        </div>
+        <div class="hero-cta">
+          <button type="button" class="hero-cta__primary" :disabled="submitting" @click="handleHeroCreateTask">
+            {{ submitting ? '创建中…' : '创建新任务' }}
+          </button>
+          <button type="button" class="hero-cta__secondary" @click="handleHeroMonitor">查看监控</button>
+          <p v-if="!pollingActive" class="hero-cta__hint">监控已暂停，点击右侧按钮恢复。</p>
+        </div>
       </div>
+      <div class="hero-steps" role="list">
+        <div v-for="step in heroJourneySteps" :key="step.id" class="hero-step" role="listitem" :class="`hero-step--${step.state}`">
+          <div class="hero-step__icon">{{ step.icon }}</div>
+          <div>
+            <p class="hero-step__label">{{ step.label }}</p>
+            <p class="hero-step__desc">{{ step.description }}</p>
+          </div>
+        </div>
+      </div>
+      <p class="hero-summary">
+        {{ heroSummaryText }}
+        <span v-if="heroSummarySubtext" class="hero-summary__message">{{ heroSummarySubtext }}</span>
+      </p>
     </header>
 
     <div class="workspace">
@@ -94,6 +117,7 @@
       </section>
       <section class="workspace__column workspace__column--right">
         <MonitorPanel
+          ref="monitorPanelRef"
           :current-job-id="currentJobId"
           :task-status="taskStatus"
           :overall-progress-percent="overallProgressPercent"
@@ -206,7 +230,7 @@
 
 <script setup lang="ts">
 import { computed, onBeforeUnmount, onMounted, reactive, ref, watch } from 'vue';
-import type { Ref } from 'vue';
+import type { ComponentPublicInstance, Ref } from 'vue';
 import { storeToRefs } from 'pinia';
 import { useAppConfig } from '@/composables/useAppConfig';
 import { useMediaQuery } from '@/composables/useMediaQuery';
@@ -266,7 +290,7 @@ const STAGE_PIPELINE: StageDefinition[] = [
 const config = useAppConfig();
 const isMobile = useMediaQuery('(max-width: 768px)', { defaultState: false });
 const dashboardStore = useDashboardStore();
-const { sortedTasks } = storeToRefs(dashboardStore);
+const { sortedTasks, currentTask: storeCurrentTask } = storeToRefs(dashboardStore);
 const BUCKET_PUBLIC_BASE = 'https://s.linapp.fun';
 const API_KEY_PATTERN = /^(?:sk|ws|pk)_[-A-Za-z0-9]{16,}$/i;
 const stageDefinitions = STAGE_PIPELINE;
@@ -276,6 +300,7 @@ const drawerButtons: Array<{ id: DrawerPanel; label: string; icon: string }> = [
 ];
 
 const creationPanelRef = ref<InstanceType<typeof CreationPanel> | null>(null);
+const monitorPanelRef = ref<InstanceType<typeof MonitorPanel> | null>(null);
 const apiKeyInput = ref(dashboardStore.apiKey);
 const apiKeyVisible = ref(false);
 const apiKeyError = ref('');
@@ -311,6 +336,21 @@ const extraTasks = computed(() => taskHistory.value.slice(MAX_VISIBLE_TASKS));
 const extraTasksSummary = computed(() =>
   extraTasks.value.length ? `其余 ${extraTasks.value.length} 个任务` : ''
 );
+const heroReferenceTask = computed(() => storeCurrentTask.value || taskHistory.value[0] || null);
+const heroSummaryText = computed(() => {
+  const task = heroReferenceTask.value;
+  if (!task) {
+    return '尚未创建任务，先在左侧完整配置一次数字人吧。';
+  }
+  const statusLabel = describeStatus(task.status);
+  const timestamp = task.updatedAt ? formatTimestamp(task.updatedAt) : '';
+  return `任务 ${task.id} · ${statusLabel}${timestamp ? ` · ${timestamp}` : ''}`;
+});
+const heroSummarySubtext = computed(() => {
+  const task = heroReferenceTask.value;
+  if (task?.message) return task.message;
+  return statusMessage.value || '';
+});
 watch(
   () => dashboardStore.apiKey,
   (value) => {
@@ -465,6 +505,35 @@ const newCharacterAlert = reactive({ message: '', type: '' as 'error' | 'success
 function updateNewCharacterForm(value: Record<string, string>) {
   Object.assign(newCharacterForm, value);
 }
+const heroJourneySteps = computed(() => {
+  const hasKey = Boolean(dashboardStore.apiKey);
+  const scriptReady = Boolean(speechText.value.trim());
+  const hasTask = Boolean(currentJobId.value);
+  const finished = taskStatus.value === 'finished';
+  return [
+    {
+      id: 'prepare',
+      label: '准备 API',
+      icon: '🔑',
+      description: hasKey ? '已绑定 Wavespeed Key' : '绑定 Wavespeed API Key',
+      state: hasKey ? 'done' : 'active'
+    },
+    {
+      id: 'script',
+      label: '填脚本',
+      icon: '📝',
+      description: scriptReady ? `${charCount.value} 字脚本` : '输入播报文本',
+      state: hasKey ? (hasTask ? 'done' : scriptReady ? 'active' : 'pending') : 'pending'
+    },
+    {
+      id: 'monitor',
+      label: '监控进度',
+      icon: '📺',
+      description: hasTask ? `${overallProgressLabel.value} 完成` : '等待创建任务',
+      state: finished ? 'done' : hasTask ? 'active' : 'pending'
+    }
+  ];
+});
 
 const charCount = computed(() => speechText.value.length);
 const estimatedDuration = computed(() => Math.ceil(charCount.value / 5) || 0);
@@ -519,6 +588,33 @@ watch(
     }
   }
 );
+
+function getComponentRootEl(component: ComponentPublicInstance | null | undefined) {
+  return (component?.$el as HTMLElement | null | undefined) || null;
+}
+
+function scrollElementIntoView(el: HTMLElement | null | undefined) {
+  if (!el) return;
+  el.scrollIntoView({ behavior: 'smooth', block: 'start' });
+}
+
+function handleHeroCreateTask() {
+  const el = getComponentRootEl(creationPanelRef.value);
+  if (el) {
+    scrollElementIntoView(el);
+  }
+}
+
+function handleHeroMonitor() {
+  if (isMobile.value) {
+    toggleMobileDrawer('monitor');
+    return;
+  }
+  const el = getComponentRootEl(monitorPanelRef.value);
+  if (el) {
+    scrollElementIntoView(el);
+  }
+}
 
 function toggleMobileDrawer(panel: DrawerPanel) {
   if (!isMobile.value) return;

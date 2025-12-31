@@ -7,324 +7,102 @@
       </div>
     </header>
 
-    <DashboardGrid>
-      <CardContainer
-        class="api-card"
-        title="Wavespeed API Key"
-        subtitle="安全存储、余额提醒"
-        :collapsible="true"
-        :initially-collapsed="isMobile"
-        persist-key="api-card"
-        :error="dashboardStore.errors.apiKey"
-      >
-        <div class="api-mini-row">
-          <label class="sr-only" for="api_key">Wavespeed API Key</label>
-          <input
-            id="api_key"
-            :type="apiKeyVisible ? 'text' : 'password'"
-            v-model="apiKeyInput"
-            placeholder="Wavespeed API Key"
-            @blur="validateApiKey"
-          />
-          <button type="button" class="btn-icon" @click="apiKeyVisible = !apiKeyVisible">
-            {{ apiKeyVisible ? '🙈' : '👁️' }}
-          </button>
-          <button type="button" class="btn-icon" @click="saveApiKeySetting" :disabled="!isApiKeyValid">
-            💾
-          </button>
-          <button type="button" class="btn-icon" @click="clearApiKeySetting" :disabled="!dashboardStore.apiKey">
-            ✖️
-          </button>
-        </div>
-        <p v-if="apiKeyError" class="input-error">{{ apiKeyError }}</p>
-        <div class="api-mini-row meta">
-          <span class="balance-label">{{ balanceDisplay }}</span>
-          <button type="button" class="btn-text" @click="refreshBalance" :disabled="balanceLoading">
-            {{ balanceLoading ? '查询中…' : '刷新余额' }}
-          </button>
-        </div>
-      </CardContainer>
-
-      <CardContainer
-        class="task-card"
-        title="任务管理"
-        subtitle="多任务、一键切换"
-        :collapsible="true"
-        :initially-collapsed="false"
-        persist-key="task-card"
-        :error="dashboardStore.errors.tasks"
-      >
-        <template #actions>
-          <div class="task-card-actions">
-            <button type="button" class="btn-text" :disabled="!currentJobId" @click="refreshSelectedTask">刷新</button>
-            <button type="button" class="btn-text" :disabled="!currentJobId" @click="togglePolling">
-              {{ pollingActive ? '暂停轮询' : '恢复轮询' }}
-            </button>
-          </div>
-        </template>
-        <section class="task-list-section">
-          <div v-if="!taskHistory.length" class="empty-state">暂无任务，快来创建第一个任务。</div>
-          <template v-else>
-            <ul class="task-list">
-              <li v-for="task in latestTasks" :key="task.id" :class="{ active: task.id === currentJobId }">
-                <div class="task-row task-primary">
-                  <div class="task-id">
-                    <strong>{{ task.id }}</strong>
-                    <span class="status-badge" :class="task.status">{{ describeStatus(task.status) }}</span>
-                  </div>
-                  <span class="task-time">{{ formatTimestamp(task.updatedAt) }}</span>
-                </div>
-                <div class="task-row task-secondary">
-                  <span class="task-message" :title="task.message">{{ task.message }}</span>
-                  <div class="task-actions">
-                    <button type="button" class="btn-text" @click="handleTaskSelection(task.id)">查看</button>
-                    <button type="button" class="btn-text danger" @click="removeTaskFromHistory(task.id)">移除</button>
-                  </div>
-                </div>
-              </li>
-            </ul>
-            <details v-if="extraTasks.length" class="task-list-more">
-              <summary>
-                <span>{{ extraTasksSummary }}</span>
-                <span class="summary-hint">点击展开/收起</span>
-              </summary>
-              <ul class="task-list secondary">
-                <li v-for="task in extraTasks" :key="`more-${task.id}`" :class="{ active: task.id === currentJobId }">
-                  <div class="task-row task-primary">
-                    <div class="task-id">
-                      <strong>{{ task.id }}</strong>
-                      <span class="status-badge" :class="task.status">{{ describeStatus(task.status) }}</span>
-                    </div>
-                    <span class="task-time">{{ formatTimestamp(task.updatedAt) }}</span>
-                  </div>
-                  <div class="task-row task-secondary">
-                    <span class="task-message" :title="task.message">{{ task.message }}</span>
-                    <div class="task-actions">
-                      <button type="button" class="btn-text" @click="handleTaskSelection(task.id)">查看</button>
-                      <button type="button" class="btn-text danger" @click="removeTaskFromHistory(task.id)">移除</button>
-                    </div>
-                  </div>
-                </li>
-              </ul>
-            </details>
-          </template>
-        </section>
-
-        <section class="form-wrapper">
-          <h2>创建数字人任务</h2>
-          <form @submit.prevent="handleSubmit">
-            <div v-if="formAlert.message" class="form-alert" :class="{ info: formAlert.type === 'info' }">
-              {{ formAlert.message }}
-            </div>
-
-            <section class="form-group">
-              <label>头像模式</label>
-              <div class="radio-group">
-                <label>
-                  <input type="radio" value="character" v-model="avatarMode" />
-                  预制人物
-                </label>
-                <label>
-                  <input type="radio" value="prompt" v-model="avatarMode" />
-                  AI 生成头像
-                </label>
-                <label>
-                  <input type="radio" value="upload" v-model="avatarMode" />
-                  上传头像
-                </label>
-              </div>
-            </section>
-
-            <section v-show="avatarMode === 'prompt'" class="form-group mode-content active">
-              <label for="avatar_prompt">头像描述</label>
-              <input
-                id="avatar_prompt"
-                type="text"
-                v-model.trim="avatarPrompt"
-                placeholder="例如：一位专业的女性播音员，微笑，正面照，商务装"
-              />
-            </section>
-
-            <section v-show="avatarMode === 'upload'" class="form-group mode-content active">
-              <label for="avatar_upload">上传头像</label>
-              <FilePond
-                ref="avatarPond"
-                :allow-multiple="false"
-                :accepted-file-types="acceptedAvatarTypes"
-                :max-file-size="maxAvatarSizeLabel"
-                :instant-upload="false"
-                :label-idle="pondLabel"
-                @updatefiles="handleAvatarFiles"
-              />
-              <small>支持 PNG/JPG，最大 5MB</small>
-              <p v-if="avatarFileError" class="input-error">{{ avatarFileError }}</p>
-            </section>
-
-            <section v-show="avatarMode === 'character'" class="form-group character-library">
-              <div class="section-header">
-                <label>🎭 预制人物</label>
-                <button type="button" class="link-btn" @click="refreshCharacters" :disabled="characterLoading">
-                  {{ characterLoading ? '刷新中...' : '重新载入' }}
-                </button>
-              </div>
-              <p class="hint">选择角色即默认使用其头像与声音设定，省去上传步骤。</p>
-              <div v-if="characterError" class="input-error">{{ characterError }}</div>
-              <div class="character-select">
-                <select v-model="selectedCharacterId">
-                  <option disabled value="">{{ characterLoading ? '加载中...' : '请选择人物' }}</option>
-                  <option v-for="char in characters" :key="char.id" :value="char.id">
-                    {{ char.name }}
-                  </option>
-                </select>
-                <button type="button" class="link-btn" v-if="selectedCharacterId" @click="clearCharacterSelection">清除选择</button>
-              </div>
-              <div v-if="selectedCharacter" class="character-detail">
-                <img :src="characterPreviewUrl" :alt="selectedCharacter.name" class="character-image" />
-                <div class="character-meta">
-                  <strong>{{ selectedCharacter.name }}</strong>
-                  <p class="character-desc">
-                    {{ selectedCharacter.appearance?.zh || selectedCharacter.appearance?.en }}
-                  </p>
-                  <p class="character-desc" v-if="selectedCharacter.voice?.zh">
-                    语音：{{ selectedCharacter.voice.zh }}
-                  </p>
-                  <p class="character-desc" v-if="selectedCharacter.voice?.voice_id">
-                    推荐音色 ID：{{ selectedCharacter.voice.voice_id }}
-                  </p>
-                </div>
-              </div>
-              <details class="character-upload">
-                <summary>上传新人物</summary>
-                <div class="upload-form">
-                  <div v-if="newCharacterAlert.message" class="input-error" :class="{ success: newCharacterAlert.type === 'success' }">
-                    {{ newCharacterAlert.message }}
-                  </div>
-                  <label>名称</label>
-                  <input type="text" v-model.trim="newCharacterForm.name" placeholder="如：产品代言人 Lisa" />
-                  <label>形象描述（中文）</label>
-                  <textarea v-model.trim="newCharacterForm.appearanceZh" rows="3" placeholder="角色的造型、服装等细节"></textarea>
-                  <label>形象描述（英文，可选）</label>
-                  <textarea v-model.trim="newCharacterForm.appearanceEn" rows="2" placeholder="可选的英文描述"></textarea>
-                  <label>声音提示（中文，可选）</label>
-                  <textarea v-model.trim="newCharacterForm.voiceZh" rows="2" placeholder="如：男声，沉稳有磁性"></textarea>
-                  <label>声音提示（英文/Prompt，可选）</label>
-                  <textarea v-model.trim="newCharacterForm.voicePrompt" rows="2" placeholder="English voice prompt"></textarea>
-                  <label>推荐音色 ID（可选）</label>
-                  <input type="text" v-model.trim="newCharacterForm.voiceId" placeholder="如：male-qn-jingying" />
-                  <label>上传头像</label>
-                  <input type="file" accept="image/*" @change="handleNewCharacterFile" />
-                  <small>支持 PNG/JPG，最大 10MB</small>
-                  <button type="button" class="btn-secondary" :disabled="creatingCharacter" @click="submitNewCharacter">
-                    {{ creatingCharacter ? '上传中...' : '保存角色' }}
-                  </button>
-                </div>
-              </details>
-            </section>
-
-            <section class="form-group">
-              <label for="speech_text">播报文本</label>
-              <textarea
-                id="speech_text"
-                v-model="speechText"
-                maxlength="1000"
-                rows="5"
-                placeholder="请输入数字人要播报的内容..."
-              ></textarea>
-              <div class="char-count">
-                {{ charCount }} / 1000 字 | 预估时长: {{ estimatedDuration }} 秒 | 预估成本: ${{ estimatedCost.toFixed(2) }}
-              </div>
-            </section>
-
-            <section class="form-group">
-              <label for="voice_id">音色</label>
-              <select id="voice_id" v-model="voiceId">
-                <option value="female-shaonv">女声 - 少女</option>
-                <option value="female-yujie">女声 - 御姐</option>
-                <option value="male-qn-qingse">男声 - 青涩</option>
-                <option value="male-qn-jingying">男声 - 精英</option>
-              </select>
-            </section>
-
-            <details class="advanced-options">
-              <summary>⚙️ 高级选项</summary>
-
-              <div class="form-group">
-                <label for="resolution">分辨率</label>
-                <select id="resolution" v-model="resolution">
-                  <option value="720p">720p ($0.06/秒)</option>
-                  <option value="1080p">1080p ($0.12/秒)</option>
-                </select>
-              </div>
-
-              <div class="form-group">
-                <label for="speed">语速</label>
-                <div class="slider-container">
-                  <input id="speed" type="range" min="0.5" max="2" step="0.1" v-model.number="speed" />
-                  <span class="slider-value">{{ speed.toFixed(1) }}</span>
-                </div>
-              </div>
-
-              <div class="form-group">
-                <label for="pitch">音调</label>
-                <div class="slider-container">
-                  <input id="pitch" type="range" min="-12" max="12" step="1" v-model.number="pitch" />
-                  <span class="slider-value">{{ pitch }}</span>
-                </div>
-              </div>
-
-              <div class="form-group">
-                <label for="emotion">情绪</label>
-                <select id="emotion" v-model="emotion">
-                  <option value="neutral">中性</option>
-                  <option value="happy">开心</option>
-                  <option value="sad">悲伤</option>
-                  <option value="angry">愤怒</option>
-                </select>
-              </div>
-
-              <div class="form-group">
-                <label for="seed">随机种子（可选）</label>
-                <input id="seed" type="text" v-model="seed" placeholder="留空则由服务端随机生成" />
-              </div>
-            </details>
-
-            <section class="form-group debug-toggle">
-              <label>
-                <input type="checkbox" v-model="debugMode" />
-                启用调试模式
-              </label>
-              <small>{{ debugHint }}</small>
-            </section>
-
-            <button type="submit" class="btn" :disabled="submitting">
-              {{ submitting ? '⏳ 正在创建任务...' : '🚀 生成数字人视频' }}
-            </button>
-          </form>
-        </section>
-      </CardContainer>
-
-      <CardContainer
-        class="progress-card"
-        title="任务进度"
-        subtitle="实时进展、日志与播放器"
-        :collapsible="true"
-        :initially-collapsed="isMobile"
-        persist-key="progress-card"
-        :error="dashboardStore.errors.progress"
-      >
-        <template #actions>
-          <a href="/doc/frontend_task_flow.md" target="_blank" rel="noreferrer" class="link">任务流说明</a>
-        </template>
-        <ProgressPanel
-          v-if="!isMobile"
+    <div class="workspace">
+      <section class="workspace__column workspace__column--left">
+        <PreparationPanel
+          class="workspace__preparation"
+          :is-mobile="isMobile"
+          :api-key-value="apiKeyInput"
+          :api-key-visible="apiKeyVisible"
+          :api-key-error="apiKeyError"
+          :is-api-key-valid="isApiKeyValid"
+          :has-stored-key="Boolean(dashboardStore.apiKey)"
+          :balance-display="balanceDisplay"
+          :balance-loading="balanceLoading"
+          :error-message="dashboardStore.errors.apiKey"
+          :task-error="dashboardStore.errors.tasks"
+          :task-history="taskHistory"
+          :latest-tasks="latestTasks"
+          :extra-tasks="extraTasks"
+          :extra-tasks-summary="extraTasksSummary"
           :current-job-id="currentJobId"
-          :overall-progress-label="overallProgressLabel"
+          :polling-active="pollingActive"
+          :describe-status="describeStatus"
+          :format-timestamp="formatTimestamp"
+          @update:api-key-value="handleApiKeyInputChange"
+          @update:api-key-visible="handleApiKeyVisibleChange"
+          @validate-api-key="validateApiKey"
+          @save-api-key="saveApiKeySetting"
+          @clear-api-key="clearApiKeySetting"
+          @refresh-balance="refreshBalance"
+          @refresh-selected-task="refreshSelectedTask"
+          @toggle-polling="togglePolling"
+          @select-task="handleTaskSelection"
+          @remove-task="removeTaskFromHistory"
+        />
+
+        <CreationPanel
+          ref="creationPanelRef"
+          :form-alert="formAlert"
+          :avatar-mode="avatarMode"
+          :avatar-prompt="avatarPrompt"
+          :avatar-file-error="avatarFileError"
+          :accepted-avatar-types="acceptedAvatarTypes"
+          :max-avatar-size-label="maxAvatarSizeLabel"
+          :pond-label="pondLabel"
+          :speech-text="speechText"
+          :char-count="charCount"
+          :estimated-duration="estimatedDuration"
+          :estimated-cost="estimatedCost"
+          :voice-id="voiceId"
+          :resolution="resolution"
+          :speed="speed"
+          :pitch="pitch"
+          :emotion="emotion"
+          :seed="seed"
+          :debug-mode="debugMode"
+          :debug-hint="debugHint"
+          :submitting="submitting"
+          :characters="characters"
+          :character-loading="characterLoading"
+          :character-error="characterError"
+          :selected-character-id="selectedCharacterId"
+          :selected-character="selectedCharacter"
+          :character-preview-url="characterPreviewUrl"
+          :new-character-form="newCharacterForm"
+          :new-character-alert="newCharacterAlert"
+          :creating-character="creatingCharacter"
+          @update:avatar-mode="updateAvatarMode"
+          @update:avatar-prompt="updateAvatarPrompt"
+          @update:speech-text="updateSpeechText"
+          @update:voice-id="updateVoiceId"
+          @update:resolution="updateResolution"
+          @update:speed="updateSpeed"
+          @update:pitch="updatePitch"
+          @update:emotion="updateEmotion"
+          @update:seed="updateSeed"
+          @update:debug-mode="updateDebugMode"
+          @refresh-characters="refreshCharacters"
+          @update:selected-character-id="updateSelectedCharacterId"
+          @clear-character-selection="clearCharacterSelection"
+          @avatar-files-change="handleAvatarFiles"
+          @update:new-character-form="updateNewCharacterForm"
+          @new-character-file-change="handleNewCharacterFile"
+          @submit-new-character="submitNewCharacter"
+          @submit="handleSubmit"
+        />
+      </section>
+      <section class="workspace__column workspace__column--right">
+        <MonitorPanel
+          :current-job-id="currentJobId"
+          :task-status="taskStatus"
           :overall-progress-percent="overallProgressPercent"
+          :overall-progress-label="overallProgressLabel"
           :stage-definitions="stageDefinitions"
           :stage-status="stageStatus"
-          :stage-state-icon="stageStateIcon"
-          :status-accent="statusAccent"
           :status-message="statusMessage"
+          :status-accent="statusAccent"
+          :trace-id="monitorTraceId"
           :countdown-visible="countdownVisible"
           :countdown-label="countdownLabel"
           :countdown-source="countdownSource"
@@ -332,52 +110,22 @@
           :cost-estimate-desc="costEstimateDesc"
           :avatar-url="avatarUrl"
           :audio-url="audioUrl"
-          :task-status="taskStatus"
           :result-video-url="resultVideoUrl"
           :total-cost="totalCost"
           :billing-summary="billingSummary"
-          :download-video="downloadVideo"
-          :copy-video-link="copyVideoLink"
           :error-message="errorMessage"
-          :video-player-ref="videoPlayerEl"
-        />
-        <div v-else class="drawer-summary">
-          <p>移动端通过底部抽屉查看完整进度，当前进度 <strong>{{ overallProgressLabel }}</strong>。</p>
-          <button type="button" class="drawer-launch" @click="toggleMobileDrawer('progress')">
-            查看进度抽屉
-          </button>
-        </div>
-      </CardContainer>
-
-      <CardContainer
-        class="material-card"
-        title="素材目录"
-        subtitle="桶内路径与公网映射"
-        :collapsible="true"
-        :initially-collapsed="isMobile"
-        persist-key="material-card"
-        :error="dashboardStore.errors.material"
-      >
-        <MaterialPanel
-          v-if="!isMobile"
-          :current-job-id="currentJobId"
-          :current-bucket-dir="currentBucketDir"
-          :audio-url="audioUrl"
-          :result-video-url="resultVideoUrl"
-          :task-status="taskStatus"
           :material-items="materialItems"
-          :copy-local-path="copyLocalPath"
-          :copy-public-link="copyPublicLink"
-          :open-public-link="openPublicLink"
+          :polling-active="pollingActive"
+          @download-video="downloadVideo"
+          @copy-video-link="copyVideoLink"
+          @copy-local-path="copyLocalPath"
+          @copy-public-link="copyPublicLink"
+          @open-public-link="openPublicLink"
+          @refresh-task="refreshSelectedTask"
+          @toggle-polling="togglePolling"
         />
-        <div v-else class="drawer-summary">
-          <p>移动端通过底部抽屉快速浏览素材路径与公网链接。</p>
-          <button type="button" class="drawer-launch" @click="toggleMobileDrawer('material')">
-            打开素材抽屉
-          </button>
-        </div>
-      </CardContainer>
-    </DashboardGrid>
+      </section>
+    </div>
   </main>
 
   <div v-if="isMobile" class="mobile-drawer-bar">
@@ -391,8 +139,7 @@
     >
       <span class="drawer-icon">{{ btn.icon }}</span>
       <span class="drawer-label">{{ btn.label }}</span>
-      <small v-if="btn.id === 'progress'">{{ overallProgressLabel }}</small>
-      <small v-else>{{ materialItems.length ? `${materialItems.length} 条` : '暂无' }}</small>
+      <small>{{ overallProgressLabel }}</small>
     </button>
   </div>
   <transition name="drawer-fade">
@@ -408,16 +155,17 @@
         <button type="button" class="drawer-close" @click="closeMobileDrawer">关闭</button>
       </header>
       <div class="drawer-panel__body">
-        <ProgressPanel
-          v-if="mobileDrawerPanel === 'progress'"
+        <MonitorPanel
+          v-if="mobileDrawerPanel === 'monitor'"
           :current-job-id="currentJobId"
-          :overall-progress-label="overallProgressLabel"
+          :task-status="taskStatus"
           :overall-progress-percent="overallProgressPercent"
+          :overall-progress-label="overallProgressLabel"
           :stage-definitions="stageDefinitions"
           :stage-status="stageStatus"
-          :stage-state-icon="stageStateIcon"
-          :status-accent="statusAccent"
           :status-message="statusMessage"
+          :status-accent="statusAccent"
+          :trace-id="monitorTraceId"
           :countdown-visible="countdownVisible"
           :countdown-label="countdownLabel"
           :countdown-source="countdownSource"
@@ -425,26 +173,19 @@
           :cost-estimate-desc="costEstimateDesc"
           :avatar-url="avatarUrl"
           :audio-url="audioUrl"
-          :task-status="taskStatus"
           :result-video-url="resultVideoUrl"
           :total-cost="totalCost"
           :billing-summary="billingSummary"
-          :download-video="downloadVideo"
-          :copy-video-link="copyVideoLink"
           :error-message="errorMessage"
-          :video-player-ref="videoPlayerEl"
-        />
-        <MaterialPanel
-          v-else-if="mobileDrawerPanel === 'material'"
-          :current-job-id="currentJobId"
-          :current-bucket-dir="currentBucketDir"
-          :audio-url="audioUrl"
-          :result-video-url="resultVideoUrl"
-          :task-status="taskStatus"
           :material-items="materialItems"
-          :copy-local-path="copyLocalPath"
-          :copy-public-link="copyPublicLink"
-          :open-public-link="openPublicLink"
+          :polling-active="pollingActive"
+          @download-video="downloadVideo"
+          @copy-video-link="copyVideoLink"
+          @copy-local-path="copyLocalPath"
+          @copy-public-link="copyPublicLink"
+          @open-public-link="openPublicLink"
+          @refresh-task="refreshSelectedTask"
+          @toggle-polling="togglePolling"
         />
       </div>
     </section>
@@ -464,21 +205,17 @@
 
 
 <script setup lang="ts">
-import { computed, nextTick, onBeforeUnmount, onMounted, reactive, ref, watch } from 'vue';
+import { computed, onBeforeUnmount, onMounted, reactive, ref, watch } from 'vue';
+import type { Ref } from 'vue';
 import { storeToRefs } from 'pinia';
-import vueFilePond from 'vue-filepond';
-import FilePondPluginImagePreview from 'filepond-plugin-image-preview';
-import FilePondPluginFileValidateType from 'filepond-plugin-file-validate-type';
-import FilePondPluginFileValidateSize from 'filepond-plugin-file-validate-size';
-import videojs from 'video.js';
 import { useAppConfig } from '@/composables/useAppConfig';
 import { useMediaQuery } from '@/composables/useMediaQuery';
-import DashboardGrid from '@/layout/DashboardGrid.vue';
-import CardContainer from '@/layout/CardContainer.vue';
-import ProgressPanel from '@/components/panels/ProgressPanel.vue';
-import MaterialPanel from '@/components/panels/MaterialPanel.vue';
+import CreationPanel from '@/components/panels/CreationPanel.vue';
+import MonitorPanel from '@/components/panels/MonitorPanel.vue';
+import PreparationPanel from '@/components/workspace/PreparationPanel.vue';
 import { useDashboardStore } from '@/stores/dashboard';
 import type { MaterialEntry, StageDefinition, StageKey, StageViewState } from '@/types/dashboard';
+import type { CharacterRecord } from '@/types/characters';
 
 interface BillingInfo {
   balance_before?: number;
@@ -512,19 +249,6 @@ interface CostEstimate {
   video?: number;
 }
 
-interface CharacterRecord {
-  id: string;
-  name: string;
-  image_url?: string;
-  thumbnail_url?: string;
-  image_path?: string;
-  appearance?: Record<string, string>;
-  voice?: Record<string, any>;
-  tags?: string[];
-  source?: string;
-  status?: string;
-}
-
 const DEBUG_MAX_DURATION = 10;
 const DEBUG_MAX_CHARS = DEBUG_MAX_DURATION * 5;
 const MAX_AVATAR_SIZE = 5 * 1024 * 1024;
@@ -539,12 +263,6 @@ const STAGE_PIPELINE: StageDefinition[] = [
   { id: 'video', label: '唇形视频', icon: '🎬', color: '#22c55e', weight: 0.5 }
 ];
 
-const FilePond = vueFilePond(
-  FilePondPluginImagePreview,
-  FilePondPluginFileValidateType,
-  FilePondPluginFileValidateSize
-);
-
 const config = useAppConfig();
 const isMobile = useMediaQuery('(max-width: 768px)', { defaultState: false });
 const dashboardStore = useDashboardStore();
@@ -552,12 +270,12 @@ const { sortedTasks } = storeToRefs(dashboardStore);
 const BUCKET_PUBLIC_BASE = 'https://s.linapp.fun';
 const API_KEY_PATTERN = /^(?:sk|ws|pk)_[-A-Za-z0-9]{16,}$/i;
 const stageDefinitions = STAGE_PIPELINE;
-type DrawerPanel = 'progress' | 'material';
+type DrawerPanel = 'monitor';
 const drawerButtons: Array<{ id: DrawerPanel; label: string; icon: string }> = [
-  { id: 'progress', label: '进度', icon: '📈' },
-  { id: 'material', label: '素材', icon: '🗂️' }
+  { id: 'monitor', label: '监控', icon: '📊' }
 ];
 
+const creationPanelRef = ref<InstanceType<typeof CreationPanel> | null>(null);
 const apiKeyInput = ref(dashboardStore.apiKey);
 const apiKeyVisible = ref(false);
 const apiKeyError = ref('');
@@ -577,6 +295,16 @@ const toastTimer = ref<number | null>(null);
 const processedAnalytics = new Set<string>();
 let analyticsHydrationRunning = false;
 const latestTaskSnapshot = ref<TaskResponse | null>(null);
+const monitorTraceId = computed(() => {
+  if (latestTaskSnapshot.value?.trace_id) {
+    return latestTaskSnapshot.value.trace_id;
+  }
+  const jobId = currentJobId.value;
+  if (!jobId) return '';
+  const entry = dashboardStore.tasks.find((task) => task.id === jobId);
+  const snapshot = entry?.snapshot as TaskResponse | undefined;
+  return snapshot?.trace_id || '';
+});
 const taskHistory = computed(() => sortedTasks.value);
 const latestTasks = computed(() => taskHistory.value.slice(0, MAX_VISIBLE_TASKS));
 const extraTasks = computed(() => taskHistory.value.slice(MAX_VISIBLE_TASKS));
@@ -601,6 +329,12 @@ watch(apiKeyInput, (value) => {
   }
   validateApiKey();
 });
+function handleApiKeyInputChange(value: string) {
+  apiKeyInput.value = value;
+}
+function handleApiKeyVisibleChange(value: boolean) {
+  apiKeyVisible.value = value;
+}
 const balanceDisplay = computed(() => {
   if (balanceLoading.value) return '余额查询中...';
   if (balanceError.value) return `余额：${balanceError.value}`;
@@ -628,10 +362,15 @@ const emotion = ref('neutral');
 const seed = ref('');
 const debugMode = ref(config.DEBUG);
 
+function bindRef<T>(target: Ref<T>) {
+  return (value: T) => {
+    target.value = value;
+  };
+}
+
 const formAlert = reactive({ message: '', type: '' as 'info' | 'error' | '' });
 const submitting = ref(false);
 const avatarFileError = ref('');
-const avatarPond = ref<any>(null);
 const avatarFile = ref<File | null>(null);
 
 const currentJobId = ref<string | null>(null);
@@ -690,13 +429,25 @@ const videoCountdown = reactive({
   active: false
 });
 const historicalStats = reactive({ secondsPerChar: 0, sampleSize: 0 });
-const videoPlayerEl = ref<HTMLVideoElement | null>(null);
-let videoPlayerInstance: videojs.Player | null = null;
 
 const characters = ref<CharacterRecord[]>([]);
 const characterLoading = ref(false);
 const characterError = ref('');
 const selectedCharacterId = ref('');
+const selectedCharacter = computed(() =>
+  characters.value.find((item) => item.id === selectedCharacterId.value) || null
+);
+const updateAvatarMode = bindRef(avatarMode);
+const updateAvatarPrompt = bindRef(avatarPrompt);
+const updateSpeechText = bindRef(speechText);
+const updateVoiceId = bindRef(voiceId);
+const updateResolution = bindRef(resolution);
+const updateSpeed = bindRef(speed);
+const updatePitch = bindRef(pitch);
+const updateEmotion = bindRef(emotion);
+const updateSeed = bindRef(seed);
+const updateDebugMode = bindRef(debugMode);
+const updateSelectedCharacterId = bindRef(selectedCharacterId);
 const characterPreviewUrl = computed(() =>
   selectedCharacter.value ? buildCharacterImageUrl(selectedCharacter.value) : ''
 );
@@ -711,6 +462,9 @@ const newCharacterForm = reactive({
 const newCharacterFile = ref<File | null>(null);
 const creatingCharacter = ref(false);
 const newCharacterAlert = reactive({ message: '', type: '' as 'error' | 'success' | '' });
+function updateNewCharacterForm(value: Record<string, string>) {
+  Object.assign(newCharacterForm, value);
+}
 
 const charCount = computed(() => speechText.value.length);
 const estimatedDuration = computed(() => Math.ceil(charCount.value / 5) || 0);
@@ -739,15 +493,13 @@ const statusAccent = computed(() => ({
 const mobileDrawerPanel = ref<DrawerPanel | ''>('');
 const drawerActive = computed(() => Boolean(mobileDrawerPanel.value));
 const drawerPanelTitle = computed(() => {
-  if (mobileDrawerPanel.value === 'progress') return '任务进度';
-  if (mobileDrawerPanel.value === 'material') return '素材目录';
+  if (mobileDrawerPanel.value === 'monitor') return '任务监控';
   return '';
 });
 const drawerPanelSubtitle = computed(() => {
-  if (mobileDrawerPanel.value === 'progress') return statusMessage.value;
-  if (mobileDrawerPanel.value === 'material') {
-    if (!currentJobId.value) return '未选择任务';
-    return currentBucketDir.value || '等待素材生成';
+  if (mobileDrawerPanel.value === 'monitor') {
+    if (!currentJobId.value) return '尚未创建任务';
+    return statusMessage.value || '等待最新状态';
   }
   return '';
 });
@@ -797,10 +549,6 @@ const overallProgressLabel = computed(() => `${overallProgressPercent.value}%`);
 const countdownVisible = computed(() => videoCountdown.active && videoCountdown.remaining > 0);
 const countdownLabel = computed(() => formatDuration(videoCountdown.remaining));
 const countdownSource = computed(() => videoCountdown.source);
-
-const selectedCharacter = computed(() =>
-  characters.value.find((item) => item.id === selectedCharacterId.value) || null
-);
 
 const materialItems = computed<MaterialEntry[]>(() => {
   if (!currentJobId.value) {
@@ -893,23 +641,6 @@ watch(selectedCharacterId, (id) => {
   }
 });
 
-watch(resultVideoUrl, (url) => {
-  if (videoPlayerInstance) {
-    videoPlayerInstance.dispose();
-    videoPlayerInstance = null;
-  }
-  if (url) {
-    nextTick(() => {
-      if (!videoPlayerEl.value) return;
-      videoPlayerInstance = videojs(videoPlayerEl.value, {
-        controls: true,
-        preload: 'auto',
-        sources: [{ src: url, type: 'video/mp4' }]
-      });
-    });
-  }
-});
-
 watch(
   () => dashboardStore.selectedTaskId,
   (taskId) => {
@@ -965,6 +696,7 @@ onMounted(() => {
   fetchCharacters();
   scheduleAnalyticsHydration();
   recomputeHistoricalStats();
+  resetCompletedTaskSelection();
 });
 
 function saveApiKeySetting() {
@@ -1351,6 +1083,14 @@ async function fetchCharacters() {
 
 function refreshCharacters() {
   fetchCharacters();
+}
+function resetCompletedTaskSelection() {
+  const selectedId = dashboardStore.selectedTaskId;
+  if (!selectedId) return;
+  const task = dashboardStore.tasks.find((item) => item.id === selectedId);
+  if (!task || task.status === 'finished' || task.status === 'failed') {
+    dashboardStore.selectTask(null);
+  }
 }
 
 function clearCharacterSelection() {
@@ -2054,17 +1794,11 @@ function handleAvatarFiles(files: Array<{ file?: File }>) {
 function clearAvatarFile() {
   avatarFile.value = null;
   avatarFileError.value = '';
-  if (avatarPond.value) {
-    avatarPond.value.removeFiles();
-  }
+  creationPanelRef.value?.clearAvatarUpload?.();
 }
 
 onBeforeUnmount(() => {
   stopPolling();
-  if (videoPlayerInstance) {
-    videoPlayerInstance.dispose();
-    videoPlayerInstance = null;
-  }
   if (typeof document !== 'undefined') {
     document.body.classList.remove('drawer-lock');
   }
@@ -2076,6 +1810,48 @@ onBeforeUnmount(() => {
   display: grid;
   grid-template-columns: repeat(auto-fit, minmax(360px, 1fr));
   gap: 1.5rem;
+}
+
+.workspace {
+  --workspace-gap: 1.5rem;
+  --workspace-left: minmax(0, 1.25fr);
+  --workspace-right: minmax(280px, 0.85fr);
+  display: grid;
+  grid-template-columns: var(--workspace-left) var(--workspace-right);
+  gap: var(--workspace-gap);
+  align-items: start;
+  margin-top: 1.5rem;
+}
+
+.workspace__column {
+  display: flex;
+  flex-direction: column;
+  gap: var(--workspace-gap);
+}
+
+.workspace__column--right {
+  position: relative;
+}
+
+@media (max-width: 1200px) {
+  .workspace {
+    --workspace-left: minmax(0, 1fr);
+    --workspace-right: minmax(0, 0.9fr);
+  }
+}
+
+@media (max-width: 1024px) {
+  .workspace {
+    grid-template-columns: 1fr;
+  }
+
+  .workspace__column--left {
+    order: 1;
+  }
+
+  .workspace__column--right {
+    order: 2;
+  }
 }
 
 .status-message {
@@ -2207,25 +1983,25 @@ onBeforeUnmount(() => {
   justify-self: start;
 }
 
-.api-mini-row {
+:global(.api-mini-row) {
   display: flex;
   align-items: center;
   gap: 0.35rem;
   min-height: 40px;
 }
 
-.api-mini-row.meta {
+:global(.api-mini-row.meta) {
   justify-content: space-between;
   color: rgba(226, 232, 240, 0.9);
   font-size: 0.9rem;
 }
 
-.balance-label {
+:global(.balance-label) {
   font-weight: 600;
   color: #cbd5f5;
 }
 
-.btn-icon {
+:global(.btn-icon) {
   border: 1px solid rgba(148, 163, 184, 0.35);
   background: rgba(15, 23, 42, 0.7);
   color: #e5e7eb;
@@ -2234,12 +2010,12 @@ onBeforeUnmount(() => {
   cursor: pointer;
 }
 
-.btn-icon:disabled {
+:global(.btn-icon:disabled) {
   opacity: 0.5;
   cursor: not-allowed;
 }
 
-.sr-only {
+:global(.sr-only) {
   position: absolute;
   width: 1px;
   height: 1px;
@@ -2286,150 +2062,6 @@ onBeforeUnmount(() => {
   color: rgba(229, 231, 235, 0.8);
 }
 
-.task-list-section {
-  margin-bottom: 1.25rem;
-}
-
-.task-list {
-  list-style: none;
-  padding: 0;
-  display: flex;
-  flex-direction: column;
-  gap: 0.85rem;
-  margin: 0;
-}
-
-.task-list li {
-  border: 1px solid rgba(148, 163, 184, 0.25);
-  border-radius: 12px;
-  padding: 0.85rem;
-  transition: border-color 0.2s ease, background-color 0.2s ease;
-  display: flex;
-  flex-direction: column;
-  gap: 0.35rem;
-}
-
-.task-list li.active {
-  border-color: rgba(59, 130, 246, 0.6);
-  background: rgba(37, 99, 235, 0.08);
-}
-
-.task-row {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  gap: 0.5rem;
-}
-
-.task-row + .task-row {
-  margin-top: 0.15rem;
-}
-
-.task-id {
-  display: flex;
-  align-items: center;
-  gap: 0.5rem;
-  min-width: 0;
-}
-
-.task-time {
-  font-size: 0.85rem;
-  color: rgba(226, 232, 240, 0.75);
-  white-space: nowrap;
-}
-
-.task-row.task-secondary {
-  align-items: center;
-}
-
-.status-badge {
-  padding: 0.15rem 0.55rem;
-  border-radius: 999px;
-  font-size: 0.75rem;
-  text-transform: uppercase;
-  background: rgba(148, 163, 184, 0.2);
-  border: 1px solid rgba(148, 163, 184, 0.3);
-}
-
-.status-badge.finished {
-  background: rgba(16, 185, 129, 0.2);
-  border-color: rgba(16, 185, 129, 0.5);
-}
-
-.status-badge.failed {
-  background: rgba(239, 68, 68, 0.2);
-  border-color: rgba(239, 68, 68, 0.45);
-}
-
-.status-badge.running {
-  background: rgba(59, 130, 246, 0.15);
-  border-color: rgba(59, 130, 246, 0.4);
-}
-
-.task-message {
-  flex: 1;
-  min-width: 0;
-  color: rgba(248, 250, 252, 0.85);
-  font-size: 0.9rem;
-  overflow: hidden;
-  text-overflow: ellipsis;
-  white-space: nowrap;
-}
-
-.task-actions {
-  display: flex;
-  justify-content: flex-end;
-  gap: 0.35rem;
-  flex-shrink: 0;
-}
-
-.task-list-more {
-  margin-top: 0.75rem;
-  border: 1px dashed rgba(148, 163, 184, 0.35);
-  border-radius: 12px;
-  padding: 0.75rem;
-}
-
-.task-list-more summary {
-  list-style: none;
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  cursor: pointer;
-  color: rgba(226, 232, 240, 0.85);
-  font-size: 0.9rem;
-}
-
-.task-list-more summary::-webkit-details-marker {
-  display: none;
-}
-
-.task-list-more[open] summary {
-  color: rgba(226, 232, 240, 1);
-}
-
-.task-list-more .summary-hint {
-  font-size: 0.8rem;
-  color: rgba(148, 163, 184, 0.8);
-}
-
-.task-list-more[open] .summary-hint {
-  color: rgba(248, 250, 252, 0.9);
-}
-
-.task-list.secondary {
-  margin-top: 0.75rem;
-  gap: 0.65rem;
-}
-
-.task-list.secondary li {
-  background: rgba(15, 23, 42, 0.3);
-}
-
-.task-card-actions {
-  display: flex;
-  gap: 0.5rem;
-}
 
 .form-wrapper {
   border-top: 1px solid rgba(148, 163, 184, 0.25);
@@ -2496,7 +2128,7 @@ onBeforeUnmount(() => {
   margin-top: 0.5rem;
 }
 
-.btn-text {
+:global(.btn-text) {
   border: none;
   background: none;
   color: #60a5fa;
@@ -2505,7 +2137,7 @@ onBeforeUnmount(() => {
   font-size: 0.9rem;
 }
 
-.btn-text.danger {
+:global(.btn-text.danger) {
   color: #f87171;
 }
 
@@ -2682,96 +2314,4 @@ onBeforeUnmount(() => {
   }
 }
 
-.character-library {
-  border: 1px solid rgba(99, 102, 241, 0.3);
-  padding: 1rem;
-  border-radius: 12px;
-  background: linear-gradient(135deg, rgba(15, 23, 42, 0.92), rgba(30, 64, 175, 0.65));
-  box-shadow: 0 20px 45px rgba(15, 23, 42, 0.35);
-  color: #e5e7eb;
-}
-
-.section-header {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  margin-bottom: 0.5rem;
-}
-
-.link-btn {
-  border: none;
-  background: none;
-  color: #2563eb;
-  cursor: pointer;
-  font-size: 0.9rem;
-  padding: 0;
-}
-
-.character-select {
-  display: flex;
-  gap: 0.5rem;
-  align-items: center;
-  margin-bottom: 0.75rem;
-}
-
-.character-select select {
-  flex: 1;
-  padding: 0.4rem 0.5rem;
-  border: 1px solid #d1d5db;
-  border-radius: 4px;
-  min-height: 36px;
-}
-
-.character-detail {
-  display: flex;
-  gap: 1rem;
-  align-items: center;
-  margin-bottom: 1rem;
-}
-
-.character-image {
-  width: 140px;
-  height: 140px;
-  object-fit: cover;
-  border-radius: 8px;
-  border: 1px solid #e2e8f0;
-}
-
-.character-meta {
-  flex: 1;
-}
-
-.character-desc {
-  margin: 0.25rem 0;
-  color: rgba(255, 255, 255, 0.85);
-  line-height: 1.4;
-}
-
-.character-upload {
-  margin-top: 0.5rem;
-}
-
-.character-upload summary {
-  cursor: pointer;
-  margin-bottom: 0.5rem;
-}
-
-.upload-form {
-  display: flex;
-  flex-direction: column;
-  gap: 0.5rem;
-}
-
-.btn-secondary {
-  background: #1d4ed8;
-  color: #fff;
-  border: none;
-  padding: 0.5rem 1rem;
-  border-radius: 4px;
-  cursor: pointer;
-}
-
-.input-error.success {
-  color: #059669;
-}
 </style>

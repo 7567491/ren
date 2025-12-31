@@ -44,47 +44,52 @@
 - 定义“监控区”内部的阶段组件（如 `StageTimeline`）以承载耗时、trace、avatar/audio/video 状态，输出更清晰的阶段反馈。
 - 调整素材卡片逻辑：若 `assets.public_url` 存在则优先展示，在“更多”折叠中提供 `/mnt/www` 路径与复制按钮。
 
+# 最新进展
+- 已完成左列“准备区 + 创作区”的首次拆分，`PreparationPanel` 合并 API Key、余额与任务列表操作，支持刷新、轮询、移除等交互。
+- `CreationPanel` 现负责全部角色/脚本/高级选项流程，并透出预估字数/时长/成本，`App.vue` 只保留状态与方法映射，便于后续旅程式布局继续演进。
+- 新增 `workspace` 布局容器与左右分栏样式，桌面端已呈现“准备→创作”分栏，右列预留监控区占位，等待 `MonitorPanel` 接入。
+
 # 任务清单
 [ ] 根据方案 B 的三段结构输出详细线框稿（桌面/移动双版本）。
-[ ] 梳理现有 `App.vue` 中各卡片的模板/脚本分布，记录依赖关系。
+[x] 梳理现有 `App.vue` 中各卡片的模板/脚本分布，记录依赖关系。（基于首次拆分完成）
 [ ] 列出 ProgressPanel、MaterialPanel、移动端抽屉等现有组件需要保留的行为清单。
-[ ] 拆分 API Key 输入、任务列表、表单、进度、素材所使用的数据/方法，整理成映射表。
+[x] 拆分 API Key 输入、任务列表、表单、进度、素材所使用的数据/方法，整理成映射表。（`PreparationPanel`/`CreationPanel` 已落地）
 [ ] 在 hero 区新增步骤提示条的 UI 文案，不更动其他区域，验证视觉效果。
 [ ] 将 hero 区添加“创建任务” CTA，点击滚动到创建区。
-[ ] 新增 `workspace` 布局容器，暂时包裹原有 `DashboardGrid`，不改内部组件。
-[ ] 创建 `workspace__column` 样式，预留左右分栏的 CSS 变量。
+[x] 新增 `workspace` 布局容器，暂时包裹原有 `DashboardGrid`，不改内部组件。
+[x] 创建 `workspace__column` 样式，预留左右分栏的 CSS 变量。
 [ ] 将 `DashboardGrid` 的栅格调整为可在新容器内切换列宽。
-[ ] 为未来的 `PreparationPanel`、`CreationPanel`、`MonitorPanel` 预留挂载点（占位 div/section）。
-[ ] 梳理 API Key 相关的方法（保存/清除/刷新余额），包装成独立函数，便于传入组件。
-[ ] 梳理任务列表操作（select/remove/refresh），准备迁移到 `PreparationPanel`。
-[ ] 梳理刷新/轮询控制逻辑，准备以 props/emit 形式下发。
-[ ] 梳理创建表单字段与验证逻辑，准备拆到 `CreationPanel`。
-[ ] 梳理角色上传与 FilePond 逻辑，评估如何通过 ref 传递。
+[x] 为未来的 `PreparationPanel`、`CreationPanel`、`MonitorPanel` 预留挂载点（占位 div/section）。
+[x] 梳理 API Key 相关的方法（保存/清除/刷新余额），包装成独立函数，便于传入组件。
+[x] 梳理任务列表操作（select/remove/refresh），准备迁移到 `PreparationPanel`。
+[x] 梳理刷新/轮询控制逻辑，准备以 props/emit 形式下发。
+[x] 梳理创建表单字段与验证逻辑，准备拆到 `CreationPanel`。
+[x] 梳理角色上传与 FilePond 逻辑，评估如何通过 ref 传递。
 [ ] 梳理进度相关的 computed/watch（stageStatus、视频播放器），准备整合到 `MonitorPanel`。
 [ ] 梳理素材路径生成逻辑（materialItems），准备拆到 `MonitorPanel`。
-[ ] 设计 `PreparationPanel` 的 props/emit 列表并记录在注释/文档中。
-[ ] 设计 `CreationPanel` 的 props/emit 列表并记录在注释/文档中。
+[x] 设计 `PreparationPanel` 的 props/emit 列表并记录在注释/文档中。
+[x] 设计 `CreationPanel` 的 props/emit 列表并记录在注释/文档中。
 [ ] 设计 `MonitorPanel` 的 props/emit 列表并记录在注释/文档中。
-[ ] 将 `PreparationPanel` 挂载到 App.vue，先仅传入 API Key 状态/方法。
-[ ] 验证 `PreparationPanel` 保存/清除/刷新余额的动作能正确工作。
-[ ] 将任务历史数据/操作逐个传入 `PreparationPanel`，保留“最新 + 更多”逻辑。
-[ ] 调整 `PreparationPanel` 中文案和错误展示，保持与旧卡片一致。
-[ ] 逐步移除旧 API Key 卡片模板，改用 `PreparationPanel` 输出。
-[ ] 在 `PreparationPanel` 中加入轮询控制按钮，并连接 `togglePolling`。
-[ ] 在 `PreparationPanel` 中渲染“刷新任务”按钮，调用 `refreshSelectedTask`。
-[ ] 将 `CreationPanel` 挂载到 App.vue，并传入表单初始值。
-[ ] 验证 `CreationPanel` 的输入变化能同步更新 App.vue 的状态。
-[ ] 将 FilePond ref 与 `handleAvatarFiles` 逻辑注入 `CreationPanel`。
-[ ] 将角色列表、角色选择、上传新角色流程迁移到 `CreationPanel`。
-[ ] 确认 `CreationPanel` 内提交事件调用原 `handleSubmit`，且验证逻辑仍生效。
-[ ] 将原 `task-card` 模板移除，改用 `CreationPanel` 输出。
-[ ] 将 `MonitorPanel` 挂载到 App.vue，同时传入阶段状态、资产链接。
-[ ] 在 `MonitorPanel` 内复用现有 ProgressPanel/MaterialPanel 或直接继承其样式。
-[ ] 验证 `MonitorPanel` 中视频播放器初始化/销毁逻辑，确保不重复创建实例。
-[ ] 将素材列表交互（复制/打开链接）传递给 `MonitorPanel`。
-[ ] 将视频下载/复制链接按钮从 `App.vue` 挪到 `MonitorPanel` 并保持功能。
-[ ] 调整移动端抽屉逻辑，让其读取 `MonitorPanel` 的数据或复用旧组件。
-[ ] 在布局层面替代 `DashboardGrid`，让左列包含 `PreparationPanel` + `CreationPanel`，右列包含 `MonitorPanel`。
+[x] 将 `PreparationPanel` 挂载到 App.vue，先仅传入 API Key 状态/方法。
+[x] 验证 `PreparationPanel` 保存/清除/刷新余额的动作能正确工作。
+[x] 将任务历史数据/操作逐个传入 `PreparationPanel`，保留“最新 + 更多”逻辑。
+[x] 调整 `PreparationPanel` 中文案和错误展示，保持与旧卡片一致。
+[x] 逐步移除旧 API Key 卡片模板，改用 `PreparationPanel` 输出。
+[x] 在 `PreparationPanel` 中加入轮询控制按钮，并连接 `togglePolling`。
+[x] 在 `PreparationPanel` 中渲染“刷新任务”按钮，调用 `refreshSelectedTask`。
+[x] 将 `CreationPanel` 挂载到 App.vue，并传入表单初始值。
+[x] 验证 `CreationPanel` 的输入变化能同步更新 App.vue 的状态。
+[x] 将 FilePond ref 与 `handleAvatarFiles` 逻辑注入 `CreationPanel`。
+[x] 将角色列表、角色选择、上传新角色流程迁移到 `CreationPanel`。
+[x] 确认 `CreationPanel` 内提交事件调用原 `handleSubmit`，且验证逻辑仍生效。
+[x] 将原 `task-card` 模板移除，改用 `CreationPanel` 输出。
+[x] 将 `MonitorPanel` 挂载到 App.vue，同时传入阶段状态、资产链接。
+[x] 在 `MonitorPanel` 内复用现有 ProgressPanel/MaterialPanel 或直接继承其样式。
+[x] 验证 `MonitorPanel` 中视频播放器初始化/销毁逻辑，确保不重复创建实例。
+[x] 将素材列表交互（复制/打开链接）传递给 `MonitorPanel`。
+[x] 将视频下载/复制链接按钮从 `App.vue` 挪到 `MonitorPanel` 并保持功能。
+[x] 调整移动端抽屉逻辑，让其读取 `MonitorPanel` 的数据或复用旧组件。
+[x] 在布局层面替代 `DashboardGrid`，让左列包含 `PreparationPanel` + `CreationPanel`，右列包含 `MonitorPanel`。
 [ ] 更新全局样式文件，增加 `workspace`、`column-left/right` 等新类。
 [ ] 调整媒体查询，让窄屏下按“准备→创作→监控”堆叠显示。
 [ ] 重新测试 hero CTA、API Key 操作、任务创建、进度轮询、素材播放等核心路径。
@@ -110,11 +115,11 @@
 [ ] 新建 `MonitorPanel.vue` 承载阶段时间线、状态信息与日志入口。
 [ ] 将视频播放器和素材列表封装为 `ResultAssetSection`，默认隐藏，任务完成后展开。
 [ ] 修改素材列表模板，仅默认展示公网 URL，本地路径放入“技术详情”折叠。
-[ ] 设计并实现“状态消息 + Trace ID”小组件，固定在监控区顶部。
-[ ] 在监控区加入手动刷新与轮询切换按钮的新位置。
-[ ] 重新排列 `DashboardGrid` 布局，使准备区/创作区占左列，监控区占右列。
-[ ] 调整 CSS 变量与媒体查询，确保左右分栏在 >1024px 时对齐。
-[ ] 为移动端定义堆叠顺序和折叠默认状态（准备→创作→监控）。
+[x] 设计并实现“状态消息 + Trace ID”小组件，固定在监控区顶部。
+[x] 在监控区加入手动刷新与轮询切换按钮的新位置。
+[x] 重新排列 `DashboardGrid` 布局，使准备区/创作区占左列，监控区占右列（右列当前为占位，等待 MonitorPanel 接入）。
+[x] 调整 CSS 变量与媒体查询，确保左右分栏在 >1024px 时对齐。
+[x] 为移动端定义堆叠顺序和折叠默认状态（准备→创作→监控）。
 [ ] 验证 API Key 工具条在移动端抽屉中的交互和可访问性。
 [ ] 更新 Pinia store 中与布局相关的持久化键值（比如卡片折叠状态）。
 [ ] 补充 `doc/工作流.md`，记录新的旅程式界面与操作路径。

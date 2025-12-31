@@ -111,6 +111,54 @@ describe('Dashboard flow', () => {
     expect(wrapper.find('.material-list li').exists()).toBe(true);
   });
 
+  it('updates character preview when switching preset options', async () => {
+    const characters = [
+      {
+        id: 'char-mai',
+        name: '格斗女王',
+        image_url: '/api/characters/assets/mai.jpg',
+        appearance: { zh: '赤色战斗服造型' },
+        voice: { zh: '活力女声', voice_id: 'female-shaonv' }
+      },
+      {
+        id: 'char-jack',
+        name: '矩阵特工',
+        image_url: '/api/characters/assets/jack.jpg',
+        appearance: { zh: '黑衣特工姿态' },
+        voice: { zh: '冷静男声', voice_id: 'male-qn-qingse' }
+      }
+    ];
+
+    const fetchMock = vi.fn(async (input: RequestInfo, init?: RequestInit) => {
+      const url = typeof input === 'string' ? input : input.url;
+      const method = init?.method || 'GET';
+      if (url.endsWith('/api/characters') && method === 'GET') {
+        return mockResponse(characters);
+      }
+      return mockResponse({ detail: 'ok' });
+    });
+    vi.stubGlobal('fetch', fetchMock);
+
+    const wrapper = mount(App);
+    await flushPromises();
+
+    const select = wrapper.find('.character-select select');
+    expect(select.exists()).toBe(true);
+
+    const previewBefore = wrapper.find('.character-detail');
+    expect(previewBefore.exists()).toBe(true);
+    expect(previewBefore.find('strong').text()).toBe('格斗女王');
+    expect(wrapper.find('.character-image').attributes('src')).toContain('mai.jpg');
+
+    await select.setValue('char-jack');
+    await flushPromises();
+
+    const previewAfter = wrapper.find('.character-detail');
+    expect(previewAfter.find('strong').text()).toBe('矩阵特工');
+    expect(wrapper.find('.character-image').attributes('src')).toContain('jack.jpg');
+    expect(wrapper.find('.character-desc').text()).toContain('黑衣特工姿态');
+  });
+
   it('enables mobile drawer interactions', async () => {
     const originalMatchMedia = window.matchMedia;
     window.matchMedia = vi.fn().mockReturnValue({
@@ -143,13 +191,13 @@ describe('Dashboard flow', () => {
     try {
       const wrapper = mount(App);
       await flushPromises();
-      expect(wrapper.find('.drawer-summary').exists()).toBe(true);
       const toggles = wrapper.findAll('.drawer-toggle');
-      expect(toggles.length).toBe(2);
+      expect(toggles.length).toBe(1);
+      expect(toggles[0].text()).toContain('监控');
       await toggles[0].trigger('click');
       await flushPromises();
       expect(wrapper.find('.drawer-panel').exists()).toBe(true);
-      expect(wrapper.find('.drawer-panel h3').text()).toContain('任务进度');
+      expect(wrapper.find('.drawer-panel h3').text()).toContain('任务监控');
       await wrapper.find('.drawer-close').trigger('click');
       expect(wrapper.find('.drawer-panel').exists()).toBe(false);
     } finally {

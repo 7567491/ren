@@ -9,6 +9,19 @@
       <div class="step-pill">Step 3</div>
     </header>
 
+    <div class="monitor-toolbar">
+      <div class="polling-indicator" :class="{ active: pollingActive }">
+        <span class="dot"></span>
+        {{ pollingActive ? '轮询中' : '轮询已暂停' }}
+      </div>
+      <div class="toolbar-actions">
+        <button type="button" class="btn-secondary" :disabled="!currentJobId" @click="$emit('refresh-task')">刷新任务</button>
+        <button type="button" class="btn-secondary" :disabled="!currentJobId" @click="$emit('toggle-polling')">
+          {{ pollingActive ? '暂停轮询' : '恢复轮询' }}
+        </button>
+      </div>
+    </div>
+
     <div class="progress-headline">
       <div v-if="currentJobId" class="task-info">任务 ID：<code>{{ currentJobId }}</code></div>
       <div class="progress-meter" role="progressbar" :aria-valuenow="overallProgressPercent" aria-valuemin="0" aria-valuemax="100">
@@ -30,8 +43,11 @@
       </li>
     </ul>
 
-    <div class="status-message" :class="statusAccent">
-      {{ statusMessage }}
+    <div class="status-card" :class="statusAccent">
+      <p class="status-text">{{ statusMessage }}</p>
+      <p v-if="traceId" class="trace-tag">
+        Trace ID：<code>{{ traceId }}</code>
+      </p>
     </div>
     <div v-if="countdownVisible" class="countdown-hint">
       ⏱️ 预计剩余 <strong>{{ countdownLabel }}</strong>
@@ -119,6 +135,7 @@ const props = defineProps<{
   stageStatus: Record<StageKey, StageViewState>;
   statusMessage: string;
   statusAccent: Record<string, boolean>;
+  traceId?: string;
   countdownVisible: boolean;
   countdownLabel: string;
   countdownSource: string;
@@ -131,6 +148,7 @@ const props = defineProps<{
   billingSummary: string;
   errorMessage: string;
   materialItems: MaterialEntry[];
+  pollingActive: boolean;
 }>();
 
 defineEmits<{
@@ -139,6 +157,8 @@ defineEmits<{
   (event: 'copy-local-path', path: string): void;
   (event: 'copy-public-link', url: string): void;
   (event: 'open-public-link', url: string): void;
+  (event: 'refresh-task'): void;
+  (event: 'toggle-polling'): void;
 }>();
 
 const videoPlayerEl = ref<HTMLVideoElement | null>(null);
@@ -294,12 +314,69 @@ function stageStateIcon(state: StageViewState['state']) {
   font-size: 1.35rem;
 }
 
-.status-message {
+.monitor-toolbar {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 0.75rem;
+  flex-wrap: wrap;
+}
+
+.polling-indicator {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.4rem;
+  padding: 0.35rem 0.8rem;
+  border-radius: 999px;
+  border: 1px solid rgba(148, 163, 184, 0.4);
+  font-size: 0.85rem;
+  color: rgba(226, 232, 240, 0.85);
+}
+
+.polling-indicator .dot {
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+  background: rgba(248, 113, 113, 0.85);
+  display: inline-block;
+}
+
+.polling-indicator.active .dot {
+  background: rgba(74, 222, 128, 0.95);
+  box-shadow: 0 0 6px rgba(74, 222, 128, 0.65);
+}
+
+.toolbar-actions {
+  display: flex;
+  gap: 0.5rem;
+  flex-wrap: wrap;
+}
+
+.status-card {
+  margin-top: 0.75rem;
   padding: 0.9rem 1rem;
-  border-radius: 10px;
-  background: rgba(57, 64, 77, 0.8);
-  border-left: 4px solid var(--color-info);
-  margin-bottom: 0.5rem;
+  border-radius: 12px;
+  background: rgba(15, 23, 42, 0.5);
+  border: 1px solid rgba(148, 163, 184, 0.35);
+  display: flex;
+  flex-direction: column;
+  gap: 0.4rem;
+}
+
+.status-text {
+  margin: 0;
+  font-weight: 600;
+}
+
+.trace-tag {
+  margin: 0;
+  font-size: 0.85rem;
+  color: rgba(226, 232, 240, 0.75);
+}
+
+.trace-tag code {
+  font-size: 0.85rem;
+  color: #cbd5f5;
 }
 
 .countdown-hint {

@@ -181,6 +181,16 @@ runtime:
     backoff_seconds: 5
     max_backoff_seconds: 30
 
+# ============================================================
+# 角色库配置
+# ============================================================
+character_library:
+  storage_dir: "/mnt/www/ren/resource/pic"
+  uploads_subdir: "user"
+  prebuilt_file: "./resource/characters/prebuilt.json"
+  user_library_file: "./resource/characters/user_defined.json"
+  public_base_url: "/api/characters/assets"
+
 frontend:
   public_url: "https://ren.linapp.fun"
   assets_cdn: null
@@ -213,6 +223,11 @@ storage:
   namespace: "ren"
   final_video_name: "digital_human.mp4"
   task_dir_pattern: "ren_%m%d%H%M"
+  video_mirrors:
+    - name: "wave-ad"
+      dir: "/mnt/www/ad"
+      base_url: "https://s.linapp.fun/ad"
+      filename_template: "{job_id}.mp4"
 # ============================================================
 # 模型配置
 # ============================================================

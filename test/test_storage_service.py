@@ -50,6 +50,42 @@ def test_publish_video(tmp_path):
     assert public_path.read_bytes() == b"video"
 
 
+def test_publish_video_with_mirror_targets(tmp_path):
+    output_root = tmp_path / "output"
+    public_root = tmp_path / "public"
+    mirror_dir = tmp_path / "mirror"
+
+    storage = StorageService(
+        output_root=output_root,
+        public_base_url="https://cdn.example.com",
+        public_export_dir=public_root,
+        namespace="demo",
+        video_mirror_targets=[
+            {
+                "name": "wave-ad",
+                "dir": str(mirror_dir),
+                "base_url": "https://wave.example.com/ad",
+                "filename_template": "{job_id}.mp4",
+            }
+        ],
+    )
+
+    paths = storage.prepare_task_paths("aka-7777")
+    video_file = paths.video_path
+    video_file.write_bytes(b"video")
+
+    publish_info = storage.publish_video("aka-7777", video_file)
+    assert publish_info is not None
+    mirrors = publish_info.get("mirrors")
+    assert mirrors
+    wave_info = mirrors[0]
+    assert wave_info["name"] == "wave-ad"
+    assert wave_info["url"] == "https://wave.example.com/ad/aka-7777.mp4"
+    mirror_path = Path(wave_info["path"])
+    assert mirror_path.exists()
+    assert mirror_path.read_bytes() == b"video"
+
+
 def test_publish_video_without_public_config(tmp_path):
     storage = StorageService(output_root=tmp_path)
     paths = storage.prepare_task_paths("aka-0002")

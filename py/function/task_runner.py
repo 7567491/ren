@@ -278,9 +278,19 @@ class TaskRunner:
 
         self._increase_cost(ctx, "video", video_result.get("cost", 0.0))
         provider_video_url = video_result.get("video_url")
-        ctx.record.assets["video_url"] = (publish_info or {}).get("url") or provider_video_url
+        mirror_locations = (publish_info or {}).get("mirrors") or []
+        resolved_video_url = (publish_info or {}).get("url") or provider_video_url
+        if not resolved_video_url:
+            for mirror in mirror_locations:
+                mirror_url = mirror.get("url")
+                if mirror_url:
+                    resolved_video_url = mirror_url
+                    break
+        ctx.record.assets["video_url"] = resolved_video_url
         ctx.record.assets["video_path"] = str(local_path)
         ctx.record.assets["public_video_path"] = (publish_info or {}).get("path")
+        if mirror_locations:
+            ctx.record.assets["video_mirrors"] = mirror_locations
         ctx.record.assets["avatar_url"] = avatar_url
         ctx.record.assets["wave_video_url"] = provider_video_url
         ctx.record.assets["local_video_url"] = f"/output/{ctx.job_id}/{self.storage.final_video_name}"

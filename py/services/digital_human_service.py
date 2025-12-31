@@ -50,15 +50,23 @@ class DigitalHumanService:
             except Exception as exc:  # noqa: BLE001
                 self.logger.warning("加载 config.yaml 失败：%s", exc)
                 self.loaded_config = None
-        self.storage = storage_service or StorageService(
-            output_root=os.getenv("DIGITAL_HUMAN_OUTPUT_DIR", "output"),
-            public_base_url=(
-                os.getenv("DIGITAL_HUMAN_PUBLIC_BASE_URL")
-                or os.getenv("STORAGE_BUCKET_URL")
-            ),
-            public_export_dir=os.getenv("DIGITAL_HUMAN_PUBLIC_EXPORT_DIR"),
-            namespace=os.getenv("DIGITAL_HUMAN_PUBLIC_NAMESPACE", "ren"),
-        )
+        if storage_service:
+            self.storage = storage_service
+        else:
+            storage_cfg = self.loaded_config.storage if self.loaded_config else {}
+            self.storage = StorageService(
+                output_root=storage_cfg.get("output_root") or os.getenv("DIGITAL_HUMAN_OUTPUT_DIR", "output"),
+                public_base_url=(
+                    storage_cfg.get("public_base_url")
+                    or os.getenv("DIGITAL_HUMAN_PUBLIC_BASE_URL")
+                    or os.getenv("STORAGE_BUCKET_URL")
+                ),
+                public_export_dir=storage_cfg.get("local_mount") or os.getenv("DIGITAL_HUMAN_PUBLIC_EXPORT_DIR"),
+                namespace=storage_cfg.get("namespace") or os.getenv("DIGITAL_HUMAN_PUBLIC_NAMESPACE", "ren"),
+                final_video_name=storage_cfg.get("final_video_name", os.getenv("DIGITAL_HUMAN_FINAL_VIDEO_NAME", "digital_human.mp4")),
+                task_dir_pattern=storage_cfg.get("task_dir_pattern", os.getenv("DIGITAL_HUMAN_TASK_DIR_PATTERN", "ren_%m%d%H%M")),
+                video_mirror_targets=storage_cfg.get("video_mirrors"),
+            )
 
         # avatar_client 默认指向自身（以便测试 mock generate_images）
         self.avatar_client = self

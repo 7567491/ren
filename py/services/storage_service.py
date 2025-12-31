@@ -8,15 +8,17 @@
 2. 提供元数据写入、artifact 拷贝等常用操作。
 3. 按配置将最终视频复制到对象存储/挂载目录（如 /mnt/www/ren/ren_MMDDHHMM/）
    并返回可访问 URL，便于前端直接播放。
+4. 可选：将最终视频额外拷贝到其他镜像目录（如 /mnt/www/ad），便于兄弟项目复用。
 """
 from __future__ import annotations
 
 import json
+import logging
 import shutil
 from dataclasses import dataclass
 from datetime import datetime, timezone
 from pathlib import Path
-from typing import Dict, Optional
+from typing import Dict, List, Optional
 
 
 @dataclass
@@ -31,6 +33,9 @@ class TaskPaths:
     log_path: Path
 
 
+logger = logging.getLogger(__name__)
+
+
 class StorageService:
     """
     管理数字人任务的本地输出目录与公开发布目录。
@@ -42,6 +47,7 @@ class StorageService:
         namespace: 发布目录下的命名空间（默认 `ren`）
         final_video_name: 最终视频文件名（默认 `digital_human.mp4`）
         task_dir_pattern: 发布目录命名模板，遵循 `datetime.strftime`
+        video_mirror_targets: 额外镜像目录配置列表
     """
 
     def __init__(
@@ -52,6 +58,7 @@ class StorageService:
         namespace: str = "ren",
         final_video_name: str = "digital_human.mp4",
         task_dir_pattern: str = "ren_%m%d%H%M",
+        video_mirror_targets: Optional[List[Dict[str, str]]] = None,
     ):
         self.output_root = Path(output_root).expanduser()
         self.output_root.mkdir(parents=True, exist_ok=True)
@@ -84,6 +91,10 @@ class StorageService:
                 self.public_root = candidate
             except PermissionError:
                 self.public_root = None
+
+        self.video_mirror_targets: list[dict] = []
+        if video_mirror_targets:
+            self._init_video_mirrors(video_mirror_targets)
 
     # ------------------------------------------------------------------ #
     # 任务目录管理
@@ -166,39 +177,126 @@ class StorageService:
             fp.write(line)
         return paths.log_path
 
+    def _init_video_mirrors(self, targets: List[Dict[str, str]]) -> None:
+        """解析镜像目录配置。"""
+        for index, raw in enumerate(targets, start=1):
+            dir_value = raw.get("dir") or raw.get("path") or raw.get("directory")
+            if not dir_value:
+                continue
+            base_dir = Path(dir_value).expanduser()
+            try:
+                base_dir.mkdir(parents=True, exist_ok=True)
+            except PermissionError as exc:  # noqa: BLE001
+                logger.warning("⚠️ 无法创建镜像目录 %s: %s", base_dir, exc)
+                continue
+            entry = {
+                "name": raw.get("name") or raw.get("id") or f"mirror-{index}",
+                "base_dir": base_dir,
+                "base_url": raw.get("base_url"),
+                "filename_template": raw.get("filename_template") or "{job_id}.mp4",
+                "relative_dir": raw.get("relative_dir") or "",
+            }
+            self.video_mirror_targets.append(entry)
+
+    @staticmethod
+    def _format_template(template: str, context: Dict[str, str]) -> str:
+        try:
+            return template.format(**context)
+        except Exception:  # noqa: BLE001
+            return template
+
+    def _mirror_video(
+        self,
+        task_id: str,
+        local_video_path: Path,
+        slug: str,
+    ) -> list[Dict[str, str]]:
+        """将视频复制到额外镜像目录。"""
+        if not self.video_mirror_targets:
+            return []
+
+        context = {
+            "job_id": task_id,
+            "slug": slug,
+            "filename": self.final_video_name,
+            "video_name": self.final_video_name,
+        }
+        results: list[Dict[str, str]] = []
+        for target in self.video_mirror_targets:
+            dest_dir = target["base_dir"]
+            relative_dir = target.get("relative_dir") or ""
+            relative_dir_value = ""
+            if relative_dir:
+                relative_dir_value = self._format_template(relative_dir, context).strip()
+                if relative_dir_value:
+                    dest_dir = dest_dir / relative_dir_value
+            try:
+                dest_dir.mkdir(parents=True, exist_ok=True)
+            except PermissionError as exc:  # noqa: BLE001
+                logger.warning("⚠️ 无法创建镜像子目录 %s: %s", dest_dir, exc)
+                continue
+
+            filename = self._format_template(target["filename_template"], context)
+            dest_path = dest_dir / filename
+            try:
+                shutil.copy2(local_video_path, dest_path)
+            except Exception as exc:  # noqa: BLE001
+                logger.warning("⚠️ 复制视频到镜像失败 (%s → %s): %s", local_video_path, dest_path, exc)
+                continue
+
+            entry: Dict[str, str] = {
+                "name": target["name"],
+                "path": str(dest_path),
+            }
+            base_url = target.get("base_url")
+            if base_url:
+                segments = [base_url.rstrip("/")]
+                if relative_dir_value:
+                    segments.append(relative_dir_value.strip("/"))
+                segments.append(filename)
+                entry["url"] = "/".join(filter(None, segments))
+            results.append(entry)
+        return results
+
     # ------------------------------------------------------------------ #
     # 对外发布
     # ------------------------------------------------------------------ #
     def publish_video(self, task_id: str, local_video_path: Path) -> Optional[Dict[str, str]]:
         """
-        将最终视频复制到公共挂载目录并返回 URL。
-        若未配置 public_root 或 public_base_url，则返回 None。
+        将最终视频复制到公共挂载目录并返回 URL；若配置了镜像目录，也会一并复制。
+        若未配置 public_root / public_base_url 且没有镜像目录，返回 None。
         """
-        if not self.public_root or not self.public_base_url:
-            return None
-
         if not local_video_path.exists():
             raise FileNotFoundError(local_video_path)
 
         slug = datetime.utcnow().strftime(self.task_dir_pattern or task_id)
-        dest_dir = self.public_root / slug
+        publish_result: Optional[Dict[str, str]] = None
 
-        index = 1
-        while dest_dir.exists():
-            index += 1
-            dest_dir = self.public_root / f"{slug}-{index}"
+        if self.public_root and self.public_base_url:
+            dest_dir = self.public_root / slug
 
-        dest_dir.mkdir(parents=True, exist_ok=True)
-        dest_path = dest_dir / self.final_video_name
-        shutil.copy2(local_video_path, dest_path)
+            index = 1
+            while dest_dir.exists():
+                index += 1
+                dest_dir = self.public_root / f"{slug}-{index}"
 
-        url_parts = [self.public_base_url.rstrip("/")]
-        if self.namespace and not self._base_includes_namespace:
-            url_parts.append(self.namespace.strip("/"))
-        url_parts.extend([dest_dir.name, self.final_video_name])
-        public_url = "/".join(url_parts)
+            dest_dir.mkdir(parents=True, exist_ok=True)
+            dest_path = dest_dir / self.final_video_name
+            shutil.copy2(local_video_path, dest_path)
 
-        return {"path": str(dest_path), "url": public_url}
+            url_parts = [self.public_base_url.rstrip("/")]
+            if self.namespace and not self._base_includes_namespace:
+                url_parts.append(self.namespace.strip("/"))
+            url_parts.extend([dest_dir.name, self.final_video_name])
+            public_url = "/".join(url_parts)
+            publish_result = {"path": str(dest_path), "url": public_url}
+
+        mirrors = self._mirror_video(task_id, local_video_path, slug)
+        if mirrors:
+            publish_result = publish_result or {}
+            publish_result["mirrors"] = mirrors
+
+        return publish_result
 
     def publish_task_asset(
         self,

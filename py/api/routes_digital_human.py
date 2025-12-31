@@ -16,6 +16,7 @@ from fastapi import APIRouter, FastAPI, File, Form, HTTPException, Request, Uplo
 from fastapi.responses import JSONResponse, FileResponse
 from pydantic import BaseModel, Field
 
+from py.function.config_loader import load_config
 from py.services.digital_human_service import DigitalHumanService
 from py.services.storage_service import StorageService
 from py.services.task_manager import TaskManager
@@ -29,13 +30,26 @@ router = APIRouter(prefix="/api", tags=["digital-human"])
 # 依赖实例（共享 TaskManager + StorageService，确保 task.json/状态一致）
 # -----------------------------------------------------------------------------
 task_manager = TaskManager()
+try:
+    _LOADED_CONFIG = load_config()
+except Exception as exc:  # noqa: BLE001
+    print(f"[WARN] 加载 config.yaml 失败，改用环境变量: {exc}")
+    _LOADED_CONFIG = None
+
+storage_cfg = _LOADED_CONFIG.storage if _LOADED_CONFIG else {}
+
 storage_service = StorageService(
-    output_root=os.getenv("DIGITAL_HUMAN_OUTPUT_DIR", "output"),
+    output_root=storage_cfg.get("output_root") or os.getenv("DIGITAL_HUMAN_OUTPUT_DIR", "output"),
     public_base_url=(
-        os.getenv("DIGITAL_HUMAN_PUBLIC_BASE_URL") or os.getenv("STORAGE_BUCKET_URL")
+        storage_cfg.get("public_base_url")
+        or os.getenv("DIGITAL_HUMAN_PUBLIC_BASE_URL")
+        or os.getenv("STORAGE_BUCKET_URL")
     ),
-    public_export_dir=os.getenv("DIGITAL_HUMAN_PUBLIC_EXPORT_DIR"),
-    namespace=os.getenv("DIGITAL_HUMAN_PUBLIC_NAMESPACE", "ren"),
+    public_export_dir=storage_cfg.get("local_mount") or os.getenv("DIGITAL_HUMAN_PUBLIC_EXPORT_DIR"),
+    namespace=storage_cfg.get("namespace") or os.getenv("DIGITAL_HUMAN_PUBLIC_NAMESPACE", "ren"),
+    final_video_name=storage_cfg.get("final_video_name", os.getenv("DIGITAL_HUMAN_FINAL_VIDEO_NAME", "digital_human.mp4")),
+    task_dir_pattern=storage_cfg.get("task_dir_pattern", os.getenv("DIGITAL_HUMAN_TASK_DIR_PATTERN", "ren_%m%d%H%M")),
+    video_mirror_targets=storage_cfg.get("video_mirrors"),
 )
 UPLOAD_DIR = storage_service.output_root / "uploads"
 UPLOAD_DIR.mkdir(parents=True, exist_ok=True)
@@ -59,6 +73,7 @@ def get_digital_human_service() -> DigitalHumanService:
             minimax_key=minimax_key,
             storage_service=storage_service,
             task_manager=task_manager,
+            loaded_config=_LOADED_CONFIG,
         )
     return _dh_service
 

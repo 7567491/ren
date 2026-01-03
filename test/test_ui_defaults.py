@@ -1,8 +1,8 @@
 #!/usr/bin/env python3
 """UI默认值测试用例 - TDD测试
 
-测试前端界面的默认值配置是否符合 ui.md 的要求：
-1. 广告主题默认文本："一个银行客户经理遇到问题，后来使用akamai推理云，分布式、低延迟、高并发，解决了问题"
+测试前端界面与 user.yaml 的默认值配置：
+1. 前端需定义10个包含“Akamai推理云”的主题模板，textarea 默认值与第一个模板一致
 2. 分辨率默认480p
 3. 并发线程默认3
 """
@@ -12,21 +12,28 @@ from pathlib import Path
 
 
 def test_frontend_default_topic():
-    """测试前端默认主题文本"""
+    """测试前端默认主题与随机主题池"""
     html_file = Path(__file__).parent.parent / 'frontend' / 'index.html'
     content = html_file.read_text(encoding='utf-8')
 
-    # 查找 topic 输入框
     topic_pattern = r'<textarea[^>]*id="topic"[^>]*>([^<]*)</textarea>'
     match = re.search(topic_pattern, content)
-
     assert match is not None, "未找到 topic 输入框"
-
     default_text = match.group(1).strip()
-    expected_text = "一个银行客户经理遇到问题，后来使用akamai推理云，分布式、低延迟、高并发，解决了问题"
 
-    assert default_text == expected_text, f"默认主题文本不匹配。\n期望: {expected_text}\n实际: {default_text}"
-    print("✓ 默认主题文本测试通过")
+    suffix_match = re.search(r"const PRESET_TOPIC_SUFFIX\s*=\s*'([^']+)';", content)
+    variants_match = re.search(r"const PRESET_TOPIC_VARIANTS\s*=\s*\[(.*?)\];", content, re.DOTALL)
+    assert suffix_match, "未找到 PRESET_TOPIC_SUFFIX"
+    assert variants_match, "未找到 PRESET_TOPIC_VARIANTS"
+
+    suffix = suffix_match.group(1)
+    variants = re.findall(r"'([^']+)'", variants_match.group(1))
+    assert len(variants) == 10, f"主题模板数量应为10，当前为{len(variants)}"
+
+    topics = [variant + suffix for variant in variants]
+    assert default_text == topics[0], "textarea 默认值应与首个主题模板一致"
+    assert all('Akamai推理云' in topic for topic in topics), "所有主题都需包含“Akamai推理云”"
+    print("✓ 默认主题与随机主题池配置测试通过")
 
 
 def test_frontend_default_resolution():
@@ -119,7 +126,7 @@ def test_user_yaml_defaults():
     # 检查关键配置
     assert 'resolution: 1' in content, "user.yaml 中分辨率应该为 1 (480p)"
     assert 'concurrent_workers: 3' in content, "user.yaml 中并发线程数应该为 3"
-    assert 'akamai推理云' in content, "user.yaml 中应包含默认主题文本"
+    assert 'Akamai推理云' in content, "user.yaml 中应包含默认主题文本"
 
     print("✓ user.yaml 默认配置测试通过")
 

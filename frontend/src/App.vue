@@ -66,6 +66,7 @@
 
         <CreationPanel
           ref="creationPanelRef"
+          :is-mobile="isMobile"
           :form-alert="formAlert"
           :avatar-mode="avatarMode"
           :avatar-prompt="avatarPrompt"
@@ -95,6 +96,7 @@
           :new-character-form="newCharacterForm"
           :new-character-alert="newCharacterAlert"
           :creating-character="creatingCharacter"
+          :creation-sections="creationSections"
           @update:avatar-mode="updateAvatarMode"
           @update:avatar-prompt="updateAvatarPrompt"
           @update:speech-text="updateSpeechText"
@@ -112,6 +114,7 @@
           @update:new-character-form="updateNewCharacterForm"
           @new-character-file-change="handleNewCharacterFile"
           @submit-new-character="submitNewCharacter"
+          @toggle-section="handleCreationSectionToggle"
           @submit="handleSubmit"
         />
       </section>
@@ -140,6 +143,8 @@
           :error-message="errorMessage"
           :material-items="materialItems"
           :polling-active="pollingActive"
+          :result-section-collapsed="resultSectionCollapsed"
+          :material-warning="resultSectionWarning"
           @download-video="downloadVideo"
           @copy-video-link="copyVideoLink"
           @copy-local-path="copyLocalPath"
@@ -147,6 +152,7 @@
           @open-public-link="openPublicLink"
           @refresh-task="refreshSelectedTask"
           @toggle-polling="togglePolling"
+          @toggle-result-section="handleResultSectionToggle"
         />
       </section>
     </div>
@@ -203,6 +209,8 @@
           :error-message="errorMessage"
           :material-items="materialItems"
           :polling-active="pollingActive"
+          :result-section-collapsed="resultSectionCollapsed"
+          :material-warning="resultSectionWarning"
           @download-video="downloadVideo"
           @copy-video-link="copyVideoLink"
           @copy-local-path="copyLocalPath"
@@ -210,6 +218,7 @@
           @open-public-link="openPublicLink"
           @refresh-task="refreshSelectedTask"
           @toggle-polling="togglePolling"
+          @toggle-result-section="handleResultSectionToggle"
         />
       </div>
     </section>
@@ -234,10 +243,13 @@ import type { ComponentPublicInstance, Ref } from 'vue';
 import { storeToRefs } from 'pinia';
 import { useAppConfig } from '@/composables/useAppConfig';
 import { useMediaQuery } from '@/composables/useMediaQuery';
+import { useAnalytics } from '@/composables/useAnalytics';
 import CreationPanel from '@/components/panels/CreationPanel.vue';
 import MonitorPanel from '@/components/panels/MonitorPanel.vue';
 import PreparationPanel from '@/components/workspace/PreparationPanel.vue';
 import { useDashboardStore } from '@/stores/dashboard';
+import { useLayoutPrefsStore } from '@/stores/layoutPrefs';
+import type { CreationSectionKey } from '@/stores/layoutPrefs';
 import type { MaterialEntry, StageDefinition, StageKey, StageViewState } from '@/types/dashboard';
 import type { CharacterRecord } from '@/types/characters';
 
@@ -290,7 +302,10 @@ const STAGE_PIPELINE: StageDefinition[] = [
 const config = useAppConfig();
 const isMobile = useMediaQuery('(max-width: 768px)', { defaultState: false });
 const dashboardStore = useDashboardStore();
+const analytics = useAnalytics();
+const layoutPrefsStore = useLayoutPrefsStore();
 const { sortedTasks, currentTask: storeCurrentTask } = storeToRefs(dashboardStore);
+const { creationSections, resultSectionCollapsed } = storeToRefs(layoutPrefsStore);
 const BUCKET_PUBLIC_BASE = 'https://s.linapp.fun';
 const API_KEY_PATTERN = /^(?:sk|ws|pk)_[-A-Za-z0-9]{16,}$/i;
 const stageDefinitions = STAGE_PIPELINE;
@@ -505,6 +520,16 @@ const newCharacterAlert = reactive({ message: '', type: '' as 'error' | 'success
 function updateNewCharacterForm(value: Record<string, string>) {
   Object.assign(newCharacterForm, value);
 }
+function handleCreationSectionToggle(payload: { id: CreationSectionKey; value: boolean }) {
+  layoutPrefsStore.setCreationSection(payload.id, payload.value);
+}
+function handleResultSectionToggle(collapsed: boolean) {
+  layoutPrefsStore.setResultSectionCollapsed(collapsed);
+  analytics.track('result_section_toggle', {
+    job_id: currentJobId.value || '',
+    collapsed
+  });
+}
 const heroJourneySteps = computed(() => {
   const hasKey = Boolean(dashboardStore.apiKey);
   const scriptReady = Boolean(speechText.value.trim());
@@ -599,6 +624,12 @@ function scrollElementIntoView(el: HTMLElement | null | undefined) {
 }
 
 function handleHeroCreateTask() {
+  analytics.track('hero_cta_click', {
+    job_id: currentJobId.value || '',
+    task_status: taskStatus.value,
+    polling_active: pollingActive.value,
+    char_count: charCount.value
+  });
   const el = getComponentRootEl(creationPanelRef.value);
   if (el) {
     scrollElementIntoView(el);
@@ -606,6 +637,12 @@ function handleHeroCreateTask() {
 }
 
 function handleHeroMonitor() {
+  analytics.track('hero_monitor_click', {
+    job_id: currentJobId.value || '',
+    overall_progress: overallProgressPercent.value,
+    is_mobile: isMobile.value,
+    drawer_active: mobileDrawerPanel.value === 'monitor'
+  });
   if (isMobile.value) {
     toggleMobileDrawer('monitor');
     return;
@@ -645,6 +682,14 @@ const overallProgressLabel = computed(() => `${overallProgressPercent.value}%`);
 const countdownVisible = computed(() => videoCountdown.active && videoCountdown.remaining > 0);
 const countdownLabel = computed(() => formatDuration(videoCountdown.remaining));
 const countdownSource = computed(() => videoCountdown.source);
+const resultSectionWarning = computed(() => {
+  const jobId = currentJobId.value;
+  if (!jobId || taskStatus.value !== 'finished') return false;
+  const localPath = latestTaskSnapshot.value?.assets?.local_video_url;
+  if (!localPath) return true;
+  const expectedSuffix = `/output/${jobId}/digital_human.mp4`;
+  return !localPath.endsWith(expectedSuffix);
+});
 
 const materialItems = computed<MaterialEntry[]>(() => {
   if (!currentJobId.value) {
@@ -1902,10 +1947,184 @@ onBeforeUnmount(() => {
 </script>
 
 <style scoped>
-.dashboard-grid {
-  display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(360px, 1fr));
+.hero {
+  background: linear-gradient(135deg, rgba(15, 23, 42, 0.95), rgba(5, 150, 105, 0.35));
+  border-radius: 32px;
+  border: 1px solid rgba(16, 185, 129, 0.25);
+  padding: 2rem;
+  display: flex;
+  flex-direction: column;
   gap: 1.5rem;
+  box-shadow: 0 25px 50px rgba(2, 6, 23, 0.45);
+}
+
+.hero-main {
+  display: flex;
+  justify-content: space-between;
+  gap: 1.25rem;
+  flex-wrap: wrap;
+  text-align: left;
+}
+
+.hero-title h1 {
+  margin: 0.25rem 0;
+  font-size: clamp(2rem, 4vw, 2.75rem);
+}
+
+.hero-eyebrow {
+  margin: 0;
+  color: rgba(226, 232, 240, 0.8);
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  font-size: 0.8rem;
+}
+
+.hero-subtitle {
+  margin: 0.25rem 0 0;
+  color: rgba(226, 232, 240, 0.78);
+}
+
+.hero-cta {
+  display: flex;
+  flex-direction: column;
+  gap: 0.65rem;
+  align-items: flex-end;
+  justify-content: center;
+}
+
+.hero-cta__primary,
+.hero-cta__secondary {
+  border: none;
+  border-radius: 999px;
+  padding: 0.8rem 1.75rem;
+  font-size: 1rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: transform 0.2s ease, box-shadow 0.2s ease;
+}
+
+.hero-cta__primary {
+  background: linear-gradient(120deg, #22d3ee, #0ea5e9);
+  color: #0f172a;
+  box-shadow: 0 15px 35px rgba(14, 165, 233, 0.45);
+}
+
+.hero-cta__primary:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+  box-shadow: none;
+}
+
+.hero-cta__secondary {
+  background: rgba(15, 23, 42, 0.65);
+  color: #e2e8f0;
+  border: 1px solid rgba(226, 232, 240, 0.3);
+}
+
+.hero-cta__hint {
+  margin: 0;
+  font-size: 0.9rem;
+  color: rgba(248, 250, 252, 0.85);
+}
+
+.hero-steps {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(190px, 1fr));
+  gap: 0.85rem;
+}
+
+.hero-step {
+  border-radius: 18px;
+  padding: 0.8rem 1rem;
+  display: flex;
+  gap: 0.75rem;
+  align-items: center;
+  border: 1px solid rgba(148, 163, 184, 0.25);
+  background: rgba(15, 23, 42, 0.55);
+  transition: border-color 0.2s ease, box-shadow 0.2s ease;
+}
+
+.hero-step__icon {
+  width: 48px;
+  height: 48px;
+  border-radius: 16px;
+  display: grid;
+  place-items: center;
+  font-size: 1.5rem;
+  background: rgba(15, 23, 42, 0.6);
+  border: 1px solid rgba(148, 163, 184, 0.25);
+}
+
+.hero-step__label {
+  margin: 0;
+  font-weight: 600;
+  font-size: 1rem;
+  color: #f8fafc;
+}
+
+.hero-step__desc {
+  margin: 0.15rem 0 0;
+  color: rgba(226, 232, 240, 0.78);
+  font-size: 0.9rem;
+}
+
+.hero-step--done {
+  border-color: rgba(34, 197, 94, 0.65);
+  box-shadow: inset 0 0 0 1px rgba(34, 197, 94, 0.35);
+}
+
+.hero-step--done .hero-step__icon {
+  background: rgba(34, 197, 94, 0.12);
+  border-color: rgba(34, 197, 94, 0.6);
+}
+
+.hero-step--active {
+  border-color: rgba(14, 165, 233, 0.65);
+  box-shadow: inset 0 0 0 1px rgba(14, 165, 233, 0.45);
+}
+
+.hero-step--active .hero-step__icon {
+  background: rgba(14, 165, 233, 0.15);
+  border-color: rgba(14, 165, 233, 0.8);
+}
+
+.hero-step--pending {
+  opacity: 0.75;
+}
+
+.hero-summary {
+  margin: 0;
+  border-radius: 16px;
+  padding: 0.85rem 1rem;
+  background: rgba(15, 23, 42, 0.55);
+  border: 1px dashed rgba(148, 163, 184, 0.35);
+  color: rgba(226, 232, 240, 0.85);
+}
+
+.hero-summary__message {
+  margin-left: 0.5rem;
+  color: #bae6fd;
+}
+
+@media (max-width: 768px) {
+  .hero {
+    padding: 1.5rem;
+  }
+
+  .hero-main {
+    flex-direction: column;
+  }
+
+  .hero-cta {
+    width: 100%;
+    align-items: stretch;
+  }
+
+  .hero-cta__primary,
+  .hero-cta__secondary {
+    width: 100%;
+    text-align: center;
+  }
 }
 
 .workspace {
@@ -2398,10 +2617,6 @@ onBeforeUnmount(() => {
 @media (max-width: 768px) {
   .page {
     padding-bottom: 6rem;
-  }
-
-  .dashboard-grid {
-    grid-template-columns: 1fr;
   }
 
   .task-card-actions {

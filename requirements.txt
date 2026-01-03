@@ -1,30 +1,13 @@
-# WaveSpeed.ai API 测试脚本依赖
-requests>=2.31.0
-httpx>=0.27.0
-python-dotenv>=1.0.0
-toml>=0.10.2
-PyYAML>=6.0
-
-# 语音合成（方案A - Edge TTS）
-edge-tts>=6.1.9
-
-# 视频编辑和合成
-moviepy>=1.0.3
-pillow>=10.0.0
-numpy>=1.24.0
-
-# 日志增强
-loguru>=0.7.2
-
-# 音频特征分析（智能音乐匹配）
-librosa>=0.10.0
-soundfile>=0.12.0
-
-# Web API 服务（新增）
-fastapi>=0.100.0
+# WaveSpeed 数字人后端
+fastapi>=0.110.0
 uvicorn[standard]>=0.23.0
-pydantic>=2.0.0
+pydantic>=2.6.0
+python-dotenv>=1.0.0
+PyYAML>=6.0.0
+httpx>=0.27.0
+requests>=2.31.0
+python-multipart>=0.0.9
 
-# 测试框架
+# 测试
 pytest>=7.4.0
 pytest-asyncio>=0.21.0

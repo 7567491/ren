@@ -15,7 +15,7 @@ from typing import Any, Dict, Optional
 
 import httpx
 
-from py.function.media_clients import InfiniteTalkClient
+from py.function.infinitetalk_client import InfiniteTalkClient
 from py.function.task_runner import TaskRequest, TaskRunner
 from py.exceptions import ExternalAPIError
 from py.function.config_loader import load_config, LoadedConfig

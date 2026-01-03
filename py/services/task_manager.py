@@ -71,7 +71,8 @@ class TaskManager:
                 'resolution': resolution,
                 'user_yaml': user_yaml,
                 'resume_id': resume_id,
-                'no_auto_resume': no_auto_resume
+                'no_auto_resume': no_auto_resume,
+                'eta_profile': None
             }
 
             self.tasks[job_id] = task
@@ -134,6 +135,19 @@ class TaskManager:
         with self.lock:
             if job_id in self.tasks:
                 self.tasks[job_id]['result_path'] = result_path
+                self._save_tasks()
+
+    def set_eta_profile(self, job_id: str, eta_profile: Optional[dict]):
+        """
+        设置任务的ETA配置
+
+        Args:
+            job_id: 任务 ID
+            eta_profile: 阶段耗时估计
+        """
+        with self.lock:
+            if job_id in self.tasks:
+                self.tasks[job_id]['eta_profile'] = eta_profile
                 self._save_tasks()
 
     def list_tasks(self) -> List[dict]:

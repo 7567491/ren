@@ -70,61 +70,34 @@
       </div>
     </section>
 
-    <section v-if="taskStatus === 'finished' && resultVideoUrl" class="result-container">
-      <p class="asset-title">最终视频</p>
-      <video ref="videoPlayerEl" class="video-player video-js vjs-default-skin" playsinline data-setup="{}"></video>
-      <div class="cost-display">
-        总成本: ${{ totalCost.toFixed(2) }}
-        <small v-if="billingSummary">{{ billingSummary }}</small>
-      </div>
-      <div class="result-actions">
-        <button class="btn-download" @click="$emit('download-video')">📥 下载视频</button>
-        <button class="btn-share" @click="$emit('copy-video-link')">🔗 复制链接</button>
-      </div>
-    </section>
-
     <div v-if="taskStatus === 'failed'" class="error-message">
       <strong>❌ 生成失败</strong>
       <p>{{ errorMessage }}</p>
     </div>
 
-    <section class="material-card">
-      <header>
-        <h3>素材目录</h3>
-        <a href="/doc/frontend_task_flow.md" target="_blank" rel="noreferrer" class="link">任务流说明</a>
-      </header>
-      <div v-if="!currentJobId" class="empty-state">未选择任务，暂无法展示素材。</div>
-      <div v-else>
-        <ul v-if="materialItems.length" class="material-list">
-          <li v-for="item in materialItems" :key="item.id">
-            <div class="material-meta">
-              <strong>{{ item.label }}</strong>
-              <span class="material-tag" :class="item.type">{{ item.type }}</span>
-            </div>
-            <p v-if="item.description" class="material-desc">{{ item.description }}</p>
-            <p v-if="item.publicUrl" class="material-path">公网：<code>{{ item.publicUrl }}</code></p>
-            <details v-if="item.localPath" class="material-details">
-              <summary>技术详情</summary>
-              <p class="material-path">本地：<code>{{ item.localPath }}</code></p>
-            </details>
-            <div class="material-actions">
-              <button v-if="item.localPath" type="button" class="btn-text" @click="$emit('copy-local-path', item.localPath)">复制本地</button>
-              <button v-if="item.publicUrl" type="button" class="btn-text" @click="$emit('copy-public-link', item.publicUrl)">复制公网</button>
-              <button v-if="item.publicUrl" type="button" class="btn-text" @click="$emit('open-public-link', item.publicUrl)">打开</button>
-            </div>
-          </li>
-        </ul>
-        <div v-else class="empty-state">暂无素材文件，等待任务产出。</div>
-      </div>
-    </section>
+    <ResultAssetSection
+      :current-job-id="currentJobId"
+      :task-status="taskStatus"
+      :result-video-url="resultVideoUrl"
+      :total-cost="totalCost"
+      :billing-summary="billingSummary"
+      :material-items="materialItems"
+      :collapsed="resultSectionCollapsed"
+      :has-path-warning="materialWarning"
+      @download-video="$emit('download-video')"
+      @copy-video-link="$emit('copy-video-link')"
+      @copy-local-path="$emit('copy-local-path', $event)"
+      @copy-public-link="$emit('copy-public-link', $event)"
+      @open-public-link="$emit('open-public-link', $event)"
+      @toggle-collapsed="$emit('toggle-result-section', $event)"
+    />
   </section>
 </template>
 
 <script setup lang="ts">
-import { onBeforeUnmount, ref, watch } from 'vue';
-import videojs from 'video.js';
 import type { StageDefinition, StageViewState, StageKey } from '@/types/stages';
 import type { MaterialEntry } from '@/types/material';
+import ResultAssetSection from './ResultAssetSection.vue';
 
 const props = defineProps<{
   currentJobId: string | null;
@@ -149,6 +122,8 @@ const props = defineProps<{
   errorMessage: string;
   materialItems: MaterialEntry[];
   pollingActive: boolean;
+  resultSectionCollapsed: boolean;
+  materialWarning: boolean;
 }>();
 
 defineEmits<{
@@ -159,37 +134,8 @@ defineEmits<{
   (event: 'open-public-link', url: string): void;
   (event: 'refresh-task'): void;
   (event: 'toggle-polling'): void;
+  (event: 'toggle-result-section', collapsed: boolean): void;
 }>();
-
-const videoPlayerEl = ref<HTMLVideoElement | null>(null);
-let videoPlayerInstance: videojs.Player | null = null;
-
-watch(
-  () => props.resultVideoUrl,
-  (url) => {
-    if (videoPlayerInstance) {
-      videoPlayerInstance.dispose();
-      videoPlayerInstance = null;
-    }
-    if (url) {
-      queueMicrotask(() => {
-        if (!videoPlayerEl.value) return;
-        videoPlayerInstance = videojs(videoPlayerEl.value, {
-          controls: true,
-          preload: 'auto',
-          sources: [{ src: url, type: 'video/mp4' }]
-        });
-      });
-    }
-  }
-);
-
-onBeforeUnmount(() => {
-  if (videoPlayerInstance) {
-    videoPlayerInstance.dispose();
-    videoPlayerInstance = null;
-  }
-});
 
 function stageStateIcon(state: StageViewState['state']) {
   if (state === 'done') return '✅';

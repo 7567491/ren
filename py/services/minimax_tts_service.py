@@ -1,9 +1,10 @@
 """
 MiniMax TTS 服务
 
-提供 MiniMax speech-02-hd TTS 服务
+提供 MiniMax speech-02-hd TTS 服务，兼容 WaveSpeed 的轮询式结果格式。
 """
 import asyncio
+import time
 from pathlib import Path
 from typing import Optional, Dict, Any, Callable
 
@@ -25,6 +26,8 @@ class MiniMaxTTSService:
         self.api_key = api_key
         self.base_url = "https://api.wavespeed.ai/api/v3"
         self.endpoint = f"{self.base_url}/minimax/speech-02-hd"
+        self._poll_interval = 3
+        self._poll_timeout = 180
 
     async def generate_voice(
         self,
@@ -82,17 +85,7 @@ class MiniMaxTTSService:
         }
 
         result = await self._with_retry(lambda: self._request_tts(payload, headers))
-
-        # 解析响应
-        output = result.get("output", {})
-        audio_url = output.get("audio_url")
-        if not audio_url:
-            raise ExternalAPIError(
-                provider="minimax",
-                message="API 响应缺少 audio_url",
-                status_code=200,
-                response_data=result
-            )
+        audio_url, duration = await self._resolve_audio_output(result, headers)
 
         # 下载音频（如果提供了输出路径）
         audio_path_str = None
@@ -101,15 +94,16 @@ class MiniMaxTTSService:
             audio_path_str = str(output_path)
 
         # 计算成本
-        duration = output.get("duration", 0)
-        cost = self._calculate_cost(duration)
+        duration_value = duration if duration is not None else 0.0
+        cost = self._calculate_cost(duration_value)
 
-        return {
+        response = {
             "audio_url": audio_url,
             "audio_path": audio_path_str,
             "duration": duration,
             "cost": cost
         }
+        return response
 
     async def _download_audio(self, url: str, target: Path):
         """
@@ -198,6 +192,107 @@ class MiniMaxTTSService:
                 status_code=0,
                 original_exception=e
             )
+
+    async def _resolve_audio_output(
+        self,
+        response: Dict[str, Any],
+        headers: Dict[str, str],
+    ) -> tuple[str, Optional[float]]:
+        """
+        解析 WaveSpeed 返回的 result/data 结构，并在必要时轮询 result URL。
+        """
+        data = self._unwrap_response(response)
+
+        # 直接返回 output 结构
+        output = data.get("output")
+        if isinstance(output, dict) and output.get("audio_url"):
+            return output["audio_url"], output.get("duration")
+
+        outputs = data.get("outputs")
+        if isinstance(outputs, list) and outputs:
+            return outputs[0], data.get("duration")
+
+        # 需要轮询 result endpoint
+        urls = data.get("urls") or {}
+        poll_url = urls.get("get") or data.get("result_url")
+        task_id = data.get("id") or data.get("task_id")
+        if poll_url:
+            final_data = await self._poll_prediction(poll_url, headers, task_id=task_id)
+            output = final_data.get("output")
+            if isinstance(output, dict) and output.get("audio_url"):
+                return output["audio_url"], output.get("duration")
+            outputs = final_data.get("outputs")
+            if isinstance(outputs, list) and outputs:
+                return outputs[0], final_data.get("duration")
+
+        raise ExternalAPIError(
+            provider="minimax",
+            message="API 响应缺少 audio_url",
+            status_code=200,
+            response_data=response
+        )
+
+    async def _poll_prediction(
+        self,
+        poll_url: str,
+        headers: Dict[str, str],
+        task_id: Optional[str] = None,
+    ) -> Dict[str, Any]:
+        """
+        轮询 WaveSpeed 预测结果（类似于 /predictions/{id}/result）。
+        """
+        auth_headers = {"Authorization": headers["Authorization"]}
+        start = time.time()
+
+        async with httpx.AsyncClient(timeout=30) as client:
+            while time.time() - start < self._poll_timeout:
+                try:
+                    response = await client.get(poll_url, headers=auth_headers)
+                except httpx.TimeoutException:
+                    await asyncio.sleep(self._poll_interval)
+                    continue
+                except httpx.RequestError as exc:
+                    raise ExternalAPIError(
+                        provider="minimax",
+                        message=f"轮询 MiniMax TTS 结果失败: {exc}",
+                        status_code=0
+                    ) from exc
+
+                if not response.is_success:
+                    raise ExternalAPIError.from_response(
+                        provider="minimax",
+                        response=response,
+                        message="轮询 MiniMax TTS 结果失败"
+                    )
+
+                payload = self._unwrap_response(response.json())
+                status = payload.get("status")
+                if status in {"completed", "succeeded"}:
+                    return payload
+                if status == "failed":
+                    raise ExternalAPIError(
+                        provider="minimax",
+                        message=f"MiniMax TTS 任务失败: {payload.get('error', 'unknown error')}",
+                        status_code=200,
+                        response_data=payload
+                    )
+                await asyncio.sleep(self._poll_interval)
+
+        raise ExternalAPIError(
+            provider="minimax",
+            message="等待 MiniMax TTS 结果超时",
+            status_code=408,
+            response_data={"task_id": task_id, "url": poll_url}
+        )
+
+    @staticmethod
+    def _unwrap_response(response: Dict[str, Any]) -> Dict[str, Any]:
+        """兼容 WaveSpeed data 包裹结构。"""
+        if isinstance(response, dict):
+            data = response.get("data")
+            if isinstance(data, dict):
+                return data
+        return response
 
     async def _with_retry(self, func: Callable[[], Any], max_attempts: int = 3, base_delay: int = 5):
         attempt = 0

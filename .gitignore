@@ -17,13 +17,18 @@ build/
 *.pem
 
 # 输出文件
-output/
+output/  # 包含 aka-* 任务与 smoke 冒烟产物
 temp/
 *.mp4
 *.mp3
 *.png
 *.jpg
 *.jpeg
+
+# Node / 前端
+node_modules/
+frontend/node_modules/
+frontend/dist/
 
 # 用户配置
 .bash_history
@@ -57,6 +62,11 @@ log.txt
 resource/songs/
 resource/music_features.json
 resource/fonts/
+
+# 角色素材上传
+resource/pic/user/
+resource/pic/user/*
+resource/characters/user/
 
 # Codex
 codex-*/

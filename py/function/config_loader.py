@@ -135,4 +135,38 @@ def load_config() -> LoadedConfig:
     )
 
 
-__all__ = ["LoadedConfig", "MappingConfig", "load_config", "build_mappings", "PROJECT_ROOT"]
+def load_config_file(path: str | Path):
+    """
+    读取临时配置文件并执行基础镜头数校验。
+
+    Returns:
+        (config, hash) 当配置有效；否则返回 None。
+    """
+    file_path = Path(path)
+    if not file_path.exists():
+        return None
+
+    try:
+        config = _load_yaml(file_path)
+    except Exception:
+        return None
+    if not isinstance(config, dict):
+        return None
+
+    shot_count = config.get("shot_count")
+    if not isinstance(shot_count, int):
+        return None
+    if not 1 <= shot_count <= 10:
+        return None
+
+    return config, _config_hash(config)
+
+
+__all__ = [
+    "LoadedConfig",
+    "MappingConfig",
+    "load_config",
+    "load_config_file",
+    "build_mappings",
+    "PROJECT_ROOT",
+]

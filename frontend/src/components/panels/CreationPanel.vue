@@ -14,179 +14,223 @@
     </div>
 
     <form @submit.prevent="$emit('submit')">
-      <article class="section-card">
-        <header class="section-header">
+      <details
+        class="section-card section-collapsible"
+        :open="creationSections.character"
+        @toggle="handleSectionToggle('character', $event)"
+      >
+        <summary class="section-summary">
           <div>
-            <p class="section-eyebrow">头像模式</p>
+            <p class="section-eyebrow">角色与头像</p>
             <h3>角色管理</h3>
           </div>
-          <button type="button" class="btn-text" :disabled="characterLoading" @click="$emit('refresh-characters')">
-            {{ characterLoading ? '刷新中…' : '重新载入' }}
-          </button>
-        </header>
-        <div class="radio-group">
-          <label>
-            <input type="radio" value="character" :checked="avatarMode === 'character'" @change="$emit('update:avatar-mode', 'character')" />
-            预制人物
-          </label>
-          <label>
-            <input type="radio" value="prompt" :checked="avatarMode === 'prompt'" @change="$emit('update:avatar-mode', 'prompt')" />
-            AI 生成头像
-          </label>
-          <label>
-            <input type="radio" value="upload" :checked="avatarMode === 'upload'" @change="$emit('update:avatar-mode', 'upload')" />
-            上传头像
-          </label>
-        </div>
-        <section v-show="avatarMode === 'prompt'" class="form-group mode-content active">
-          <label for="avatar_prompt">头像描述</label>
-          <input
-            id="avatar_prompt"
-            type="text"
-            :value="avatarPrompt"
-            placeholder="例如：专业女性播音员，商务装"
-            @input="$emit('update:avatar-prompt', ($event.target as HTMLInputElement).value)"
-          />
-        </section>
-        <section v-show="avatarMode === 'upload'" class="form-group mode-content active">
-          <label for="avatar_upload">上传头像</label>
-          <FilePond
-            ref="avatarPond"
-            :allow-multiple="false"
-            :accepted-file-types="acceptedAvatarTypes"
-            :max-file-size="maxAvatarSizeLabel"
-            :instant-upload="false"
-            :label-idle="pondLabel"
-            @updatefiles="(files) => $emit('avatar-files-change', files)"
-          />
-          <small>支持 PNG/JPG，最大 5MB</small>
-          <p v-if="avatarFileError" class="input-error">{{ avatarFileError }}</p>
-        </section>
-        <section v-show="avatarMode === 'character'" class="form-group character-library">
-          <p class="hint">选择角色即默认使用其头像与声音设定。</p>
-          <div v-if="characterError" class="input-error">{{ characterError }}</div>
-          <div class="character-select">
-            <select :value="selectedCharacterId" @change="$emit('update:selected-character-id', ($event.target as HTMLSelectElement).value)">
-              <option disabled value="">{{ characterLoading ? '加载中...' : '请选择人物' }}</option>
-              <option v-for="char in characters" :key="char.id" :value="char.id">
-                {{ char.name }}
-              </option>
-            </select>
-            <button type="button" class="link-btn" v-if="selectedCharacterId" @click="$emit('clear-character-selection')">清除选择</button>
+          <p class="section-status">{{ characterSummary }}</p>
+        </summary>
+        <div class="section-body">
+          <div class="radio-group">
+            <label>
+              <input type="radio" value="character" :checked="avatarMode === 'character'" @change="$emit('update:avatar-mode', 'character')" />
+              预制人物
+            </label>
+            <label>
+              <input type="radio" value="prompt" :checked="avatarMode === 'prompt'" @change="$emit('update:avatar-mode', 'prompt')" />
+              AI 生成头像
+            </label>
+            <label>
+              <input type="radio" value="upload" :checked="avatarMode === 'upload'" @change="$emit('update:avatar-mode', 'upload')" />
+              上传头像
+            </label>
+            <button type="button" class="btn-text" :disabled="characterLoading" @click="$emit('refresh-characters')">
+              {{ characterLoading ? '刷新中…' : '重新载入' }}
+            </button>
           </div>
-          <div v-if="selectedCharacter" class="character-detail">
-            <img :src="characterPreviewUrl" :alt="selectedCharacter.name" class="character-image" />
-            <div class="character-meta">
-              <strong>{{ selectedCharacter.name }}</strong>
-              <p class="character-desc">
-                {{ selectedCharacter.appearance?.zh || selectedCharacter.appearance?.en }}
-              </p>
-              <p class="character-desc" v-if="selectedCharacter.voice?.zh">
-                语音：{{ selectedCharacter.voice.zh }}
-              </p>
-              <p class="character-desc" v-if="selectedCharacter.voice?.voice_id">
-                推荐音色 ID：{{ selectedCharacter.voice.voice_id }}
-              </p>
+          <section v-show="avatarMode === 'prompt'" class="form-group mode-content active">
+            <label for="avatar_prompt">头像描述</label>
+            <input
+              id="avatar_prompt"
+              type="text"
+              :value="avatarPrompt"
+              placeholder="例如：专业女性播音员，商务装"
+              @input="$emit('update:avatar-prompt', ($event.target as HTMLInputElement).value)"
+            />
+          </section>
+          <section v-show="avatarMode === 'upload'" class="form-group mode-content active">
+            <label for="avatar_upload">上传头像</label>
+            <FilePond
+              ref="avatarPond"
+              :allow-multiple="false"
+              :accepted-file-types="acceptedAvatarTypes"
+              :max-file-size="maxAvatarSizeLabel"
+              :instant-upload="false"
+              :label-idle="pondLabel"
+              @updatefiles="(files) => $emit('avatar-files-change', files)"
+            />
+            <small>支持 PNG/JPG，最大 5MB</small>
+            <p v-if="avatarFileError" class="input-error">{{ avatarFileError }}</p>
+          </section>
+          <section v-show="avatarMode === 'character'" class="form-group character-library">
+            <p class="hint">选择角色即默认使用其头像与声音设定。</p>
+            <div v-if="characterError" class="input-error">{{ characterError }}</div>
+            <div class="character-select">
+              <select :value="selectedCharacterId" @change="$emit('update:selected-character-id', ($event.target as HTMLSelectElement).value)">
+                <option disabled value="">{{ characterLoading ? '加载中...' : '请选择人物' }}</option>
+                <option v-for="char in characters" :key="char.id" :value="char.id">
+                  {{ char.name }}
+                </option>
+              </select>
+              <button type="button" class="link-btn" v-if="selectedCharacterId" @click="$emit('clear-character-selection')">清除选择</button>
             </div>
-          </div>
-          <details class="character-upload">
-            <summary>上传新人物</summary>
-            <div class="upload-form">
-              <div v-if="newCharacterAlert.message" class="input-error" :class="{ success: newCharacterAlert.type === 'success' }">
-                {{ newCharacterAlert.message }}
+            <div v-if="selectedCharacter" class="character-detail">
+              <img :src="characterPreviewUrl" :alt="selectedCharacter.name" class="character-image" />
+              <div class="character-meta">
+                <strong>{{ selectedCharacter.name }}</strong>
+                <p class="character-desc">
+                  {{ selectedCharacter.appearance?.zh || selectedCharacter.appearance?.en }}
+                </p>
+                <p class="character-desc" v-if="selectedCharacter.voice?.zh">
+                  语音：{{ selectedCharacter.voice.zh }}
+                </p>
+                <p class="character-desc" v-if="selectedCharacter.voice?.voice_id">
+                  推荐音色 ID：{{ selectedCharacter.voice.voice_id }}
+                </p>
               </div>
-              <label>名称</label>
-              <input type="text" :value="newCharacterForm.name" placeholder="如：产品代言人 Lisa" @input="$emit('update:new-character-form', { ...newCharacterForm, name: ($event.target as HTMLInputElement).value })" />
-              <label>形象描述（中文）</label>
-              <textarea :value="newCharacterForm.appearanceZh" rows="3" @input="$emit('update:new-character-form', { ...newCharacterForm, appearanceZh: ($event.target as HTMLTextAreaElement).value })"></textarea>
-              <label>形象描述（英文，可选）</label>
-              <textarea :value="newCharacterForm.appearanceEn" rows="2" @input="$emit('update:new-character-form', { ...newCharacterForm, appearanceEn: ($event.target as HTMLTextAreaElement).value })"></textarea>
-              <label>声音提示（中文，可选）</label>
-              <textarea :value="newCharacterForm.voiceZh" rows="2" @input="$emit('update:new-character-form', { ...newCharacterForm, voiceZh: ($event.target as HTMLTextAreaElement).value })"></textarea>
-              <label>声音提示（英文/Prompt，可选）</label>
-              <textarea :value="newCharacterForm.voicePrompt" rows="2" @input="$emit('update:new-character-form', { ...newCharacterForm, voicePrompt: ($event.target as HTMLTextAreaElement).value })"></textarea>
-              <label>推荐音色 ID（可选）</label>
-              <input type="text" :value="newCharacterForm.voiceId" @input="$emit('update:new-character-form', { ...newCharacterForm, voiceId: ($event.target as HTMLInputElement).value })" />
-              <label>上传头像</label>
-              <input type="file" accept="image/*" @change="$emit('new-character-file-change', $event)" />
-              <small>支持 PNG/JPG，最大 10MB</small>
-              <button type="button" class="btn-secondary" :disabled="creatingCharacter" @click="$emit('submit-new-character')">
-                {{ creatingCharacter ? '上传中...' : '保存角色' }}
-              </button>
             </div>
-          </details>
-        </section>
-      </article>
+            <details class="character-upload">
+              <summary>上传新人物</summary>
+              <div class="upload-form">
+                <div v-if="newCharacterAlert.message" class="input-error" :class="{ success: newCharacterAlert.type === 'success' }">
+                  {{ newCharacterAlert.message }}
+                </div>
+                <label>名称</label>
+                <input type="text" :value="newCharacterForm.name" placeholder="如：产品代言人 Lisa" @input="$emit('update:new-character-form', { ...newCharacterForm, name: ($event.target as HTMLInputElement).value })" />
+                <label>形象描述（中文）</label>
+                <textarea :value="newCharacterForm.appearanceZh" rows="3" @input="$emit('update:new-character-form', { ...newCharacterForm, appearanceZh: ($event.target as HTMLTextAreaElement).value })"></textarea>
+                <label>形象描述（英文，可选）</label>
+                <textarea :value="newCharacterForm.appearanceEn" rows="2" @input="$emit('update:new-character-form', { ...newCharacterForm, appearanceEn: ($event.target as HTMLTextAreaElement).value })"></textarea>
+                <label>声音提示（中文，可选）</label>
+                <textarea :value="newCharacterForm.voiceZh" rows="2" @input="$emit('update:new-character-form', { ...newCharacterForm, voiceZh: ($event.target as HTMLTextAreaElement).value })"></textarea>
+                <label>声音提示（英文/Prompt，可选）</label>
+                <textarea :value="newCharacterForm.voicePrompt" rows="2" @input="$emit('update:new-character-form', { ...newCharacterForm, voicePrompt: ($event.target as HTMLTextAreaElement).value })"></textarea>
+                <label>推荐音色 ID（可选）</label>
+                <input type="text" :value="newCharacterForm.voiceId" @input="$emit('update:new-character-form', { ...newCharacterForm, voiceId: ($event.target as HTMLInputElement).value })" />
+                <label>上传头像</label>
+                <input type="file" accept="image/*" @change="$emit('new-character-file-change', $event)" />
+                <small>支持 PNG/JPG，最大 10MB</small>
+                <button type="button" class="btn-secondary" :disabled="creatingCharacter" @click="$emit('submit-new-character')">
+                  {{ creatingCharacter ? '上传中...' : '保存角色' }}
+                </button>
+              </div>
+            </details>
+          </section>
+        </div>
+      </details>
 
-      <article class="section-card">
-        <header class="section-header">
+      <details
+        class="section-card section-collapsible"
+        :open="creationSections.script"
+        @toggle="handleSectionToggle('script', $event)"
+      >
+        <summary class="section-summary">
           <div>
-            <p class="section-eyebrow">脚本与音色</p>
+            <p class="section-eyebrow">脚本</p>
             <h3>播报内容</h3>
           </div>
-          <div class="estimates">
-            <span>{{ charCount }} / 1000 字</span>
-            <span>预估 {{ estimatedDuration }} 秒</span>
-            <span>${{ estimatedCost.toFixed(2) }}</span>
+          <p class="section-status">{{ scriptSummary }}</p>
+        </summary>
+        <div class="section-body script-layout">
+          <div class="script-field">
+            <label for="speech_text">播报文本</label>
+            <textarea
+              id="speech_text"
+              :value="speechText"
+              maxlength="1000"
+              rows="6"
+              placeholder="请输入数字人要播报的内容..."
+              @input="$emit('update:speech-text', ($event.target as HTMLTextAreaElement).value)"
+            ></textarea>
           </div>
-        </header>
-        <div class="form-group">
-          <label for="speech_text">播报文本</label>
-          <textarea
-            id="speech_text"
-            :value="speechText"
-            maxlength="1000"
-            rows="5"
-            placeholder="请输入数字人要播报的内容..."
-            @input="$emit('update:speech-text', ($event.target as HTMLTextAreaElement).value)"
-          ></textarea>
+          <CostEstimateBadge
+            class="script-estimate"
+            :char-count="charCount"
+            :estimated-duration="estimatedDuration"
+            :estimated-cost="estimatedCost"
+            :sticky="!isMobile"
+          />
         </div>
-        <div class="form-group">
-          <label for="voice_id">音色</label>
-          <select id="voice_id" :value="voiceId" @change="$emit('update:voice-id', ($event.target as HTMLSelectElement).value)">
-            <option value="female-shaonv">女声 - 少女</option>
-            <option value="female-yujie">女声 - 御姐</option>
-            <option value="male-qn-qingse">男声 - 青涩</option>
-            <option value="male-qn-jingying">男声 - 精英</option>
-          </select>
-        </div>
-      </article>
+      </details>
 
-      <details class="section-card advanced-options" open>
-        <summary>⚙️ 高级选项</summary>
-        <div class="form-group">
-          <label for="resolution">分辨率</label>
-          <select id="resolution" :value="resolution" @change="$emit('update:resolution', ($event.target as HTMLSelectElement).value)">
-            <option value="720p">720p ($0.06/秒)</option>
-            <option value="1080p">1080p ($0.12/秒)</option>
-          </select>
-        </div>
-        <div class="form-group">
-          <label for="speed">语速</label>
-          <div class="slider-container">
-            <input id="speed" type="range" min="0.5" max="2" step="0.1" :value="speed" @input="$emit('update:speed', Number(($event.target as HTMLInputElement).value))" />
-            <span class="slider-value">{{ speed.toFixed(1) }}</span>
+      <details
+        class="section-card section-collapsible"
+        :open="creationSections.voice"
+        @toggle="handleSectionToggle('voice', $event)"
+      >
+        <summary class="section-summary">
+          <div>
+            <p class="section-eyebrow">音色与节奏</p>
+            <h3>语音配置</h3>
+          </div>
+          <p class="section-status">{{ voiceSummary }}</p>
+        </summary>
+        <div class="section-body">
+          <div class="form-group">
+            <label for="voice_id">音色</label>
+            <select id="voice_id" :value="voiceId" @change="$emit('update:voice-id', ($event.target as HTMLSelectElement).value)">
+              <option value="female-shaonv">女声 - 少女</option>
+              <option value="female-yujie">女声 - 御姐</option>
+              <option value="male-qn-qingse">男声 - 青涩</option>
+              <option value="male-qn-jingying">男声 - 精英</option>
+            </select>
+          </div>
+          <div class="form-group">
+            <label for="speed">语速</label>
+            <div class="slider-container">
+              <input id="speed" type="range" min="0.5" max="2" step="0.1" :value="speed" @input="$emit('update:speed', Number(($event.target as HTMLInputElement).value))" />
+              <span class="slider-value">{{ speed.toFixed(1) }}x</span>
+            </div>
+          </div>
+          <div class="form-group">
+            <label for="pitch">音调</label>
+            <div class="slider-container">
+              <input id="pitch" type="range" min="-12" max="12" step="1" :value="pitch" @input="$emit('update:pitch', Number(($event.target as HTMLInputElement).value))" />
+              <span class="slider-value">{{ pitch }}</span>
+            </div>
+          </div>
+          <div class="form-group">
+            <label for="emotion">情绪</label>
+            <select id="emotion" :value="emotion" @change="$emit('update:emotion', ($event.target as HTMLSelectElement).value)">
+              <option value="neutral">中性</option>
+              <option value="happy">开心</option>
+              <option value="sad">悲伤</option>
+              <option value="angry">愤怒</option>
+            </select>
           </div>
         </div>
-        <div class="form-group">
-          <label for="pitch">音调</label>
-          <div class="slider-container">
-            <input id="pitch" type="range" min="-12" max="12" step="1" :value="pitch" @input="$emit('update:pitch', Number(($event.target as HTMLInputElement).value))" />
-            <span class="slider-value">{{ pitch }}</span>
+      </details>
+
+      <details
+        class="section-card section-collapsible advanced-options"
+        :open="creationSections.advanced"
+        @toggle="handleSectionToggle('advanced', $event)"
+      >
+        <summary class="section-summary">
+          <div>
+            <p class="section-eyebrow">⚙️ 高级参数</p>
+            <h3>画质与随机种子</h3>
           </div>
-        </div>
-        <div class="form-group">
-          <label for="emotion">情绪</label>
-          <select id="emotion" :value="emotion" @change="$emit('update:emotion', ($event.target as HTMLSelectElement).value)">
-            <option value="neutral">中性</option>
-            <option value="happy">开心</option>
-            <option value="sad">悲伤</option>
-            <option value="angry">愤怒</option>
-          </select>
-        </div>
-        <div class="form-group">
-          <label for="seed">随机种子（可选）</label>
-          <input id="seed" type="text" :value="seed" placeholder="留空则由服务端随机生成" @input="$emit('update:seed', ($event.target as HTMLInputElement).value)" />
+          <p class="section-status">{{ advancedSummary }}</p>
+        </summary>
+        <div class="section-body">
+          <div class="form-group">
+            <label for="resolution">分辨率</label>
+            <select id="resolution" :value="resolution" @change="$emit('update:resolution', ($event.target as HTMLSelectElement).value)">
+              <option value="720p">720p ($0.06/秒)</option>
+              <option value="1080p">1080p ($0.12/秒)</option>
+            </select>
+          </div>
+          <div class="form-group">
+            <label for="seed">随机种子（可选）</label>
+            <input id="seed" type="text" :value="seed" placeholder="留空则由服务端随机生成" @input="$emit('update:seed', ($event.target as HTMLInputElement).value)" />
+          </div>
         </div>
       </details>
 
@@ -212,10 +256,13 @@ import FilePondPluginImagePreview from 'filepond-plugin-image-preview';
 import FilePondPluginFileValidateType from 'filepond-plugin-file-validate-type';
 import FilePondPluginFileValidateSize from 'filepond-plugin-file-validate-size';
 import type { CharacterRecord } from '@/types/characters';
+import CostEstimateBadge from './CostEstimateBadge.vue';
+import type { CreationSectionKey } from '@/stores/layoutPrefs';
 
 const FilePond = vueFilePond(FilePondPluginImagePreview, FilePondPluginFileValidateType, FilePondPluginFileValidateSize);
 
 const props = defineProps<{
+  isMobile: boolean;
   avatarMode: 'character' | 'prompt' | 'upload';
   avatarPrompt: string;
   speechText: string;
@@ -252,6 +299,7 @@ const props = defineProps<{
   charCount: number;
   estimatedDuration: number;
   estimatedCost: number;
+  creationSections: Record<CreationSectionKey, boolean>;
 }>();
 
 const emit = defineEmits<{
@@ -273,9 +321,42 @@ const emit = defineEmits<{
   (event: 'new-character-file-change', event: Event): void;
   (event: 'submit-new-character'): void;
   (event: 'submit'): void;
+  (event: 'toggle-section', payload: { id: CreationSectionKey; value: boolean }): void;
 }>();
 
 const avatarPond = ref<any>(null);
+const voiceLabels: Record<string, string> = {
+  'female-shaonv': '女声 - 少女',
+  'female-yujie': '女声 - 御姐',
+  'male-qn-qingse': '男声 - 青涩',
+  'male-qn-jingying': '男声 - 精英'
+};
+
+const characterSummary = computed(() => {
+  if (props.avatarMode === 'character' && props.selectedCharacter?.name) {
+    return `已选 ${props.selectedCharacter.name}`;
+  }
+  if (props.avatarMode === 'prompt' && props.avatarPrompt.trim()) {
+    return `AI 描述 · ${props.avatarPrompt.trim().slice(0, 12)}`;
+  }
+  if (props.avatarMode === 'upload') {
+    return '等待头像上传';
+  }
+  return '尚未配置';
+});
+
+const scriptSummary = computed(() => {
+  if (!props.charCount) return '未输入脚本';
+  return `${props.charCount} / 1000 字`;
+});
+
+const voiceSummary = computed(() => voiceLabels[props.voiceId] || '默认音色');
+const advancedSummary = computed(() => `${props.resolution.toUpperCase()} · 种子${props.seed ? '已填' : '自动'}`);
+
+function handleSectionToggle(id: CreationSectionKey, event: Event) {
+  const target = event.currentTarget as HTMLDetailsElement | null;
+  emit('toggle-section', { id, value: Boolean(target?.open) });
+}
 
 defineExpose({
   clearAvatarUpload() {
@@ -329,12 +410,26 @@ defineExpose({
   margin-bottom: 1rem;
 }
 
-.section-header {
+.section-collapsible summary::-webkit-details-marker {
+  display: none;
+}
+
+.section-summary {
   display: flex;
   justify-content: space-between;
   align-items: flex-start;
   gap: 0.75rem;
-  margin-bottom: 0.75rem;
+  cursor: pointer;
+  list-style: none;
+}
+
+.section-summary:focus-visible {
+  outline: 2px solid #22d3ee;
+  border-radius: 12px;
+}
+
+.section-body {
+  margin-top: 0.85rem;
 }
 
 .section-eyebrow {
@@ -345,12 +440,10 @@ defineExpose({
   text-transform: uppercase;
 }
 
-.estimates {
-  display: flex;
-  flex-direction: column;
-  gap: 0.2rem;
-  font-size: 0.85rem;
-  color: rgba(226, 232, 240, 0.8);
+.section-status {
+  margin: 0;
+  color: rgba(224, 231, 255, 0.75);
+  font-size: 0.9rem;
 }
 
 .character-library {
@@ -395,8 +488,31 @@ defineExpose({
   cursor: pointer;
 }
 
+.script-layout {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) minmax(200px, 0.45fr);
+  gap: 1rem;
+  align-items: flex-start;
+}
+
+.script-field label {
+  font-weight: 600;
+  display: block;
+  margin-bottom: 0.5rem;
+}
+
 .section-card textarea {
   width: 100%;
+}
+
+.script-estimate {
+  align-self: stretch;
+}
+
+@media (max-width: 960px) {
+  .script-layout {
+    grid-template-columns: 1fr;
+  }
 }
 
 .advanced-options {

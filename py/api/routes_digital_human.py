@@ -208,7 +208,7 @@ async def create_task(req: CreateTaskRequest):
         preset_name="digital_human",
         num_shots=1,
         resolution=req.resolution,
-        user_yaml={},
+        user_yaml=None,
     )
 
     if character_payload:

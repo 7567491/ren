@@ -2,9 +2,65 @@
   {
     "id": "gallery-896c0299",
     "name": "约翰斯佳丽红毯礼服",
-    "image_url": "https://upload.wikimedia.org/wikipedia/commons/c/c5/Scarlett_Johansson_in_Kuwait_01b-tweaked.jpg",
+    "image_url": "https://s.linapp.fun/figure/scarlett-johansson-kuwait.jpg",
     "description": "浅金色短发、自然妆容，穿军旅风米色夹克搭配白色内搭，在阳光下举手微笑，体现干练自信的好莱坞女主氛围。",
     "created_at": "2025-12-29T16:35:40.779022",
     "updated_at": "2025-12-29T16:35:40.779022"
+  },
+  {
+    "id": "gallery-e2b8e7bb",
+    "name": "克里斯·海姆斯沃斯红毯",
+    "image_url": "https://s.linapp.fun/figure/chris-hemsworth-blue-suit.jpg",
+    "description": "金发短发配浅胡渣，穿深蓝西装和白衬衫，微笑面对镜头，展现阳光硬汉型男主气质。",
+    "created_at": "2025-12-29T16:43:03.409905",
+    "updated_at": "2025-12-29T16:43:03.409905"
+  },
+  {
+    "id": "gallery-54d78cf3",
+    "name": "迈克尔B乔丹街头",
+    "image_url": "https://s.linapp.fun/figure/michael-b-jordan-street.jpg",
+    "description": "深肤色短寸头，穿黑色棒球夹克叠穿灰色T恤，表情自信随性，适合都市热血男主角色。",
+    "created_at": "2025-12-29T16:43:26.924570",
+    "updated_at": "2025-12-29T16:43:26.924570"
+  },
+  {
+    "id": "gallery-10357896",
+    "name": "亨利·卡维尔绅士",
+    "image_url": "https://s.linapp.fun/figure/henry-cavill-gentleman.jpg",
+    "description": "深棕发背头配胡茬，身穿灰色西装+蓝色条纹衬衫，神情沉稳，适合英伦绅士或超级英雄男主。",
+    "created_at": "2025-12-29T16:43:35.541092",
+    "updated_at": "2025-12-29T16:43:35.541092"
+  },
+  {
+    "id": "gallery-c7e14311",
+    "name": "瑞安·雷诺兹休闲",
+    "image_url": "https://s.linapp.fun/figure/ryan-reynolds-casual.jpg",
+    "description": "卷发+浅胡渣，穿军绿色夹克配牛仔衬衫，笑容幽默亲切，适合轻松风格的机智男主。",
+    "created_at": "2025-12-29T16:43:46.071918",
+    "updated_at": "2025-12-29T16:43:46.071918"
+  },
+  {
+    "id": "gallery-d52e7936",
+    "name": "盖尔·加朵红毯",
+    "image_url": "https://s.linapp.fun/figure/gal-gadot-redcarpet.jpg",
+    "description": "深棕长发披肩，穿银白亮片礼服，笑容自信优雅，适合高贵而英气的女主形象。",
+    "created_at": "2025-12-29T16:45:22.816210",
+    "updated_at": "2025-12-29T16:45:22.816210"
+  },
+  {
+    "id": "gallery-5cfd252a",
+    "name": "艾玛·沃森清新",
+    "image_url": "https://s.linapp.fun/figure/emma-watson-elegant.jpg",
+    "description": "棕色短发偏分，穿白色无袖礼服配金色耳环，气质文雅清新，适合知性女主或青春励志角色。",
+    "created_at": "2025-12-29T16:45:55.910769",
+    "updated_at": "2025-12-29T16:45:55.910769"
+  },
+  {
+    "id": "gallery-585da9c0",
+    "name": "布丽·拉尔森活力",
+    "image_url": "https://s.linapp.fun/figure/brie-larson-vibrant.jpg",
+    "description": "金色中长发披肩，穿亮黄色连衣裙，眼神灵动自信，适合阳光能量型的女主角色。",
+    "created_at": "2025-12-29T16:49:39.743406",
+    "updated_at": "2025-12-29T16:49:39.743406"
   }
 ]

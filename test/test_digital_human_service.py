@@ -19,12 +19,15 @@ class TestDigitalHumanService:
     """DigitalHumanService 单元测试"""
 
     @pytest.fixture
-    def service(self, api_keys):
+    def service(self, api_keys, tmp_path):
         """创建 DigitalHumanService 实例"""
         from py.services.digital_human_service import DigitalHumanService
+        from py.services.storage_service import StorageService
+        storage = StorageService(output_root=tmp_path / "digital_human_tests")
         svc = DigitalHumanService(
             wavespeed_key=api_keys["wavespeed"],
-            minimax_key=api_keys["minimax"]
+            minimax_key=api_keys["minimax"],
+            storage_service=storage,
         )
         svc._safe_fetch_balance = AsyncMock(return_value=None)  # type: ignore[attr-defined]
         return svc

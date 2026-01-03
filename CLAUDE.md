@@ -7,259 +7,165 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 - 用中文对话
 - 用最简单的方法完成任务
 - 不要创建新文件，除非明确要求
-- 不要生成新的md文档，除非我告诉你需要
-所有新增md文件放在./doc目录
-所有测试相关文件放在./test目录
+- 不要生成新的 md 文档，除非我告诉你需要；所有新增 md 文档放在 `./doc`
+- 所有测试相关文件放在 `./test`
 
 ## 项目定位
 
-**本项目是前后端分离的AI视频生成系统**
+**本项目现为面向 Web 的数字人生成系统**
 
-- **主程序**: `frontend/` (前端) + `ad-back.py` (后端API)
-- **参考脚本**: `ad-aka.py` (独立脚本，仅供参考，不要变更；若确需调整主流程逻辑，必须与 `ad-back.py` 同步以保持 CLI/API 一致，或抽取共享模块后双端共用)
+- 主程序 = `frontend/` Web 界面 + `ad-back.py`/`py/` 后端 API，统一 orchestrate WaveSpeedAI 数字人链路（详见 `doc/数字人.md`）。
+- 仍保留 `ad-aka.py` 作为历史脚本参考，但任何上线逻辑必须以后端 API 为准；如需复用算法请抽象至 `py/services/`。
 
 ## 项目概述
 
-**AI故事化视频生成系统** - 基于 DeepSeek 和 WavespeedAI 的智能视频制作工具
+**Digital Human Studio**：用户在浏览器输入提示词/脚本 → 后端串行执行“形象 → 语音 → 唇同步” → 返回可播放的视频 URL。
 
-- **核心功能**: 从主题到成片的全自动故事化视频生成
-- **技术架构**: DeepSeek(故事生成) → Edge TTS(配音) → WavespeedAI(视频生成) → MoviePy(合成)
-- **技术栈**: Python 3.10+, DeepSeek API, WavespeedAI API, Edge TTS, MoviePy
+- 核心 API：`bytedance/seedream-v4`（头像）、`minimax/speech-02-hd`（语音）、`wavespeed-ai/infinitetalk`（唇同步）。
+- 技术栈：Python 3.10+（Flask/FastAPI）、前端可采用 Vite + Vue/React 或纯静态页面，Nginx 将 `ren.linapp.fun` 反向代理至本地 `0.0.0.0:18005`。
+- 提供 REST 接口：`POST /api/tasks` 创建任务、`GET /api/tasks/<id>` 查询状态、`POST /api/assets/upload` 上传头像等。
 
 ## 常用命令
 
 ```bash
-# 激活虚拟环境
+# 激活虚拟环境并安装依赖
 source venv/bin/activate
-
-# 安装依赖
 pip install -r requirements.txt
 
-# 启动后端API服务（主程序）
-python3 ad-back.py
+# 启动/重启后端（默认监听 18005）
+python3 ad-back.py --port 18005
+# 或使用 restart 脚本（自动加载 .env、优雅重启 uvicorn）
+./restart_api_server.sh
 
-# 前端访问
-# 打开浏览器访问 frontend/index.html 或部署的前端地址
+# 前端开发
+cd frontend && npm install && npm run dev
 
-# 测试网络连接
-python3 py/test_network.py
+# WaveSpeed API 连通性 / 冒烟
+python3 py/test_network.py --digital-human
+./test/smoke_digital_human.sh        # 10 秒冒烟，输出到 output/smoke/aka-*
 
-# 参考脚本（不推荐直接使用）
-# python3 ad-aka.py
+# 统一测试（CI 同步）
+PYTEST_WAVESPEED_MOCK=1 ./run_tests.sh
 ```
 
 ## 配置层级
-- `.env`：存放 API 密钥，不提交。
-- `config.yaml`：全局默认与限流/路径/模型配置。
-- `user.yaml`：运行时用户参数覆盖（主题、镜头、分辨率、角色/Logo、并发等），缺省回落 `config.yaml`。
+
+- `.env`：存放 `WAVESPEED_API_KEY`、`MINIMAX_API_KEY`、对象存储凭证等敏感信息，不提交；可提供 `.env.example`。
+- `config.yaml`：全局参数（并发、重试、静态资源目录、Nginx 端口映射、调试模式）。
+- `user.yaml`：仅本地调试时使用，预填默认头像/语音；线上请求通过前端传参。
+- `doc/数字人.md`：数字人 API 协议的唯一来源，新增字段/模型前必须更新此文档。
 
 ## 项目结构
 
 ```
 wavespeed/
-├── 【主程序 - 前后端分离架构】
-│   ├── frontend/         # 前端页面（主程序前端）
-│   └── ad-back.py        # 后端API服务（主程序后端）
-│
-├── 【参考脚本 - 不要变更】
-│   └── ad-aka.py         # 独立脚本，仅供参考
-│
-├── py/                   # 后端核心模块
-│   ├── api/              # Workflow 对外 API
-│   ├── function/         # 配置/上下文/steps/pipeline 等模块
-│   ├── services/         # 语音/字幕/合成/音乐等原有服务
-│   ├── py1/              # 独立工具脚本
-│   ├── test_network.py   # 网络测试
-│   └── test-*.py         # 其他测试脚本
-│
-├── .test/                # 内部测试样例
-├── output/               # 输出目录(自动创建)
-├── resource/             # 资源目录（含 songs/）
-├── test/                 # 测试脚本目录
-├── doc/                  # 文档目录
-├── venv/                 # Python虚拟环境
-├── .env                  # API密钥配置
-├── config.yaml           # 系统配置文件
-├── requirements.txt      # Python依赖
-└── README.md             # 项目说明
+├── frontend/            # Web UI，负责任务创建/状态轮询/播放
+├── ad-back.py           # 后端入口，监听 18005
+├── py/
+│   ├── api/             # REST 路由、任务控制器
+│   ├── function/        # 配置、上下文、步骤调度
+│   ├── services/        # WaveSpeed API 客户端、存储、队列
+│   ├── py1/             # 工具脚本
+│   └── test_network.py  # 连通性检测
+├── doc/                 # 设计/接口文档（含 数字人.md）
+├── output/              # 任务资产（avatar/speech/video/log）
+├── resource/            # 静态资源
+├── test/                # 自动化测试
+├── README.md
+└── requirements.txt
 ```
 
-### 音乐脚本（统一放在 `music/`）
-- `1-download-yt-music.py`：按 `music-urls.txt` 下载 YouTube 音乐
-- `2-download-incompetech.py`：Incompetech 免费曲库并发直链（`--count`/`--filter`）
-- `3-download-freesound.py`：Freesound API 下载，支持 `--mode epic` + `--bpm-min`
-- `4-preprocess_music.py`：生成 `resource/music_features.json`（智能选曲缓存）
-- `5-check-music.py`：校验/清理 `resource/songs/` 中损坏或过短文件
-- `6-extract-music-climax.py`：按能量截取高潮片段到 `resource/songs/`
-- `7-example_music_usage.py`：背景音乐服务示例
+## 数字人服务脚本
 
-## 核心架构
+- `py/services/digital_human_service.py`（或等效模块）：封装 Seedream/Minimax/Infinitetalk 请求，提供 trace id、重试策略。
+- `py/services/storage_service.py`：生成的视频上传到对象存储或 `output/`，返回可公网访问的 URL。
+- `py/api/routes_digital_human.py`：REST API 入口，处理任务生命周期。
+- `music/` 下历史 BGM 工具可选对接，为数字人视频添加背景音乐。
 
-### 视频生成流程(5阶段) - **已升级支持配音和字幕！**
+## 数字人生成流程
 
-**阶段0: 配置与交互**
-- 验证API密钥和环境
-- 用户输入主题、选择风格、设置参数
-- 确认配置并创建工作目录
+1. **阶段0 前端交互**
+   - 用户填写 `avatar_mode`（上传/Prompt）、文本脚本、语音参数、分辨率。
+   - 前端 POST `/api/tasks`，后端写入 `task.json`（含 `trace_id/config_hash`）并持久化任务。
+2. **阶段1 形象生成**
+   - 上传头像直接落盘 `output/<job_id>/avatar.png`；Prompt 模式调用 `bytedance/seedream-v4`，记录成本。
+3. **阶段2 语音生成**
+   - 调用 `minimax/speech-02-hd` 生成音频，落盘 `speech.mp3`，记录时长与成本。
+4. **阶段3 唇同步**
+   - 调 `wavespeed-ai/infinitetalk`（或 MultiTalk）并轮询 `/api/v3/predictions/<id>`，生成 `digital_human.mp4`。
+5. **阶段4 发布**
+   - 使用 `storage_service.publish_video()` 将视频复制到 `/mnt/www/ren/ren_MMDDHHMM/` 并返回外链；`task.json` 与 `log.txt` 同步更新，前端轮询到 `finished`。
 
-**阶段1: 故事生成(DeepSeek API)**
-- 生成故事大纲(起承转合结构)
-- 生成连贯的分镜脚本（画面描述 + 旁白文案）
-- 输出: `story_outline.json`, `shots_script.json`
+## 关键设计模式
 
-**阶段2: 配音和字幕生成(Edge TTS) ⭐新增**
-- 2a: 为每个镜头的旁白生成配音（Edge TTS，免费）
-- 2b: 自动生成精确时间戳的SRT字幕（SubMaker）
-- 输出: `shot_X_audio.mp3`, `shot_X_subtitle.srt`
-
-**阶段3: 视频生成(WavespeedAI API)**
-- 3a: 并发生成图像(2线程,Seedream v4)
-- 3b: 串行生成视频(WAN 2.5 I2V模式)
-- 支持断点续传
-- 输出: `shot_X_image.png`, `shot_X.mp4`(静音视频)
-
-**阶段4: 音视频合成(MoviePy) ⭐增强**
-- 4a: 为每个镜头添加配音音频
-- 4b: 渲染字幕到视频（可自定义样式）
-- 4c: 混合背景音乐（可选）
-- 4d: 拼接所有镜头
-- 输出: `final_video.mp4`(完整带音字幕视频)
-
-### 关键设计模式
-
-**错误处理与重试**
-- 自定义异常体系: `APIError`(可重试) vs `TaskFailedError`(不可重试)
-- 指数退避策略: 3次重试,间隔递增(5s→10s→15s)
-- 完整日志记录到文件和控制台
-
-**并发优化**
-- 图像生成阶段: 使用 `ThreadPoolExecutor` 2线程并发
-- 视频生成阶段: 串行处理(避免API限流)
-
-**智能断点续传**
-- **自动检测** - 启动时自动查找最近任务,判断是否完整
-- **完成度展示** - 显示故事/图像/视频各阶段进度
-- **用户确认** - 询问是否继续未完成任务
-- **智能跳过** - 已完成的阶段自动跳过:
-  - 已有 `shots_script.json` → 跳过故事生成
-  - 已有 `shot_X_image.png` → 跳过图像生成
-  - 已有 `shot_X.mp4` → 跳过视频生成
-- **灵活控制** - 支持 `--no-auto-resume` 强制新建
-
-### 风格模板系统
-
-10种预定义视觉风格,每种包含:
-- `visual_style`: 视觉描述
-- `color_palette`: 色彩方案
-- `lighting`: 光照效果
-- `camera_movement`: 镜头运动
-- `mood`: 情绪氛围
-
-风格列表: 科技/仙侠/赛博朋克/动画/3D/水墨/蒸汽朋克/太空/魔法/电影
+- **错误处理**：所有外部 API 抛 `ExternalAPIError`，附带 provider/status/trace_id；FastAPI 中统一注册 exception handler，将 `trace_id` 返回给前端对话框与日志。
+- **重试策略**：默认 3 次指数退避（5s/10s/15s）；429 或 5xx 必须重试，客户端可在响应体中看到详细日志，`output/<job_id>/log.txt` 要完整记录。
+- **任务状态机**：`pending → avatar_generating → avatar_ready → speech_generating → speech_ready → video_rendering → finished/failed`；服务重启后可继续，且会校验 `config_hash`。
+- **并发控制**：Seedream <=2 并发，Infinitetalk 串行（<=1 QPS）；必要时通过信号量或调度器限制。
 
 ## 配置说明
 
-### 环境变量(.env)
+### 环境变量示例
 
 ```env
-DeepSeek_API_KEY=your_deepseek_key
-# Wavespeed_API_KEY=不需要后端配置，通过前端网页输入并记住
+WAVESPEED_API_KEY=your_wavespeed_key
+MINIMAX_API_KEY=your_minimax_key
+STORAGE_BUCKET=s.linapp.fun/background
+NGINX_SERVER=ren.linapp.fun
 ```
 
-**注意**: Wavespeed API密钥**不需要在后端配置**，而是通过前端网页界面输入，浏览器会自动记住（localStorage），提供更好的用户体验和安全性。
+### 用户参数（前端传递）
 
-### 用户可配置参数
+- `avatar_mode` (`upload/prompt`), `avatar_prompt` 或上传文件 URL
+- `speech_text`, `voice_id`, `speed`, `pitch`, `emotion`, `english_normalization`
+- `resolution` (720p/1080p), `seed`, `mask_image`
+- 自定义水印/字幕开关（可复用原 `services/subtitle_service`）
 
-- **主题**: 任意文本描述
-- **视觉风格**: 10选1(科技/仙侠/赛博朋克/动画/3D/水墨/蒸汽朋克/太空/魔法/电影)
-- **镜头数**: 1-10个
-- **时长**: 每镜头3-5秒
-- **分辨率**: 480p/720p/1080p
-
-### 输出文件结构
+### 输出结构
 
 ```
-output/aka-{mmddhhmm}/
-├── story_outline.json    # 故事大纲(起承转合)
-├── shots_script.json     # 分镜脚本(连贯描述)
-├── checkpoint.json       # 断点续传检查点
-├── shot_1_image.png      # 镜头1关键帧
-├── shot_1.mp4           # 镜头1视频
-├── shot_2.mp4           # 镜头2视频
-├── shot_N.mp4           # 镜头N视频
-├── final_video.mp4      # 最终合成视频
-└── log.txt              # 完整运行日志
+output/aka-{task_id}/
+├── avatar.png
+├── speech.mp3
+├── digital_human.mp4
+├── task.json
+└── log.txt
 ```
 
-## API集成
+## API 集成（依据 `doc/数字人.md`）
 
-### DeepSeek API
-- **用途**: 故事大纲和分镜脚本生成
-- **端点**: `https://api.deepseek.com/v1/chat/completions`
-- **成本**: 约$0.002-0.004/次
-
-### WavespeedAI API
-- **用途**: 文本→图像, 图像→视频
-- **模型**: WAN 2.5 (文本生成图像$0.15, I2V$0.15)
-- **端点**: `https://api.wavespeed.ai/v1/generations`
-- **轮询**: 每5秒检查任务状态
+- **Seedream v4**
+  - `POST https://api.wavespeed.ai/api/v3/bytedance/seedream-v4`
+  - 参数：`prompt`, `negative_prompt`, `width`, `height`, `num_inference_steps`, `guidance_scale`
+- **MiniMax speech-02-hd**
+  - `POST https://api.wavespeed.ai/api/v3/minimax/speech-02-hd`
+  - 参数：`text`, `voice_id`, `speed`, `pitch`, `emotion`, `sample_rate`, `channel`
+- **Infinitetalk**
+  - `POST https://api.wavespeed.ai/api/v3/wavespeed-ai/infinitetalk`
+  - 轮询 `GET https://api.wavespeed.ai/api/v3/tasks/{task_id}`
+  - 参数：`image_url`, `audio_url`, `mask_image`, `prompt`, `seed`
 
 ## 成本估算
 
-**I2V模式(推荐)**:
-- 3镜头720p: ~$0.90
-- 5镜头720p: ~$1.50
-- 10镜头1080p: ~$5.00
+| 服务 | 估算成本 |
+|------|---------|
+| Seedream 头像 | $0.02–0.05/张 |
+| MiniMax 语音 | $0.01–0.03/分钟 |
+| Infinitetalk 唇同步 | $0.10–0.20/分钟 |
+
+单条 60 秒数字人视频 ≈ $0.13–0.28。调试时建议语音 < 10 秒，成本 < $0.05。
 
 ## 开发注意事项
 
-1. **前后端分离架构**:
-   - 前端: `frontend/` 目录中的Web界面
-   - 后端: `ad-back.py` 提供RESTful API服务
-   - 参考脚本: `ad-aka.py` 仅供参考，不要变更
-
-2. **编码处理**: 脚本已设置UTF-8编码处理,避免中文输入中断
-
-3. **日志系统**: 双重记录(控制台+文件),带时间戳
-
-4. **网络要求**: 需稳定国际网络连接
-
-5. **成本控制建议**:
-   - 生产环境: 建议3-5镜头，720p分辨率
-   - **测试环境: 强烈建议使用1个镜头 + 480p分辨率测试（每次仅$0.30，节省90%成本）**
-   - 成本对比:
-     - ⚠️  3镜头480p测试: ~$0.90
-     - ✅ 1镜头480p测试: ~$0.30（推荐）
-     - ❌ 3镜头720p测试: ~$3.00（不推荐用于测试）
-
-6. **API限流**: 视频生成串行处理,避免并发限流
-
-7. **智能断点续传**: 通过API支持任务恢复和进度查询
+1. **Nginx**：`ren.linapp.fun` 必须代理到 `127.0.0.1:18005`；`/` 提供前端静态资源，`/api/` 设置 `proxy_read_timeout 120s`。
+2. **安全**：前端不得暴露 API Key；上传头像需校验文件类型、大小并落在受控目录或 OSS。
+3. **日志**：每个任务写入 `log.txt`，包含外部 task_id，方便追踪。
+4. **对象存储**：生成结果建议同步到 `https://s.linapp.fun/...`，返回可直接播放的 URL。
+5. **兼容历史模块**：保留原有日志、限流、音乐服务；但所有新增逻辑以数字人业务为优先。
 
 ## 测试最佳实践
 
-### **功能测试（推荐配置）**
-```yaml
-# user.yaml 测试配置示例
-topic: "简短测试主题"
-shot_count: 1          # ⭐ 重要：测试时只用1个镜头
-shot_duration: 5       # 5秒
-resolution: "480p"     # ⭐ 重要：使用最低分辨率
-style: 6               # 任意风格
-```
-
-**成本估算**:
-- 1镜头480p: $0.028(图像) + $0.30(视频) = **$0.328/次**
-- 测试10次也仅需 **$3.28**
-
-### **集成测试流程**
-1. **阶段1测试**（免费）: 验证故事生成、分镜脚本生成
-   - 检查日志中是否有 `✅ 连贯分镜脚本已生成`
-   - 无需等待视频生成即可验证核心逻辑
-
-2. **完整流程测试**（$0.33）: 使用1镜头480p配置
-   - 验证图像生成、视频生成、配音、字幕、合成
-   - 确认输出 `final_video.mp4` 可播放
-
-3. **生产验证**（$0.90+）: 确认功能正常后，使用3-5镜头720p
-   - 仅在发布前或关键功能变更时执行
+1. **Mock 测试**：`PYTEST_WAVESPEED_MOCK=1 pytest test/test-digital-human.py`，验证状态机与 API 返回。
+2. **真实冒烟**：准备 8–10 秒脚本，运行 `python3 py/test_network.py --digital-human`；确认 Seedream/Minimax/Infinitetalk 均能返回 URL。
+3. **前后端联调**：`npm run dev` + `python3 ad-back.py --port 18005`，通过浏览器创建任务并验证播放。
+4. **部署验证**：上线后访问 `https://ren.linapp.fun/api/health`，确保 Nginx + 后端正常；生成一条 10 秒视频确认 CDN URL 可访问。

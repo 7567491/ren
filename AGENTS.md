@@ -1,6 +1,6 @@
-# Repository Guidelines
-
 中文对话
+
+# Repository Guidelines
 
 ## 项目定位
 - 本仓库现为**数字人生成 Web 项目**，前端负责配置、头像上传与播放展示，后端聚焦编排数字人三阶段（形象→语音→唇形）生成。

@@ -46,10 +46,11 @@
 ## 2. 设计目标
 
 1. **Web 低门槛**：浏览器填写提示词/脚本 → 后端 orchestrate WaveSpeed API → 返回可访问的视频 URL。
-2. **三阶段流水线**：头像（Seedream/上传）→ 语音（MiniMax）→ 唇同步（Infinitetalk/MultiTalk）。
-3. **任务可观测性**：提供任务状态轮询、阶段日志、成本估算、 trace id。
-4. **安全与成本控制**：密钥置于 `.env`，调试模式限制 10 秒语音，默认重试 3 次指数退避。
-5. **部署一体化**：Nginx 提供 HTTPS 与静态资源，后端监听 `0.0.0.0:18005`，域名 `ren.linapp.fun` 通过 `/api/` 反代。
+2. **极简 Hero + 三栏布局**：首屏只保留一句价值主张与「开始创建」按钮，下方固定左中右三栏（密钥与任务 / 输入素材 / 输出过程）确保信息分区明确。
+3. **三阶段流水线**：头像（Seedream/上传）→ 语音（MiniMax）→ 唇同步（Infinitetalk/MultiTalk）。
+4. **任务可观测性**：提供任务状态轮询、阶段日志、成本估算、 trace id。
+5. **安全与成本控制**：密钥置于 `.env`，调试模式限制 10 秒语音，默认重试 3 次指数退避。
+6. **部署一体化**：Nginx 提供 HTTPS 与静态资源，后端监听 `0.0.0.0:18005`，域名 `ren.linapp.fun` 通过 `/api/` 反代。
 
 ---
 
@@ -75,12 +76,27 @@ ad-back.py / api_server.py (FastAPI)
 ## 4. 模块设计
 
 ### 4.1 前端 `frontend/`
-- 表单字段：`avatar_mode (prompt/upload)`、`avatar_prompt`、`speech_text`、`voice{voice_id,speed,pitch,emotion}`、`resolution`、`seed`、`debug_mode`、`mask_image`。
-- 交互：`POST /api/tasks` 创建任务，随后轮询 `GET /api/tasks/<id>`，展示阶段进度、成本、trace id、日志。
-- 播放卡片：头像预览、音频试听、视频播放、下载/复制链接（video.js + `<a download>` 双轨保障）。
-- 技术栈：Vite + Vue 3（`frontend/src/App.vue`），构建产物由 `npm run build` 输出到 `frontend/dist/`。页面初始化时加载 `frontend/dist/config.js` 自动推导 `API_BASE`，并通过 `window.__APP_CONFIG__` 暴露轮询间隔。
-- 上传组件：FilePond（头像 upload 模式），校验 5MB PNG/JPG；播放器依赖 video.js。
-- SPA 行为：所有未知路由回退至 `index.html`，前端优先使用后端返回的 `assets.local_video_url` 直连 `/output/<job_id>/digital_human.mp4`，若 CDN URL 存在则自动降级切换。
+- **Hero 极简化**：首屏 Hero 仅包含一句价值主张（“10 秒配置，即刻生成数字人”）、副标题（说明成本/时长）与主按钮（`开始创建`）。Hero 下沿接三栏布局的顶端，视觉上通过浅色背景与 16px 投影过渡，保证用户视线迅速落到工作区域。
+- **三栏布局骨架**：Hero 之后的主内容由一个 12 列 CSS Grid 划分成 3:5:4 的三栏。布局固定，可在窄屏降级为纵向折叠。三栏的语义如下：
+  - **左栏（系统栏）**：集中所有和账户/任务相关的控件：
+    - API Key 模块：输入框 + “校验”按钮 + 状态徽章（`未配置/有效/过期`），说明所需 Key（WaveSpeed、MiniMax），旁边提供 `.env.example` 下载链接。
+    - 任务管理：列出最近 5 个 `task_id`，展示状态、耗时、成本；支持“新标签页打开 / 复制 Trace ID / 停止任务”操作，并在顶部提供筛选（全部/进行中/失败）。
+    - 全局设置：限流策略、调试模式开关（提示 10 秒语音限制）放在此处，避免干扰输入栏。
+  - **中栏（输入栏）**：承载所有创造性输入与素材上传：
+    - 将字段拆为“形象配置”“语音脚本”“高级参数”三折叠面板，默认展开前两块。字段包含 `avatar_mode/avatar_prompt`、上传头像（FilePond + 5MB 校验）、`speech_text`、`voice{voice_id,speed,pitch,emotion}`、`resolution`、`seed`、`debug_mode`、`mask_image`。
+    - 在折叠标题上显示推荐值与剩余字数/体积，减少用户在多字段中迷失。
+    - 素材区展示最近上传的头像、脚本模板，支持一键复用，所有上传通过 `POST /api/assets/upload`，结果回填在当前面板中。
+  - **右栏（输出栏）**：聚焦任务执行状态与结果资产：
+    - 顶部是“Avatar → Speech → Video”水平时间条，节点展示状态、耗时、trace id。节点下方同步成本小计。
+    - 中段为日志摘要（最近 5 条）与“展开全部日志”按钮；展开后在抽屉内加载完整日志。
+    - 底部为播放器卡片（video.js），主按钮默认播放 `/output/<job_id>/digital_human.mp4`，旁边文字链接提示“备用 CDN”。同一卡片包含音频试听、下载按钮，以及任务完成后的分享链接。
+- **交互与技术栈**：
+  - Vite + Vue 3（`frontend/src/App.vue`）渲染整页，`npm run build` 输出到 `frontend/dist/`。
+  - 页面初始化时加载 `frontend/dist/config.js` 动态推导 `API_BASE`，并通过 `window.__APP_CONFIG__` 设置轮询间隔、列宽断点。
+  - 使用 Vue 状态管理（Pinia）集中管理任务列表与当前任务，以便左栏与右栏共享状态。
+  - `POST /api/tasks` 创建任务，轮询 `GET /api/tasks/<id>` 更新右栏；若任务在左栏切换即停止当前轮询并加载新任务。
+  - 上传组件沿用 FilePond，校验 5MB PNG/JPG 并在上传后生成缩略图展示于中栏素材区；播放器依旧依赖 video.js。
+  - SPA 回退：未知路由回退到 `index.html`；资源优先使用 `assets.local_video_url`，失败后右栏提示自动切换 CDN。
 
 ### 4.2 后端入口 `ad-back.py`
 - CLI 参数：`--port`、`--config`、`--debug`，默认端口 `18005`。

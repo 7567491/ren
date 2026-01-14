@@ -8,7 +8,8 @@ __pycache__/
 *.so
 *.egg
 *.egg-info/
-dist/
+# 只忽略 Python 的 dist/ 目录，不忽略 frontend/dist/
+/py/dist/
 build/
 
 # 环境变量和密钥

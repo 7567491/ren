@@ -183,7 +183,7 @@ DEBUG_MODE=true
 ## 🌐 部署与 Nginx
 
 1. **后端**：以 systemd 方式运行 `python3 ad-back.py --port 18005`。
-2. **前端**：`npm run build` 后将 `frontend/dist` 发布到 `/var/www/wave-frontend`。
+2. **前端**：`npm run build` 后将 `frontend/dist` 发布到站点根目录（如 `/var/www/wave-frontend` 或 `/home/ren/frontend/dist`）。
 3. **Nginx 示例 (`ren.linapp.fun`)**
 
 ```nginx
@@ -209,6 +209,7 @@ server {
 ```
 
 > HTTPS 证书可使用 Certbot；需要更长的代理超时时间，以容纳唇同步轮询。
+> `ren2.linapp.fun` 使用同样的反代规则，直接挂载 `frontend/dist` 静态页并使用 `*.linapp.fun` 证书，详见 `doc/nginx-ren2.linapp.fun.md`。
 
 ---
 

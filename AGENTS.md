@@ -11,7 +11,7 @@
 - **前端 (`frontend/`)**：基于 Vite + Vue 3 的 SPA（`src/App.vue`），`npm run build` 输出 `frontend/dist/`，`config.js` 启动时自动推导 `API_BASE`；负责提示词/脚本/角色参数输入与任务轮询、播放器/下载交互。
 - **后端 (`ad-back.py` + `py/`)**：保留 Flask/FastAPI 结构，新增 `digital_human` 相关蓝图，暴露任务编排、任务状态查询与素材上传 API。端口固定 **18005** (供 `ren.linapp.fun` Nginx 反代)。
 - **配置**：`.env` 存放 WaveSpeed API Key 等敏感信息；`config.yaml` 负责任务超时、并发、静态资源目录；`user.yaml` 仅保留示例参数。
-- **文档**：除 `README.md` 以外的新增文档只放在 `doc/`，测试说明集中在 `test/`；`doc/design.md` 为唯一权威架构文档，历史 `doc/plan.md` 已下线，新的进度说明请写入 `doc/工作流.md`。
+- **文档**：除 `README.md` 以外的新增文档只放在 `doc/`，测试说明集中在 `test/`；`doc/design.md` 为唯一权威架构文档，历史 `doc/plan.md` 已下线。
 
 ## 开发与测试
 - Python 3.10+ 且遵循 PEP 8，组件之间优先通过服务层交互（例如 `services/digital_human_service.py`）。前端保持 ESLint/Prettier 默认配置，提交前运行 `npm run build`（如适用）。

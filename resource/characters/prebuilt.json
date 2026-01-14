@@ -1,0 +1,255 @@
+[
+  {
+    "id": "char-gy",
+    "name": "青龙武圣",
+    "image_path": "GY.jpg",
+    "appearance": {
+      "zh": "中年男子，面容威严，眼神微眯沉稳；头戴绿色巾帽，身穿绿色长袍与黑色内衣，长灰须垂至胸前；造型仿古名将，神态端庄肃穆，气质似关羽。",
+      "en": "Middle-aged man with a stern face and steady, slightly narrowed eyes; wearing a green headwrap and green robe over a dark inner layer, long gray beard to the chest; styled like a historical general with a dignified, solemn presence reminiscent of Guan Yu."
+    },
+    "voice": {
+      "zh": "男性，低沉男中音，节奏权威；英语带普通话口音，刻意停顿，庄重且有掌控感。",
+      "prompt": "Male, deep baritone, authoritative pacing; Mandarin accent carried into English, deliberate pauses, solemn and commanding resonance.",
+      "voice_id": "male-qn-jingying"
+    },
+    "tags": [
+      "prebuilt",
+      "historical"
+    ],
+    "status": "active",
+    "source": "prebuilt",
+    "created_at": "2025-12-31T10:36:56.200120+00:00",
+    "updated_at": "2025-12-31T10:36:56.200120+00:00",
+    "created_by": "system"
+  },
+  {
+    "id": "char-jack",
+    "name": "矩阵特工",
+    "image_path": "Jack.jpg",
+    "appearance": {
+      "zh": "短发男子戴黑色墨镜，表情冷静专注；穿全黑西装与黑衬衫，无领带，右手伸出做阻挡姿势，左手收于身前；白色背景，带《黑客帝国》风格特工/主角感。",
+      "en": "Short-haired man in black sunglasses with a calm, focused expression; wearing an all-black suit and black shirt, no tie, right hand extended in a blocking pose, left hand near his torso; white background with a Matrix-inspired agent/hero vibe."
+    },
+    "voice": {
+      "zh": "男性，中低音，克制简约；中性美式口音，语句干练，平稳自信，像冷静的动作男主角。",
+      "prompt": "Male, mid-low voice, controlled and minimal; neutral American accent, clipped sentences, steady and confident like a calm action lead.",
+      "voice_id": "male-qn-qingse"
+    },
+    "tags": [
+      "prebuilt",
+      "action"
+    ],
+    "status": "active",
+    "source": "prebuilt",
+    "created_at": "2025-12-31T10:36:56.200238+00:00",
+    "updated_at": "2025-12-31T10:36:56.200238+00:00",
+    "created_by": "system"
+  },
+  {
+    "id": "char-scalet",
+    "name": "暗影玫瑰",
+    "image_path": "Scalet.jpg",
+    "appearance": {
+      "zh": "红色短波浪发女性，表情坚定警觉；穿黑色战术紧身衣，前胸拉链微开，双臂交叉；戴黑色护手与弹匣样护具，腰带红色沙漏徽标，肩袖神盾局标志，形象似黑寡妇。",
+      "en": "Red short-wavy-haired woman with a firm, alert expression; dressed in a black tactical bodysuit with a slightly open front zipper, arms crossed; black gloves with ammo-like gauntlets, belt with red hourglass emblem, SHIELD insignia on sleeves, resembling Black Widow."
+    },
+    "voice": {
+      "zh": "女性，中低音，冷静果决；美式口音带轻微东欧调，表达简洁，节奏自信。",
+      "prompt": "Female, mid-low voice, composed and decisive; American accent with a faint Eastern European undertone, concise delivery, confident cadence.",
+      "voice_id": "female-yujie"
+    },
+    "tags": [
+      "prebuilt",
+      "agent"
+    ],
+    "status": "active",
+    "source": "prebuilt",
+    "created_at": "2025-12-31T10:36:56.200296+00:00",
+    "updated_at": "2025-12-31T10:36:56.200296+00:00",
+    "created_by": "system"
+  },
+  {
+    "id": "char-tom",
+    "name": "睿智导师",
+    "image_path": "Tom.jpg",
+    "appearance": {
+      "zh": "灰白短发中年男性，微笑温和，自信友好；穿深色西装外套、淡色衬衫，系红白交织纹理领带；双手轻握于身前，站姿端正，白色背景，职业且亲和。",
+      "en": "Middle-aged man with short gray hair and a warm smile, confident and approachable; in a dark suit jacket, light dress shirt, and red-and-white patterned tie; hands gently clasped in front, upright stance on white background, professional and friendly."
+    },
+    "voice": {
+      "zh": "男性，中高音，友好清晰；中性美式口音，语速平稳，亲和且专业。",
+      "prompt": "Male, mid-high register, friendly and clear; neutral American accent, steady pace, welcoming and professional tone.",
+      "voice_id": "male-qn-qingse"
+    },
+    "tags": [
+      "prebuilt",
+      "mentor"
+    ],
+    "status": "active",
+    "source": "prebuilt",
+    "created_at": "2025-12-31T10:36:56.200346+00:00",
+    "updated_at": "2025-12-31T10:36:56.200346+00:00",
+    "created_by": "system"
+  },
+  {
+    "id": "char-ada",
+    "name": "赤焰特工 Ada",
+    "image_path": "ada.jpg",
+    "appearance": {
+      "zh": "短黑发女性，妆容精致，表情自信侧视；穿酒红色褶皱吊带裙，胸前黑色蕾丝内衬，配黑色颈圈；右肩皮质枪套背带，左手持对讲机，黑色丝袜，站姿微侧，数字插画风格，气质类似阿达·王。",
+      "en": "Short black-haired woman with polished makeup and a confident sideward gaze; in a tight ruched burgundy slip dress with a black lace inset and black choker; leather shoulder holster on the right, holding a walkie-talkie in her left hand, black stockings, slight side pose. Digital illustration vibe similar to Ada Wong from Resident Evil."
+    },
+    "voice": {
+      "zh": "女性，中低音域，声线平滑稳重；英语带轻微港式/华语口音，辅音清晰，语气冷静自信，表达简洁。",
+      "prompt": "Female, mid-low register, smooth and composed; light Hong Kong/Chinese accent on English, crisp consonants, calm confidence with concise delivery.",
+      "voice_id": "female-yujie"
+    },
+    "tags": [
+      "prebuilt",
+      "heroine"
+    ],
+    "status": "active",
+    "source": "prebuilt",
+    "created_at": "2025-12-31T10:36:56.200408+00:00",
+    "updated_at": "2025-12-31T10:36:56.200408+00:00",
+    "created_by": "system"
+  },
+  {
+    "id": "char-huang",
+    "name": "舞台领航者",
+    "image_path": "huang.jpg",
+    "appearance": {
+      "zh": "灰白短发男性，戴金属细框眼镜，淡笑沉稳；穿亮面黑色皮夹克，竖领中央拉链，单侧耳麦；舞台演讲气质，外观类似黄仁勋。",
+      "en": "Gray short-haired man with thin metal-frame glasses and a calm slight smile; in a glossy black leather jacket with a standing collar and central zipper, wearing a single-sided headset mic; keynote-presenter vibe resembling Jensen Huang."
+    },
+    "voice": {
+      "zh": "男性，中低音域，自信温和；英语带台美口音，演讲节奏流畅，技术词强调清晰。",
+      "prompt": "Male, mid-low register, confident and warm; Taiwanese-American English accent, polished keynote cadence, clear technical emphasis.",
+      "voice_id": "male-qn-jingying"
+    },
+    "tags": [
+      "prebuilt",
+      "tech"
+    ],
+    "status": "active",
+    "source": "prebuilt",
+    "created_at": "2025-12-31T10:36:56.200465+00:00",
+    "updated_at": "2025-12-31T10:36:56.200465+00:00",
+    "created_by": "system"
+  },
+  {
+    "id": "char-longma",
+    "name": "龙裔君主",
+    "image_path": "longma.jpg",
+    "appearance": {
+      "zh": "金色长卷发女性，编发垂落，神情温柔略忧虑；穿浅金/米色羽片纹理披肩礼服，胸口以横杆固定；柔光白底，气质似丹妮莉丝。",
+      "en": "Platinum blonde woman with braids framing her face, gentle expression with a hint of concern; wearing a light gold/beige gown with feather-like textures and a shoulder cape fastened by a horizontal bar; soft light on white background, aura akin to Daenerys."
+    },
+    "voice": {
+      "zh": "女性，中音柔和，平静共情；英语带轻微英式RP口音，节奏优雅，温和克制。",
+      "prompt": "Female, soft mid register, calm and empathetic; light British/RP accent, graceful pacing, measured warmth.",
+      "voice_id": "female-yujie"
+    },
+    "tags": [
+      "prebuilt",
+      "fantasy"
+    ],
+    "status": "active",
+    "source": "prebuilt",
+    "created_at": "2025-12-31T10:36:56.200527+00:00",
+    "updated_at": "2025-12-31T10:36:56.200527+00:00",
+    "created_by": "system"
+  },
+  {
+    "id": "char-mai",
+    "name": "格斗女王",
+    "image_path": "mai.jpg",
+    "appearance": {
+      "zh": "高马尾红发女战士，丝带束发，目光锐利坚毅；穿白色无袖武服配红色边缘，束宽红腰带，红色裙摆飘动；手臂缠红色护腕与金属饰带，战斗姿态，格斗游戏插画风格。",
+      "en": "Red-haired female fighter with a high ponytail tied by a ribbon, sharp determined gaze; wearing a sleeveless white martial top with red trims, wide red sash, and flowing red skirt; arms wrapped with red bracers and metallic bands, battle-ready pose in a fighting-game illustration style."
+    },
+    "voice": {
+      "zh": "女性，明亮有活力的语气；英语带日式口音，语速轻快自信，活泼但吐字清晰。",
+      "prompt": "Female, bright and energetic tone; Japanese accent on English, quick confident cadence, spirited but clear articulation.",
+      "voice_id": "female-shaonv"
+    },
+    "tags": [
+      "prebuilt",
+      "fighter"
+    ],
+    "status": "active",
+    "source": "prebuilt",
+    "created_at": "2025-12-31T10:36:56.200581+00:00",
+    "updated_at": "2025-12-31T10:36:56.200581+00:00",
+    "created_by": "system"
+  },
+  {
+    "id": "char-mask",
+    "name": "星舰领袖",
+    "image_path": "mask.jpg",
+    "appearance": {
+      "zh": "短棕发男性，神情严肃略嘟嘴，眼神直接；穿深蓝/黑色西装外套，内搭敞领白色条纹衬衫；半身肖像白底，外观似埃隆·马斯克。",
+      "en": "Short brown-haired man with a serious slightly pursed look and direct gaze; in a dark navy/black suit jacket over an open-collar white striped shirt; half-body portrait on white, resembling Elon Musk."
+    },
+    "voice": {
+      "zh": "男性，中音，沉稳思考；英语带南非混美式口音，关键点前略作停顿，语气分析感。",
+      "prompt": "Male, mid register, measured and thoughtful; South African-tinged American accent, slight pauses before key points, analytical tone.",
+      "voice_id": "male-qn-qingse"
+    },
+    "tags": [
+      "prebuilt",
+      "leader"
+    ],
+    "status": "active",
+    "source": "prebuilt",
+    "created_at": "2025-12-31T10:36:56.200634+00:00",
+    "updated_at": "2025-12-31T10:36:56.200634+00:00",
+    "created_by": "system"
+  },
+  {
+    "id": "char-sun",
+    "name": "齐天行者",
+    "image_path": "sun.jpg",
+    "appearance": {
+      "zh": "猴脸妆容的男性，表情惊讶俏皮，眼睛圆睁；戴黄色帽子上有黑色“佛”字与金边，穿黄色僧服配黑色披肩；手臂露出金色毛发，姿态生动，似《西游记》孙悟空戏服。",
+      "en": "Man in monkey makeup with a surprised, playful look and wide-open eyes; wearing a yellow hat with a black '佛' character and gold trim, yellow monk-style outfit with black shawl; golden fur on arms, lively pose reminiscent of Journey to the West Monkey King costume."
+    },
+    "voice": {
+      "zh": "男性，明亮又调皮的语气；英语带舞台感普通话口音，语速轻快活泼，语调俏皮。",
+      "prompt": "Male, bright and mischievous tone; Mandarin stage accent in English, quick lively pacing, playful inflection.",
+      "voice_id": "male-qn-qingse"
+    },
+    "tags": [
+      "prebuilt",
+      "classic"
+    ],
+    "status": "active",
+    "source": "prebuilt",
+    "created_at": "2025-12-31T10:36:56.200688+00:00",
+    "updated_at": "2025-12-31T10:36:56.200688+00:00",
+    "created_by": "system"
+  },
+  {
+    "id": "char-terminator",
+    "name": "未来守护者",
+    "image_path": "terminator.jpg",
+    "appearance": {
+      "zh": "短立发硬汉，戴黑色墨镜，表情冷峻；穿黑色皮夹克与黑T恤，脸部一侧有浅色伤痕/白痕；强烈光影对比，经典《终结者》T-800肖像感。",
+      "en": "Tough man with short spiked hair and black sunglasses, stern expression; in a black leather jacket and black T-shirt, light scar/white mark on one side of the face; strong contrast lighting, classic Terminator T-800 portrait vibe."
+    },
+    "voice": {
+      "zh": "男性，低沉单调，语速简短；英语带奥地利口音，机械般稳定，几乎无情绪，节奏刻意。",
+      "prompt": "Male, low monotone, terse delivery; Austrian accent, mechanical steadiness, minimal emotion, deliberate pace.",
+      "voice_id": "male-qn-jingying"
+    },
+    "tags": [
+      "prebuilt",
+      "cyber"
+    ],
+    "status": "active",
+    "source": "prebuilt",
+    "created_at": "2025-12-31T10:36:56.200742+00:00",
+    "updated_at": "2025-12-31T10:36:56.200742+00:00",
+    "created_by": "system"
+  }
+]

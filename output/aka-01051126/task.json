@@ -1,0 +1,103 @@
+{
+  "job_id": "aka-01051126",
+  "status": "finished",
+  "created_at": "2026-01-05T03:26:01.968460+00:00",
+  "updated_at": "2026-01-05T03:28:37.240732+00:00",
+  "params": {
+    "avatar_mode": "prompt",
+    "avatar_prompt": "商务风数字人，深蓝西装，干练短发，柔和光线，纯色背景，正面镜头，微笑",
+    "avatar_upload_path": null,
+    "speech_text": "阿森纳是不可战胜的",
+    "voice_id": "male-qn-qingse",
+    "resolution": "720p",
+    "speed": 1.0,
+    "pitch": 0,
+    "emotion": "neutral",
+    "seed": 42,
+    "mask_image": null,
+    "character": null
+  },
+  "trace_id": "trace-77f3c6e194e4",
+  "duration": 125.681,
+  "stages": {
+    "avatar": {
+      "state": "completed",
+      "message": "头像生成完成",
+      "retries": 0,
+      "provider_task_id": null,
+      "output_url": "https://d1q70pf5vjeyhc.cloudfront.net/predictions/fda5888e75dd46daaf850dbde742fa6f/1.jpeg",
+      "artifact_path": null
+    },
+    "speech": {
+      "state": "completed",
+      "message": "语音生成完成 (0.0s)",
+      "retries": 0,
+      "provider_task_id": null,
+      "output_url": "https://d1q70pf5vjeyhc.cloudfront.net/predictions/d25181e12325480f90b44a8bdb9579aa/1.mp3",
+      "artifact_path": "output/aka-01051126/speech.mp3"
+    },
+    "video": {
+      "state": "completed",
+      "message": "数字人视频生成完成",
+      "retries": 0,
+      "provider_task_id": null,
+      "output_url": "https://s.linapp.fun/ren/ren_01050328/digital_human.mp4",
+      "artifact_path": "output/aka-01051126/digital_human.mp4"
+    }
+  },
+  "cost": 0.33,
+  "cost_breakdown": {
+    "avatar": 0.03,
+    "speech": 0.0,
+    "video": 7.5408599999999995
+  },
+  "assets": {
+    "text_length": 9,
+    "avatar_url": "https://d1q70pf5vjeyhc.cloudfront.net/predictions/fda5888e75dd46daaf850dbde742fa6f/1.jpeg",
+    "wave_avatar_url": "https://d1q70pf5vjeyhc.cloudfront.net/predictions/fda5888e75dd46daaf850dbde742fa6f/1.jpeg",
+    "audio_url": "https://d1q70pf5vjeyhc.cloudfront.net/predictions/d25181e12325480f90b44a8bdb9579aa/1.mp3",
+    "audio_path": "output/aka-01051126/speech.mp3",
+    "wave_audio_url": "https://d1q70pf5vjeyhc.cloudfront.net/predictions/d25181e12325480f90b44a8bdb9579aa/1.mp3",
+    "video_stage_started_at": "2026-01-05T03:26:18.758233+00:00",
+    "video_url": "https://s.linapp.fun/ren/ren_01050328/digital_human.mp4",
+    "video_path": "output/aka-01051126/digital_human.mp4",
+    "public_video_path": "/mnt/www/ren/ren_01050328/digital_human.mp4",
+    "video_mirrors": [
+      {
+        "name": "wave-ad",
+        "path": "/mnt/www/ad/aka-01051126.mp4",
+        "url": "https://s.linapp.fun/ad/aka-01051126.mp4"
+      }
+    ],
+    "wave_video_url": "https://d2p7pge43lyniu.cloudfront.net/output/2a756ba5-c9c3-4f02-99b4-ab9c59d1bc52-u1_d41ca1df-f7e8-4bac-a68e-7dba347d083a.mp4",
+    "local_video_url": "/output/aka-01051126/digital_human.mp4",
+    "duration": 125.681,
+    "video_stage_completed_at": "2026-01-05T03:28:37.238746+00:00",
+    "video_stage_seconds": 138.480513
+  },
+  "error": null,
+  "config_hash": "c06e0ee94cdcba3f81e63365b5a5fb0d62c14592c90450e608638516bf773353",
+  "logs": [
+    "[INFO] 任务已创建，等待执行",
+    "[INFO] 正在生成头像...",
+    "[INFO] [avatar] 头像生成完成",
+    "[INFO] ✅ 头像生成完成: https://d1q70pf5vjeyhc.cloudfront.net/predictions/fda5888e75dd46daaf850dbde742fa6f/1.jpeg",
+    "[INFO] 正在生成语音...",
+    "[INFO] [speech] 语音生成完成 (0.0s)",
+    "[INFO] ✅ 语音生成完成",
+    "[INFO] 正在生成数字人视频...",
+    "[INFO] [video] 数字人视频生成完成",
+    "[INFO] ✅ 数字人视频生成完成"
+  ],
+  "avatar_url": "https://d1q70pf5vjeyhc.cloudfront.net/predictions/fda5888e75dd46daaf850dbde742fa6f/1.jpeg",
+  "audio_url": "https://d1q70pf5vjeyhc.cloudfront.net/predictions/d25181e12325480f90b44a8bdb9579aa/1.mp3",
+  "video_url": "https://s.linapp.fun/ren/ren_01050328/digital_human.mp4",
+  "video_path": "output/aka-01051126/digital_human.mp4",
+  "billing": {
+    "currency": "USD",
+    "balance_before": 105.21,
+    "balance_after": 104.88,
+    "actual_cost": 0.33,
+    "updated_at": "2026-01-05T03:28:38.056395+00:00"
+  }
+}

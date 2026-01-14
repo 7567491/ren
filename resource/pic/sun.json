@@ -1,0 +1,10 @@
+{
+  "appearance": {
+    "zh": "猴脸妆容的男性，表情惊讶俏皮，眼睛圆睁；戴黄色帽子上有黑色“佛”字与金边，穿黄色僧服配黑色披肩；手臂露出金色毛发，姿态生动，似《西游记》孙悟空戏服。",
+    "en": "Man in monkey makeup with a surprised, playful look and wide-open eyes; wearing a yellow hat with a black '佛' character and gold trim, yellow monk-style outfit with black shawl; golden fur on arms, lively pose reminiscent of Journey to the West Monkey King costume."
+  },
+  "voice": {
+    "zh": "男性，明亮又调皮的语气；英语带舞台感普通话口音，语速轻快活泼，语调俏皮。",
+    "prompt": "Male, bright and mischievous tone; Mandarin stage accent in English, quick lively pacing, playful inflection."
+  }
+}

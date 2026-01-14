@@ -1,0 +1,81 @@
+{
+  "job_id": "aka-12311823-01",
+  "status": "failed",
+  "created_at": "2025-12-31T10:23:42.741246+00:00",
+  "updated_at": "2025-12-31T10:24:01.237978+00:00",
+  "params": {
+    "avatar_mode": "upload",
+    "avatar_prompt": null,
+    "avatar_upload_path": "output/uploads/fda81f8dc0c9414b929773abc4e0ce3d.jpg",
+    "speech_text": "你好啊！欢迎进入Linode+WavespeedAI数字人空间。",
+    "voice_id": "female-shaonv",
+    "resolution": "720p",
+    "speed": 1.0,
+    "pitch": 0,
+    "emotion": "neutral",
+    "seed": 42,
+    "mask_image": null
+  },
+  "trace_id": "trace-19138dc68c5f",
+  "duration": null,
+  "stages": {
+    "avatar": {
+      "state": "completed",
+      "message": "头像生成完成",
+      "retries": 0,
+      "provider_task_id": null,
+      "output_url": "https://s.linapp.fun/ren/output/aka-12311823-01/avatar.png",
+      "artifact_path": null
+    },
+    "speech": {
+      "state": "completed",
+      "message": "语音生成完成 (0.0s)",
+      "retries": 0,
+      "provider_task_id": null,
+      "output_url": "https://d1q70pf5vjeyhc.cloudfront.net/predictions/c18d34c68303489d81b217ebb79d40ba/1.mp3",
+      "artifact_path": "output/aka-12311823-01/speech.mp3"
+    },
+    "video": {
+      "state": "pending",
+      "message": "",
+      "retries": 0,
+      "provider_task_id": null,
+      "output_url": null,
+      "artifact_path": null
+    }
+  },
+  "cost": 0.0,
+  "cost_breakdown": {
+    "avatar": 0.0,
+    "speech": 0.0,
+    "video": 0.0
+  },
+  "assets": {
+    "avatar_url": "https://s.linapp.fun/ren/output/aka-12311823-01/avatar.png",
+    "wave_avatar_url": "https://s.linapp.fun/ren/output/aka-12311823-01/avatar.png",
+    "audio_url": "https://d1q70pf5vjeyhc.cloudfront.net/predictions/c18d34c68303489d81b217ebb79d40ba/1.mp3",
+    "audio_path": "output/aka-12311823-01/speech.mp3",
+    "wave_audio_url": "https://d1q70pf5vjeyhc.cloudfront.net/predictions/c18d34c68303489d81b217ebb79d40ba/1.mp3"
+  },
+  "error": {
+    "message": "[infinitetalk] Infinitetalk 任务失败: Error during processing: 404 Client Error: Not Found for url: https://s.linapp.fun/ren/output/aka-12311823-01/avatar.png (status: 200)",
+    "type": "ExternalAPIError",
+    "trace_id": "trace-19138dc68c5f"
+  },
+  "config_hash": "8300dfa8fd29cc847420a9bf4853425096ac67c2cbc9b61dd0d99e7887e342b1",
+  "logs": [
+    "[INFO] 任务已创建，等待执行",
+    "[INFO] 正在生成头像...",
+    "[INFO] [avatar] 头像生成完成",
+    "[INFO] ✅ 头像生成完成: https://s.linapp.fun/ren/output/aka-12311823-01/avatar.png",
+    "[INFO] 正在生成语音...",
+    "[INFO] [speech] 语音生成完成 (0.0s)",
+    "[INFO] ✅ 语音生成完成",
+    "[INFO] 正在生成数字人视频...",
+    "[ERROR] ❌ 生成失败: [infinitetalk] Infinitetalk 任务失败: Error during processing: 404 Client Error: Not Found for url: https://s.linapp.fun/ren/output/aka-12311823-01/avatar.png (status: 200)"
+  ],
+  "avatar_url": "https://s.linapp.fun/ren/output/aka-12311823-01/avatar.png",
+  "audio_url": "https://d1q70pf5vjeyhc.cloudfront.net/predictions/c18d34c68303489d81b217ebb79d40ba/1.mp3",
+  "video_url": null,
+  "video_path": null
+}

@@ -1,0 +1,10 @@
+{
+  "appearance": {
+    "zh": "短黑发女性，妆容精致，表情自信侧视；穿酒红色褶皱吊带裙，胸前黑色蕾丝内衬，配黑色颈圈；右肩皮质枪套背带，左手持对讲机，黑色丝袜，站姿微侧，数字插画风格，气质类似阿达·王。",
+    "en": "Short black-haired woman with polished makeup and a confident sideward gaze; in a tight ruched burgundy slip dress with a black lace inset and black choker; leather shoulder holster on the right, holding a walkie-talkie in her left hand, black stockings, slight side pose. Digital illustration vibe similar to Ada Wong from Resident Evil."
+  },
+  "voice": {
+    "zh": "女性，中低音域，声线平滑稳重；英语带轻微港式/华语口音，辅音清晰，语气冷静自信，表达简洁。",
+    "prompt": "Female, mid-low register, smooth and composed; light Hong Kong/Chinese accent on English, crisp consonants, calm confidence with concise delivery."
+  }
+}

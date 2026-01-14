@@ -8,17 +8,19 @@ from __future__ import annotations
 import asyncio
 import os
 from pathlib import Path
-from typing import Any, Dict, Optional
+from typing import Any, Dict, List, Optional
 from urllib.parse import urlparse
 from uuid import uuid4
 
+import httpx
 from fastapi import APIRouter, FastAPI, File, Form, HTTPException, Request, UploadFile
 from fastapi.responses import JSONResponse, FileResponse
 from pydantic import BaseModel, Field
 
 from py.function.config_loader import load_config
-from py.services.digital_human_service import DigitalHumanService
+from py.services.digital_human_service import DigitalHumanService, WAVESPEED_BALANCE_URL
 from py.services.storage_service import StorageService
+from py.services.history_service import HistoryService
 from py.services.task_manager import TaskManager
 from py.exceptions import ExternalAPIError
 from py.services.character_repository import CharacterRepository
@@ -51,6 +53,7 @@ storage_service = StorageService(
     task_dir_pattern=storage_cfg.get("task_dir_pattern", os.getenv("DIGITAL_HUMAN_TASK_DIR_PATTERN", "ren_%m%d%H%M")),
     video_mirror_targets=storage_cfg.get("video_mirrors"),
 )
+history_service = HistoryService(storage_service)
 UPLOAD_DIR = storage_service.output_root / "uploads"
 UPLOAD_DIR.mkdir(parents=True, exist_ok=True)
 UPLOAD_PUBLIC_BASE = os.getenv(
@@ -59,23 +62,23 @@ UPLOAD_PUBLIC_BASE = os.getenv(
 character_repository = CharacterRepository()
 MAX_CHARACTER_IMAGE_SIZE = 10 * 1024 * 1024
 
-_dh_service: Optional[DigitalHumanService] = None
+def get_digital_human_service(wavespeed_key: str) -> DigitalHumanService:
+    """
+    创建数字人服务实例（每次请求动态创建）
 
+    Args:
+        wavespeed_key: 用户提供的 Wavespeed API Key
 
-def get_digital_human_service() -> DigitalHumanService:
-    """延迟初始化，方便测试替换环境变量。"""
-    global _dh_service
-    if _dh_service is None:
-        wavespeed_key = os.getenv("WAVESPEED_API_KEY", "")
-        minimax_key = os.getenv("MINIMAX_API_KEY", "")
-        _dh_service = DigitalHumanService(
-            wavespeed_key=wavespeed_key,
-            minimax_key=minimax_key,
-            storage_service=storage_service,
-            task_manager=task_manager,
-            loaded_config=_LOADED_CONFIG,
-        )
-    return _dh_service
+    Returns:
+        DigitalHumanService 实例
+    """
+    return DigitalHumanService(
+        wavespeed_key=wavespeed_key,
+        minimax_key=wavespeed_key,  # MiniMax TTS 也通过 Wavespeed 调用，使用同一个 Key
+        storage_service=storage_service,
+        task_manager=task_manager,
+        loaded_config=_LOADED_CONFIG,
+    )
 
 
 def _resolve_upload_file_path(upload_url: Optional[str]) -> Optional[str]:
@@ -118,6 +121,7 @@ class CreateTaskRequest(BaseModel):
     seed: int = Field(42, description="随机种子")
     mask_image: Optional[str] = Field(None, description="蒙版图片URL")
     character_id: Optional[str] = Field(None, description="可选角色ID")
+    wavespeed_api_key: str = Field(..., min_length=10, description="Wavespeed API Key（必填）")
 
 
 class TaskResponse(BaseModel):
@@ -139,6 +143,25 @@ class TaskResponse(BaseModel):
     character: Optional[Dict[str, Any]] = None
 
 
+class HistoryVideoItem(BaseModel):
+    job_id: str
+    status: str
+    message: Optional[str] = None
+    video_url: Optional[str] = None
+    local_video_url: Optional[str] = None
+    public_video_path: Optional[str] = None
+    duration: Optional[float] = None
+    published_at: Optional[str] = None
+    file_size: Optional[int] = None
+    web_url: Optional[str] = None
+    relative_url: Optional[str] = None
+
+
+class HistoryVideoResponse(BaseModel):
+    count: int
+    items: List[HistoryVideoItem]
+
+
 class CharacterResponse(BaseModel):
     id: str
     name: str
@@ -155,12 +178,65 @@ class CharacterResponse(BaseModel):
     created_by: Optional[str] = None
 
 
+class WavespeedBalanceRequest(BaseModel):
+    wavespeed_api_key: str = Field(..., min_length=10, description="Wavespeed 控制台生成的 API Key")
+
+
+class WavespeedBalanceResponse(BaseModel):
+    balance: float
+    currency: str = Field(default="USD", description="余额币种，恒定为 USD")
+
+
 # -----------------------------------------------------------------------------
 # 路由实现
 # -----------------------------------------------------------------------------
+@router.post("/wavespeed/balance", response_model=WavespeedBalanceResponse)
+async def get_wavespeed_balance(payload: WavespeedBalanceRequest) -> WavespeedBalanceResponse:
+    """查询 Wavespeed 账户余额（USD）。"""
+    api_key = payload.wavespeed_api_key.strip()
+    if not api_key:
+        raise HTTPException(status_code=400, detail="缺少 Wavespeed API Key")
+
+    try:
+        async with httpx.AsyncClient(timeout=10.0) as client:
+            response = await client.get(
+                WAVESPEED_BALANCE_URL,
+                headers={"Authorization": f"Bearer {api_key}"},
+            )
+        response.raise_for_status()
+    except httpx.HTTPStatusError as exc:
+        status_code = exc.response.status_code if exc.response else 502
+        if status_code == 401:
+            raise HTTPException(status_code=401, detail="Wavespeed API Key 无效或已过期") from exc
+        raise HTTPException(status_code=status_code, detail="查询 Wavespeed 余额失败") from exc
+    except httpx.TimeoutException as exc:
+        raise HTTPException(status_code=504, detail="查询 Wavespeed 余额超时，请稍后再试") from exc
+    except httpx.RequestError as exc:
+        raise HTTPException(status_code=502, detail="无法连接 Wavespeed 服务，请稍后再试") from exc
+
+    try:
+        payload_json = response.json()
+    except ValueError as exc:
+        raise HTTPException(status_code=502, detail="Wavespeed 响应格式异常") from exc
+
+    balance = DigitalHumanService._parse_balance_payload(payload_json)
+    if balance is None:
+        raise HTTPException(status_code=502, detail="未能从 Wavespeed API 获取余额信息")
+
+    return WavespeedBalanceResponse(balance=round(balance, 4))
+
+
 @router.post("/tasks", response_model=TaskResponse)
 async def create_task(req: CreateTaskRequest):
     """创建数字人生成任务。"""
+    # 验证 Wavespeed API Key
+    api_key = req.wavespeed_api_key.strip()
+    if not api_key or len(api_key) < 10:
+        raise HTTPException(
+            status_code=400,
+            detail="请提供有效的 Wavespeed API Key（至少10个字符）"
+        )
+
     character_internal: Optional[Dict[str, Any]] = None
     character_payload: Optional[Dict[str, Any]] = None
     if req.character_id:
@@ -218,7 +294,8 @@ async def create_task(req: CreateTaskRequest):
 
     async def _runner():
         try:
-            service = get_digital_human_service()
+            # 使用用户提供的 API Key 创建服务实例
+            service = get_digital_human_service(wavespeed_key=api_key)
             await service.generate_digital_human(
                 job_id=job_id,
                 avatar_mode=resolved_mode,
@@ -283,6 +360,14 @@ async def get_task_status(job_id: str):
         character=character_payload,
         links={"self": f"/api/tasks/{job_id}"},
     )
+
+
+@router.get("/history/videos", response_model=HistoryVideoResponse)
+async def list_history_videos(limit: int = 50):
+    """返回公开目录中可访问的历史视频列表。"""
+    records = history_service.list_recent_videos(limit=limit)
+    items = [HistoryVideoItem(**record) for record in records]
+    return HistoryVideoResponse(count=len(items), items=items)
 
 
 @router.post("/assets/upload")

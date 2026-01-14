@@ -1,0 +1,10 @@
+{
+  "appearance": {
+    "zh": "短棕发男性，神情严肃略嘟嘴，眼神直接；穿深蓝/黑色西装外套，内搭敞领白色条纹衬衫；半身肖像白底，外观似埃隆·马斯克。",
+    "en": "Short brown-haired man with a serious slightly pursed look and direct gaze; in a dark navy/black suit jacket over an open-collar white striped shirt; half-body portrait on white, resembling Elon Musk."
+  },
+  "voice": {
+    "zh": "男性，中音，沉稳思考；英语带南非混美式口音，关键点前略作停顿，语气分析感。",
+    "prompt": "Male, mid register, measured and thoughtful; South African-tinged American accent, slight pauses before key points, analytical tone."
+  }
+}

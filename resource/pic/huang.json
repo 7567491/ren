@@ -1,0 +1,10 @@
+{
+  "appearance": {
+    "zh": "灰白短发男性，戴金属细框眼镜，淡笑沉稳；穿亮面黑色皮夹克，竖领中央拉链，单侧耳麦；舞台演讲气质，外观类似黄仁勋。",
+    "en": "Gray short-haired man with thin metal-frame glasses and a calm slight smile; in a glossy black leather jacket with a standing collar and central zipper, wearing a single-sided headset mic; keynote-presenter vibe resembling Jensen Huang."
+  },
+  "voice": {
+    "zh": "男性，中低音域，自信温和；英语带台美口音，演讲节奏流畅，技术词强调清晰。",
+    "prompt": "Male, mid-low register, confident and warm; Taiwanese-American English accent, polished keynote cadence, clear technical emphasis."
+  }
+}

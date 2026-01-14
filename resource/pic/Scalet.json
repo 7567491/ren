@@ -1,0 +1,10 @@
+{
+  "appearance": {
+    "zh": "红色短波浪发女性，表情坚定警觉；穿黑色战术紧身衣，前胸拉链微开，双臂交叉；戴黑色护手与弹匣样护具，腰带红色沙漏徽标，肩袖神盾局标志，形象似黑寡妇。",
+    "en": "Red short-wavy-haired woman with a firm, alert expression; dressed in a black tactical bodysuit with a slightly open front zipper, arms crossed; black gloves with ammo-like gauntlets, belt with red hourglass emblem, SHIELD insignia on sleeves, resembling Black Widow."
+  },
+  "voice": {
+    "zh": "女性，中低音，冷静果决；美式口音带轻微东欧调，表达简洁，节奏自信。",
+    "prompt": "Female, mid-low voice, composed and decisive; American accent with a faint Eastern European undertone, concise delivery, confident cadence."
+  }
+}

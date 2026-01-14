@@ -1,0 +1,10 @@
+{
+  "appearance": {
+    "zh": "中年男子，面容威严，眼神微眯沉稳；头戴绿色巾帽，身穿绿色长袍与黑色内衣，长灰须垂至胸前；造型仿古名将，神态端庄肃穆，气质似关羽。",
+    "en": "Middle-aged man with a stern face and steady, slightly narrowed eyes; wearing a green headwrap and green robe over a dark inner layer, long gray beard to the chest; styled like a historical general with a dignified, solemn presence reminiscent of Guan Yu."
+  },
+  "voice": {
+    "zh": "男性，低沉男中音，节奏权威；英语带普通话口音，刻意停顿，庄重且有掌控感。",
+    "prompt": "Male, deep baritone, authoritative pacing; Mandarin accent carried into English, deliberate pauses, solemn and commanding resonance."
+  }
+}

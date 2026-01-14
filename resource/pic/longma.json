@@ -1,0 +1,10 @@
+{
+  "appearance": {
+    "zh": "金色长卷发女性，编发垂落，神情温柔略忧虑；穿浅金/米色羽片纹理披肩礼服，胸口以横杆固定；柔光白底，气质似丹妮莉丝。",
+    "en": "Platinum blonde woman with braids framing her face, gentle expression with a hint of concern; wearing a light gold/beige gown with feather-like textures and a shoulder cape fastened by a horizontal bar; soft light on white background, aura akin to Daenerys."
+  },
+  "voice": {
+    "zh": "女性，中音柔和，平静共情；英语带轻微英式RP口音，节奏优雅，温和克制。",
+    "prompt": "Female, soft mid register, calm and empathetic; light British/RP accent, graceful pacing, measured warmth."
+  }
+}

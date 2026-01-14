@@ -1,0 +1,89 @@
+{
+  "job_id": "integration-test-001",
+  "status": "finished",
+  "created_at": "2026-01-03T04:08:36.530565+00:00",
+  "updated_at": "2026-01-03T04:08:36.540415+00:00",
+  "params": {
+    "avatar_mode": "prompt",
+    "avatar_prompt": "测试头像",
+    "avatar_upload_path": null,
+    "speech_text": "这是一段测试文本。",
+    "voice_id": "male-qn-qingse",
+    "resolution": "720p",
+    "speed": 1.0,
+    "pitch": 0,
+    "emotion": "neutral",
+    "seed": 42,
+    "mask_image": null,
+    "character": null
+  },
+  "trace_id": "trace-9a99366d1102",
+  "duration": 10.0,
+  "stages": {
+    "avatar": {
+      "state": "completed",
+      "message": "头像生成完成",
+      "retries": 0,
+      "provider_task_id": null,
+      "output_url": "https://example.com/avatar.png",
+      "artifact_path": null
+    },
+    "speech": {
+      "state": "completed",
+      "message": "语音生成完成 (10.0s)",
+      "retries": 0,
+      "provider_task_id": null,
+      "output_url": "https://example.com/speech.mp3",
+      "artifact_path": "output/integration-test-001/speech.mp3"
+    },
+    "video": {
+      "state": "completed",
+      "message": "数字人视频生成完成",
+      "retries": 0,
+      "provider_task_id": null,
+      "output_url": "https://example.com/video.mp4",
+      "artifact_path": "output/integration-test-001/digital_human.mp4"
+    }
+  },
+  "cost": 0.65,
+  "cost_breakdown": {
+    "avatar": 0.03,
+    "speech": 0.02,
+    "video": 0.6
+  },
+  "assets": {
+    "text_length": 9,
+    "avatar_url": "https://example.com/avatar.png",
+    "wave_avatar_url": "https://example.com/avatar.png",
+    "duration": 10.0,
+    "audio_url": "https://example.com/speech.mp3",
+    "audio_path": "/tmp/pytest-of-ren/pytest-51/test_output0/speech.mp3",
+    "wave_audio_url": "https://example.com/speech.mp3",
+    "video_stage_started_at": "2026-01-03T04:08:36.537862+00:00",
+    "video_url": "https://example.com/video.mp4",
+    "video_path": "output/integration-test-001/digital_human.mp4",
+    "public_video_path": null,
+    "wave_video_url": "https://example.com/video.mp4",
+    "local_video_url": "/output/integration-test-001/digital_human.mp4",
+    "video_stage_completed_at": "2026-01-03T04:08:36.539255+00:00",
+    "video_stage_seconds": 0.001393
+  },
+  "error": null,
+  "config_hash": "c06e0ee94cdcba3f81e63365b5a5fb0d62c14592c90450e608638516bf773353",
+  "logs": [
+    "[INFO] 任务已创建，等待执行",
+    "[INFO] 正在生成头像...",
+    "[INFO] [avatar] 头像生成完成",
+    "[INFO] ✅ 头像生成完成: https://example.com/avatar.png",
+    "[INFO] 正在生成语音...",
+    "[INFO] [speech] 语音生成完成 (10.0s)",
+    "[INFO] ✅ 语音生成完成",
+    "[INFO] 正在生成数字人视频...",
+    "[INFO] [video] 数字人视频生成完成",
+    "[INFO] ✅ 数字人视频生成完成"
+  ],
+  "avatar_url": "https://example.com/avatar.png",
+  "audio_url": "https://example.com/speech.mp3",
+  "video_url": "https://example.com/video.mp4",
+  "video_path": "output/integration-test-001/digital_human.mp4"
+}

@@ -1,0 +1,103 @@
+{
+  "job_id": "aka-01051043",
+  "status": "finished",
+  "created_at": "2026-01-05T02:43:26.155234+00:00",
+  "updated_at": "2026-01-05T02:45:56.920004+00:00",
+  "params": {
+    "avatar_mode": "upload",
+    "avatar_prompt": null,
+    "avatar_upload_path": "output/uploads/feeaa79e06064fc18468f126fe14857a.jpg",
+    "speech_text": "2026新年快乐",
+    "voice_id": "female-shaonv",
+    "resolution": "720p",
+    "speed": 1.0,
+    "pitch": 0,
+    "emotion": "neutral",
+    "seed": 42,
+    "mask_image": null,
+    "character": null
+  },
+  "trace_id": "trace-fc8ca1fd0dc9",
+  "duration": 130.225,
+  "stages": {
+    "avatar": {
+      "state": "completed",
+      "message": "头像生成完成",
+      "retries": 0,
+      "provider_task_id": null,
+      "output_url": "https://s.linapp.fun/ren/output/aka-01051043/avatar.png",
+      "artifact_path": null
+    },
+    "speech": {
+      "state": "completed",
+      "message": "语音生成完成 (0.0s)",
+      "retries": 0,
+      "provider_task_id": null,
+      "output_url": "https://d1q70pf5vjeyhc.cloudfront.net/predictions/609bb0a93a9a43b0bc1ead393d37e486/1.mp3",
+      "artifact_path": "output/aka-01051043/speech.mp3"
+    },
+    "video": {
+      "state": "completed",
+      "message": "数字人视频生成完成",
+      "retries": 0,
+      "provider_task_id": null,
+      "output_url": "https://s.linapp.fun/ren/ren_01050245/digital_human.mp4",
+      "artifact_path": "output/aka-01051043/digital_human.mp4"
+    }
+  },
+  "cost": 0.3,
+  "cost_breakdown": {
+    "avatar": 0.0,
+    "speech": 0.0,
+    "video": 7.8134999999999994
+  },
+  "assets": {
+    "text_length": 8,
+    "avatar_url": "https://s.linapp.fun/ren/output/aka-01051043/avatar.png",
+    "wave_avatar_url": "https://s.linapp.fun/ren/output/aka-01051043/avatar.png",
+    "audio_url": "https://d1q70pf5vjeyhc.cloudfront.net/predictions/609bb0a93a9a43b0bc1ead393d37e486/1.mp3",
+    "audio_path": "output/aka-01051043/speech.mp3",
+    "wave_audio_url": "https://d1q70pf5vjeyhc.cloudfront.net/predictions/609bb0a93a9a43b0bc1ead393d37e486/1.mp3",
+    "video_stage_started_at": "2026-01-05T02:43:32.752379+00:00",
+    "video_url": "https://s.linapp.fun/ren/ren_01050245/digital_human.mp4",
+    "video_path": "output/aka-01051043/digital_human.mp4",
+    "public_video_path": "/mnt/www/ren/ren_01050245/digital_human.mp4",
+    "video_mirrors": [
+      {
+        "name": "wave-ad",
+        "path": "/mnt/www/ad/aka-01051043.mp4",
+        "url": "https://s.linapp.fun/ad/aka-01051043.mp4"
+      }
+    ],
+    "wave_video_url": "https://d2p7pge43lyniu.cloudfront.net/output/9e8db280-6118-48c3-9eff-3375917ba7d8-u1_c6573901-012d-4132-b4e6-648d717eb16f.mp4",
+    "local_video_url": "/output/aka-01051043/digital_human.mp4",
+    "duration": 130.225,
+    "video_stage_completed_at": "2026-01-05T02:45:56.918240+00:00",
+    "video_stage_seconds": 144.165861
+  },
+  "error": null,
+  "config_hash": "c06e0ee94cdcba3f81e63365b5a5fb0d62c14592c90450e608638516bf773353",
+  "logs": [
+    "[INFO] 任务已创建，等待执行",
+    "[INFO] 正在生成头像...",
+    "[INFO] [avatar] 头像生成完成",
+    "[INFO] ✅ 头像生成完成: https://s.linapp.fun/ren/output/aka-01051043/avatar.png",
+    "[INFO] 正在生成语音...",
+    "[INFO] [speech] 语音生成完成 (0.0s)",
+    "[INFO] ✅ 语音生成完成",
+    "[INFO] 正在生成数字人视频...",
+    "[INFO] [video] 数字人视频生成完成",
+    "[INFO] ✅ 数字人视频生成完成"
+  ],
+  "avatar_url": "https://s.linapp.fun/ren/output/aka-01051043/avatar.png",
+  "audio_url": "https://d1q70pf5vjeyhc.cloudfront.net/predictions/609bb0a93a9a43b0bc1ead393d37e486/1.mp3",
+  "video_url": "https://s.linapp.fun/ren/ren_01050245/digital_human.mp4",
+  "video_path": "output/aka-01051043/digital_human.mp4",
+  "billing": {
+    "currency": "USD",
+    "balance_before": 105.81,
+    "balance_after": 105.51,
+    "actual_cost": 0.3,
+    "updated_at": "2026-01-05T02:45:57.684364+00:00"
+  }
+}

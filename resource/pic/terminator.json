@@ -1,0 +1,10 @@
+{
+  "appearance": {
+    "zh": "短立发硬汉，戴黑色墨镜，表情冷峻；穿黑色皮夹克与黑T恤，脸部一侧有浅色伤痕/白痕；强烈光影对比，经典《终结者》T-800肖像感。",
+    "en": "Tough man with short spiked hair and black sunglasses, stern expression; in a black leather jacket and black T-shirt, light scar/white mark on one side of the face; strong contrast lighting, classic Terminator T-800 portrait vibe."
+  },
+  "voice": {
+    "zh": "男性，低沉单调，语速简短；英语带奥地利口音，机械般稳定，几乎无情绪，节奏刻意。",
+    "prompt": "Male, low monotone, terse delivery; Austrian accent, mechanical steadiness, minimal emotion, deliberate pace."
+  }
+}

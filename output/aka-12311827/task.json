@@ -1,0 +1,84 @@
+{
+  "job_id": "aka-12311827",
+  "status": "finished",
+  "created_at": "2025-12-31T10:27:49.706866+00:00",
+  "updated_at": "2025-12-31T10:30:15.521746+00:00",
+  "params": {
+    "avatar_mode": "upload",
+    "avatar_prompt": null,
+    "avatar_upload_path": "output/uploads/2d325e3ef39543bfb285780752f5d5f1.jpg",
+    "speech_text": "你好啊！欢迎进入Linode+WavespeedAI数字人空间。",
+    "voice_id": "female-shaonv",
+    "resolution": "720p",
+    "speed": 1.0,
+    "pitch": 0,
+    "emotion": "neutral",
+    "seed": 42,
+    "mask_image": null
+  },
+  "trace_id": "trace-b3ebfcfe94ab",
+  "duration": 125.848,
+  "stages": {
+    "avatar": {
+      "state": "completed",
+      "message": "头像生成完成",
+      "retries": 0,
+      "provider_task_id": null,
+      "output_url": "https://s.linapp.fun/ren/output/aka-12311827/avatar.png",
+      "artifact_path": null
+    },
+    "speech": {
+      "state": "completed",
+      "message": "语音生成完成 (0.0s)",
+      "retries": 0,
+      "provider_task_id": null,
+      "output_url": "https://d1q70pf5vjeyhc.cloudfront.net/predictions/56755730a13542deac290428477fb9a3/1.mp3",
+      "artifact_path": "output/aka-12311827/speech.mp3"
+    },
+    "video": {
+      "state": "completed",
+      "message": "数字人视频生成完成",
+      "retries": 0,
+      "provider_task_id": null,
+      "output_url": "https://s.linapp.fun/ren/ren_12311030/digital_human.mp4",
+      "artifact_path": "output/aka-12311827/digital_human.mp4"
+    }
+  },
+  "cost": 7.550879999999999,
+  "cost_breakdown": {
+    "avatar": 0.0,
+    "speech": 0.0,
+    "video": 7.550879999999999
+  },
+  "assets": {
+    "avatar_url": "https://s.linapp.fun/ren/output/aka-12311827/avatar.png",
+    "wave_avatar_url": "https://s.linapp.fun/ren/output/aka-12311827/avatar.png",
+    "audio_url": "https://d1q70pf5vjeyhc.cloudfront.net/predictions/56755730a13542deac290428477fb9a3/1.mp3",
+    "audio_path": "output/aka-12311827/speech.mp3",
+    "wave_audio_url": "https://d1q70pf5vjeyhc.cloudfront.net/predictions/56755730a13542deac290428477fb9a3/1.mp3",
+    "video_url": "https://s.linapp.fun/ren/ren_12311030/digital_human.mp4",
+    "video_path": "output/aka-12311827/digital_human.mp4",
+    "public_video_path": "/mnt/www/ren/ren_12311030/digital_human.mp4",
+    "wave_video_url": "https://d2p7pge43lyniu.cloudfront.net/output/e953005e-9a4d-45da-aa9e-fa54651b4a66-u1_63f9e00d-ddcc-4970-a5d3-57adc3681200.mp4",
+    "local_video_url": "/output/aka-12311827/digital_human.mp4",
+    "duration": 125.848
+  },
+  "error": null,
+  "config_hash": "8300dfa8fd29cc847420a9bf4853425096ac67c2cbc9b61dd0d99e7887e342b1",
+  "logs": [
+    "[INFO] 任务已创建，等待执行",
+    "[INFO] 正在生成头像...",
+    "[INFO] [avatar] 头像生成完成",
+    "[INFO] ✅ 头像生成完成: https://s.linapp.fun/ren/output/aka-12311827/avatar.png",
+    "[INFO] 正在生成语音...",
+    "[INFO] [speech] 语音生成完成 (0.0s)",
+    "[INFO] ✅ 语音生成完成",
+    "[INFO] 正在生成数字人视频...",
+    "[INFO] [video] 数字人视频生成完成",
+    "[INFO] ✅ 数字人视频生成完成"
+  ],
+  "avatar_url": "https://s.linapp.fun/ren/output/aka-12311827/avatar.png",
+  "audio_url": "https://d1q70pf5vjeyhc.cloudfront.net/predictions/56755730a13542deac290428477fb9a3/1.mp3",
+  "video_url": "https://s.linapp.fun/ren/ren_12311030/digital_human.mp4",
+  "video_path": "output/aka-12311827/digital_human.mp4"
+}

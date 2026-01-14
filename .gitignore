@@ -19,16 +19,13 @@ build/
 # 输出文件
 output/  # 包含 aka-* 任务与 smoke 冒烟产物
 temp/
-*.mp4
-*.mp3
-*.png
-*.jpg
-*.jpeg
+# 只忽略 output 和 temp 目录下的媒体文件
+# resource/pic/ 下的预制角色图片需要提交
 
 # Node / 前端
 node_modules/
 frontend/node_modules/
-frontend/dist/
+# frontend/dist/ 现在包含静态 HTML，需要提交
 
 # 用户配置
 .bash_history

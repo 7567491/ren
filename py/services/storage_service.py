@@ -14,6 +14,7 @@ from __future__ import annotations
 
 import json
 import logging
+import os
 import shutil
 from dataclasses import dataclass
 from datetime import datetime, timezone
@@ -335,6 +336,110 @@ class StorageService:
         public_url = "/".join(url_parts)
 
         return {"path": str(dest_path), "url": public_url}
+
+    def list_published_videos(self, limit: int = 100) -> List[Dict[str, object]]:
+        """
+        枚举公开目录下带有最终视频的所有子目录，返回可访问的 URL 列表。
+        """
+        if not self.public_root or limit <= 0:
+            return []
+
+        try:
+            children = [child for child in self.public_root.iterdir() if child.is_dir()]
+        except FileNotFoundError:
+            return []
+
+        def _mtime(path: Path) -> float:
+            try:
+                return path.stat().st_mtime
+            except FileNotFoundError:
+                return 0.0
+
+        children.sort(key=_mtime, reverse=True)
+        items: List[Dict[str, object]] = []
+        relative_namespace = self.namespace.strip("/") if self.namespace else ""
+        history_web_base = os.getenv("DIGITAL_HUMAN_HISTORY_WEB_BASE", "https://linapp.fun/ren").rstrip("/")
+
+        for directory in children:
+            video_file = directory / self.final_video_name
+            if not video_file.exists():
+                continue
+            try:
+                stat = video_file.stat()
+            except FileNotFoundError:
+                continue
+
+            url_parts: List[str] = []
+            if self.public_base_url:
+                url_parts.append(self.public_base_url.rstrip("/"))
+                if relative_namespace and not self._base_includes_namespace:
+                    url_parts.append(relative_namespace)
+                elif relative_namespace and self._base_includes_namespace and not self.public_base_url.rstrip("/").endswith(relative_namespace):
+                    url_parts.append(relative_namespace)
+                url_parts.extend([directory.name, self.final_video_name])
+            public_url = "/".join(url_parts) if url_parts else ""
+
+            relative_url = (
+                f"/{relative_namespace}/{directory.name}/{self.final_video_name}"
+                if relative_namespace
+                else f"/{directory.name}/{self.final_video_name}"
+            )
+            web_url = f"{history_web_base}/{directory.name}/{self.final_video_name}".rstrip("/")
+
+            items.append(
+                {
+                    "slug": directory.name,
+                    "path": str(video_file),
+                    "video_url": public_url or relative_url,
+                    "relative_url": relative_url,
+                    "web_url": web_url,
+                    "size": stat.st_size,
+                    "timestamp": int(stat.st_mtime * 1000),
+                    "modified_at": datetime.fromtimestamp(stat.st_mtime, timezone.utc).isoformat(),
+                }
+            )
+            if len(items) >= limit:
+                break
+
+        path_map = self._map_public_paths_to_jobs({item["path"] for item in items})
+        for item in items:
+            job_id = path_map.get(item["path"])  # type: ignore[arg-type]
+            if job_id:
+                item["job_id"] = job_id
+
+        return items
+
+    def _map_public_paths_to_jobs(self, target_paths: set[str]) -> Dict[str, str]:
+        """
+        读取 output/<job_id>/task.json，将 public_video_path 映射到 job_id，便于反查任务。
+        """
+        mapping: Dict[str, str] = {}
+        if not target_paths:
+            return mapping
+
+        try:
+            candidates = [p for p in self.output_root.iterdir() if p.is_dir()]
+        except FileNotFoundError:
+            return mapping
+
+        for job_dir in candidates:
+            meta_path = job_dir / "task.json"
+            if not meta_path.exists():
+                continue
+            try:
+                payload = json.loads(meta_path.read_text(encoding="utf-8"))
+            except (OSError, ValueError):
+                continue
+            public_path = ((payload.get("assets") or {}).get("public_video_path")) if payload else None
+            if not public_path:
+                continue
+            normalized = str(Path(public_path))
+            if normalized in target_paths:
+                mapping[normalized] = payload.get("job_id") or job_dir.name
+                if len(mapping) >= len(target_paths):
+                    break
+
+        return mapping
 
 
 __all__ = ["StorageService", "TaskPaths"]

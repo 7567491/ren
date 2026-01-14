@@ -1,0 +1,144 @@
+{
+  "job_id": "aka-12312352",
+  "status": "finished",
+  "created_at": "2025-12-31T15:52:19.375655+00:00",
+  "updated_at": "2025-12-31T15:56:40.856784+00:00",
+  "params": {
+    "avatar_mode": "upload",
+    "avatar_prompt": "金色长卷发女性，编发垂落，神情温柔略忧虑；穿浅金/米色羽片纹理披肩礼服，胸口以横杆固定；柔光白底，气质似丹妮莉丝。",
+    "avatar_upload_path": "/home/ren/resource/pic/longma.jpg",
+    "speech_text": "盼您2026身体康健，笑口常开，与所爱之人共度每个平凡而闪亮的日常。",
+    "voice_id": "female-yujie",
+    "resolution": "720p",
+    "speed": 1.0,
+    "pitch": 0,
+    "emotion": "neutral",
+    "seed": 42,
+    "mask_image": null,
+    "character": {
+      "id": "char-longma",
+      "name": "龙裔君主",
+      "appearance": {
+        "zh": "金色长卷发女性，编发垂落，神情温柔略忧虑；穿浅金/米色羽片纹理披肩礼服，胸口以横杆固定；柔光白底，气质似丹妮莉丝。",
+        "en": "Platinum blonde woman with braids framing her face, gentle expression with a hint of concern; wearing a light gold/beige gown with feather-like textures and a shoulder cape fastened by a horizontal bar; soft light on white background, aura akin to Daenerys."
+      },
+      "voice": {
+        "zh": "女性，中音柔和，平静共情；英语带轻微英式RP口音，节奏优雅，温和克制。",
+        "prompt": "Female, soft mid register, calm and empathetic; light British/RP accent, graceful pacing, measured warmth.",
+        "voice_id": "female-yujie"
+      },
+      "image_url": "/api/characters/assets/longma.jpg",
+      "image_path": "longma.jpg",
+      "tags": [
+        "prebuilt",
+        "fantasy"
+      ],
+      "source": "prebuilt"
+    }
+  },
+  "trace_id": "trace-ff8ac7eadb1d",
+  "duration": 243.255,
+  "stages": {
+    "avatar": {
+      "state": "completed",
+      "message": "头像生成完成",
+      "retries": 0,
+      "provider_task_id": null,
+      "output_url": "https://s.linapp.fun/ren/output/aka-12312352/avatar.png",
+      "artifact_path": null
+    },
+    "speech": {
+      "state": "completed",
+      "message": "语音生成完成 (0.0s)",
+      "retries": 0,
+      "provider_task_id": null,
+      "output_url": "https://d1q70pf5vjeyhc.cloudfront.net/predictions/c4f5f1590e75433cb28d65afdcc2afe8/1.mp3",
+      "artifact_path": "output/aka-12312352/speech.mp3"
+    },
+    "video": {
+      "state": "completed",
+      "message": "数字人视频生成完成",
+      "retries": 0,
+      "provider_task_id": null,
+      "output_url": "https://s.linapp.fun/ren/ren_12311556/digital_human.mp4",
+      "artifact_path": "output/aka-12312352/digital_human.mp4"
+    }
+  },
+  "cost": 0.56,
+  "cost_breakdown": {
+    "avatar": 0.0,
+    "speech": 0.0,
+    "video": 14.5953
+  },
+  "assets": {
+    "text_length": 34,
+    "character": {
+      "id": "char-longma",
+      "name": "龙裔君主",
+      "appearance": {
+        "zh": "金色长卷发女性，编发垂落，神情温柔略忧虑；穿浅金/米色羽片纹理披肩礼服，胸口以横杆固定；柔光白底，气质似丹妮莉丝。",
+        "en": "Platinum blonde woman with braids framing her face, gentle expression with a hint of concern; wearing a light gold/beige gown with feather-like textures and a shoulder cape fastened by a horizontal bar; soft light on white background, aura akin to Daenerys."
+      },
+      "voice": {
+        "zh": "女性，中音柔和，平静共情；英语带轻微英式RP口音，节奏优雅，温和克制。",
+        "prompt": "Female, soft mid register, calm and empathetic; light British/RP accent, graceful pacing, measured warmth.",
+        "voice_id": "female-yujie"
+      },
+      "image_url": "/api/characters/assets/longma.jpg",
+      "image_path": "longma.jpg",
+      "tags": [
+        "prebuilt",
+        "fantasy"
+      ],
+      "source": "prebuilt"
+    },
+    "character_id": "char-longma",
+    "avatar_url": "https://s.linapp.fun/ren/output/aka-12312352/avatar.png",
+    "wave_avatar_url": "https://s.linapp.fun/ren/output/aka-12312352/avatar.png",
+    "audio_url": "https://d1q70pf5vjeyhc.cloudfront.net/predictions/c4f5f1590e75433cb28d65afdcc2afe8/1.mp3",
+    "audio_path": "output/aka-12312352/speech.mp3",
+    "wave_audio_url": "https://d1q70pf5vjeyhc.cloudfront.net/predictions/c4f5f1590e75433cb28d65afdcc2afe8/1.mp3",
+    "video_stage_started_at": "2025-12-31T15:52:25.831463+00:00",
+    "video_url": "https://s.linapp.fun/ren/ren_12311556/digital_human.mp4",
+    "video_path": "output/aka-12312352/digital_human.mp4",
+    "public_video_path": "/mnt/www/ren/ren_12311556/digital_human.mp4",
+    "video_mirrors": [
+      {
+        "name": "wave-ad",
+        "path": "/mnt/www/ad/aka-12312352.mp4",
+        "url": "https://s.linapp.fun/ad/aka-12312352.mp4"
+      }
+    ],
+    "wave_video_url": "https://d2p7pge43lyniu.cloudfront.net/output/fe83be31-4435-4e18-9d65-135b7870ea0b-u2_100d957e-7bd5-492c-9d2a-be0d85243417.mp4",
+    "local_video_url": "/output/aka-12312352/digital_human.mp4",
+    "duration": 243.255,
+    "video_stage_completed_at": "2025-12-31T15:56:40.855135+00:00",
+    "video_stage_seconds": 255.023672
+  },
+  "error": null,
+  "config_hash": "c06e0ee94cdcba3f81e63365b5a5fb0d62c14592c90450e608638516bf773353",
+  "logs": [
+    "[INFO] 🎭 使用角色 龙裔君主",
+    "[INFO] 任务已创建，等待执行",
+    "[INFO] 正在生成头像...",
+    "[INFO] [avatar] 头像生成完成",
+    "[INFO] ✅ 头像生成完成: https://s.linapp.fun/ren/output/aka-12312352/avatar.png",
+    "[INFO] 正在生成语音...",
+    "[INFO] [speech] 语音生成完成 (0.0s)",
+    "[INFO] ✅ 语音生成完成",
+    "[INFO] 正在生成数字人视频...",
+    "[INFO] [video] 数字人视频生成完成",
+    "[INFO] ✅ 数字人视频生成完成"
+  ],
+  "avatar_url": "https://s.linapp.fun/ren/output/aka-12312352/avatar.png",
+  "audio_url": "https://d1q70pf5vjeyhc.cloudfront.net/predictions/c4f5f1590e75433cb28d65afdcc2afe8/1.mp3",
+  "video_url": "https://s.linapp.fun/ren/ren_12311556/digital_human.mp4",
+  "video_path": "output/aka-12312352/digital_human.mp4",
+  "billing": {
+    "currency": "USD",
+    "balance_before": 120.48,
+    "balance_after": 119.92,
+    "actual_cost": 0.56,
+    "updated_at": "2025-12-31T15:56:41.653815+00:00"
+  }
+}

@@ -1,0 +1,77 @@
+{
+  "job_id": "test-job-billing",
+  "status": "failed",
+  "created_at": "2026-01-03T02:58:45.142950+00:00",
+  "updated_at": "2026-01-03T02:58:45.143227+00:00",
+  "params": {
+    "avatar_mode": "prompt",
+    "avatar_prompt": "测试",
+    "avatar_upload_path": null,
+    "speech_text": "测试文本",
+    "voice_id": "male-qn-qingse",
+    "resolution": "720p",
+    "speed": 1.0,
+    "pitch": 0,
+    "emotion": "neutral",
+    "seed": 42,
+    "mask_image": null,
+    "character": null
+  },
+  "trace_id": "trace-91ec4990b19a",
+  "duration": null,
+  "stages": {
+    "avatar": {
+      "state": "pending",
+      "message": "",
+      "retries": 0,
+      "provider_task_id": null,
+      "output_url": null,
+      "artifact_path": null
+    },
+    "speech": {
+      "state": "pending",
+      "message": "",
+      "retries": 0,
+      "provider_task_id": null,
+      "output_url": null,
+      "artifact_path": null
+    },
+    "video": {
+      "state": "pending",
+      "message": "",
+      "retries": 0,
+      "provider_task_id": null,
+      "output_url": null,
+      "artifact_path": null
+    }
+  },
+  "cost": 1.6,
+  "cost_breakdown": {
+    "avatar": 0.0,
+    "speech": 0.0,
+    "video": 0.0
+  },
+  "assets": {
+    "text_length": 4
+  },
+  "error": {
+    "message": "配置文件已更新，无法继续使用旧任务。请重新创建任务以加载最新配置。",
+    "type": "RuntimeError",
+    "trace_id": "trace-91ec4990b19a"
+  },
+  "config_hash": "c06e0ee94cdcba3f81e63365b5a5fb0d62c14592c90450e608638516bf773353",
+  "logs": [
+    "[ERROR] ❌ 生成失败: 配置文件已更新，无法继续使用旧任务。请重新创建任务以加载最新配置。"
+  ],
+  "avatar_url": null,
+  "audio_url": null,
+  "video_url": null,
+  "video_path": null,
+  "billing": {
+    "currency": "USD",
+    "balance_before": 120.0,
+    "balance_after": 118.4,
+    "actual_cost": 1.6,
+    "updated_at": "2026-01-03T02:58:45.145118+00:00"
+  }
+}

@@ -1,0 +1,10 @@
+{
+  "appearance": {
+    "zh": "高马尾红发女战士，丝带束发，目光锐利坚毅；穿白色无袖武服配红色边缘，束宽红腰带，红色裙摆飘动；手臂缠红色护腕与金属饰带，战斗姿态，格斗游戏插画风格。",
+    "en": "Red-haired female fighter with a high ponytail tied by a ribbon, sharp determined gaze; wearing a sleeveless white martial top with red trims, wide red sash, and flowing red skirt; arms wrapped with red bracers and metallic bands, battle-ready pose in a fighting-game illustration style."
+  },
+  "voice": {
+    "zh": "女性，明亮有活力的语气；英语带日式口音，语速轻快自信，活泼但吐字清晰。",
+    "prompt": "Female, bright and energetic tone; Japanese accent on English, quick confident cadence, spirited but clear articulation."
+  }
+}

@@ -1,0 +1,884 @@
+<!doctype html>
+<html lang="zh-CN">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0" />
+    <link rel="icon" type="image/svg+xml" href="/favicon.svg" />
+    <title>ren2 数字人 · 极简三栏</title>
+    <script src="/config.js"></script>
+    <style>
+      @import url("https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;500;600&family=Noto+Sans+SC:wght@400;500;600&display=swap");
+
+      :root {
+        --bg: #030915;
+        --card: rgba(12, 20, 38, 0.82);
+        --card-border: rgba(255, 255, 255, 0.06);
+        --accent: #5de0e6;
+        --accent-2: #2f8dff;
+        --text: #eaf3ff;
+        --muted: #93a6c6;
+        --error: #ff6b6b;
+        --success: #4ade80;
+        --shadow: 0 20px 60px rgba(0, 0, 0, 0.35);
+      }
+
+      * {
+        box-sizing: border-box;
+        padding: 0;
+        margin: 0;
+      }
+
+      body {
+        font-family: "Space Grotesk", "Noto Sans SC", "Helvetica Neue", Arial, sans-serif;
+        background: radial-gradient(circle at 12% 18%, rgba(47, 141, 255, 0.22), transparent 26%),
+          radial-gradient(circle at 82% 8%, rgba(93, 224, 230, 0.2), transparent 22%),
+          linear-gradient(140deg, #020611 0%, #050c1d 45%, #0c1732 100%);
+        color: var(--text);
+        min-height: 100vh;
+        padding: 30px 18px 46px;
+        letter-spacing: 0.01em;
+      }
+
+      .page {
+        max-width: 1180px;
+        margin: 0 auto;
+        display: flex;
+        flex-direction: column;
+        gap: 18px;
+      }
+
+      header.hero {
+        display: flex;
+        flex-direction: column;
+        gap: 10px;
+      }
+
+      .hero h1 {
+        font-size: 30px;
+        font-weight: 600;
+        line-height: 1.2;
+      }
+
+      .hero p {
+        color: var(--muted);
+        font-size: 15px;
+        max-width: 860px;
+      }
+
+      main.grid {
+        display: grid;
+        grid-template-columns: repeat(3, minmax(0, 1fr));
+        gap: 14px;
+      }
+
+      .panel {
+        background: var(--card);
+        border: 1px solid var(--card-border);
+        border-radius: 16px;
+        padding: 18px;
+        box-shadow: var(--shadow);
+        backdrop-filter: blur(10px);
+        display: flex;
+        flex-direction: column;
+        gap: 12px;
+        min-height: 100%;
+      }
+
+      .panel h3 {
+        font-size: 18px;
+      }
+
+      .eyebrow {
+        font-size: 12px;
+        color: var(--muted);
+        letter-spacing: 0.08em;
+      }
+
+      .muted {
+        color: var(--muted);
+        font-size: 14px;
+        line-height: 1.5;
+      }
+
+      .field {
+        display: flex;
+        flex-direction: column;
+        gap: 6px;
+        width: 100%;
+        color: var(--text);
+        font-size: 14px;
+      }
+
+      .field input,
+      .field textarea,
+      .field select {
+        width: 100%;
+        padding: 10px 12px;
+        border-radius: 10px;
+        border: 1px solid rgba(255, 255, 255, 0.12);
+        background: rgba(255, 255, 255, 0.04);
+        color: var(--text);
+        outline: none;
+        transition: border 0.2s ease, background 0.2s ease;
+      }
+
+      .field input:focus,
+      .field textarea:focus,
+      .field select:focus {
+        border-color: var(--accent);
+        background: rgba(255, 255, 255, 0.06);
+      }
+
+      textarea {
+        resize: vertical;
+        min-height: 96px;
+      }
+
+      .row {
+        display: grid;
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+        gap: 10px;
+        width: 100%;
+      }
+
+      .divider {
+        text-align: center;
+        color: var(--muted);
+        font-size: 12px;
+        letter-spacing: 0.1em;
+        margin-top: 2px;
+      }
+
+      button {
+        border: none;
+        cursor: pointer;
+        transition: transform 0.12s ease, box-shadow 0.18s ease, background 0.2s ease;
+        font-weight: 600;
+        letter-spacing: 0.01em;
+      }
+
+      .primary-btn {
+        background: linear-gradient(120deg, var(--accent), var(--accent-2));
+        color: #031225;
+        padding: 12px 14px;
+        border-radius: 12px;
+        width: 100%;
+        font-size: 15px;
+        box-shadow: 0 10px 30px rgba(47, 141, 255, 0.32);
+      }
+
+      .primary-btn:disabled {
+        opacity: 0.6;
+        cursor: not-allowed;
+        box-shadow: none;
+      }
+
+      .primary-btn:hover:not(:disabled) {
+        transform: translateY(-1px);
+      }
+
+      .ghost-btn {
+        background: rgba(255, 255, 255, 0.06);
+        color: var(--text);
+        padding: 10px 12px;
+        border-radius: 12px;
+        font-size: 14px;
+      }
+
+      .ghost-btn:hover {
+        background: rgba(255, 255, 255, 0.1);
+      }
+
+      .status-panel .status {
+        display: flex;
+        flex-direction: column;
+        gap: 10px;
+      }
+
+      .status-chip {
+        display: inline-flex;
+        align-items: center;
+        gap: 8px;
+        width: fit-content;
+        padding: 8px 12px;
+        border-radius: 999px;
+        font-size: 13px;
+        border: 1px solid rgba(255, 255, 255, 0.12);
+      }
+
+      .status-chip.idle {
+        color: var(--muted);
+      }
+
+      .status-chip.pending {
+        color: #facc15;
+        border-color: rgba(250, 204, 21, 0.3);
+      }
+
+      .status-chip.running {
+        color: var(--accent);
+        border-color: rgba(93, 224, 230, 0.3);
+      }
+
+      .status-chip.success {
+        color: var(--success);
+        border-color: rgba(74, 222, 128, 0.3);
+      }
+
+      .status-chip.error {
+        color: var(--error);
+        border-color: rgba(255, 107, 107, 0.35);
+      }
+
+      .status-body {
+        display: grid;
+        grid-template-columns: 1fr;
+        gap: 6px;
+        font-size: 14px;
+        color: var(--muted);
+      }
+
+      .status-body code {
+        background: rgba(255, 255, 255, 0.06);
+        padding: 4px 6px;
+        border-radius: 8px;
+        color: var(--text);
+      }
+
+      .link {
+        color: var(--accent);
+        text-decoration: none;
+        font-weight: 600;
+      }
+
+      .link:hover {
+        text-decoration: underline;
+      }
+
+      .error-box {
+        background: rgba(255, 107, 107, 0.12);
+        color: #ffc7c7;
+        border: 1px solid rgba(255, 107, 107, 0.35);
+        padding: 10px 12px;
+        border-radius: 10px;
+        font-size: 14px;
+      }
+
+      .history-toggle {
+        position: fixed;
+        right: 16px;
+        bottom: 16px;
+        z-index: 21;
+        border-radius: 999px;
+        background: rgba(3, 9, 21, 0.92);
+        border: 1px solid rgba(255, 255, 255, 0.14);
+        color: var(--text);
+        padding: 10px 14px;
+        box-shadow: 0 10px 30px rgba(0, 0, 0, 0.35);
+        display: inline-flex;
+        gap: 10px;
+        align-items: center;
+      }
+
+      .history-toggle__count {
+        min-width: 28px;
+        height: 28px;
+        border-radius: 999px;
+        background: linear-gradient(120deg, var(--accent), var(--accent-2));
+        color: #031225;
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        font-weight: 700;
+        font-size: 13px;
+        box-shadow: 0 8px 20px rgba(47, 141, 255, 0.25);
+      }
+
+      .history-overlay {
+        position: fixed;
+        inset: 0;
+        background: rgba(0, 8, 20, 0.4);
+        backdrop-filter: blur(2px);
+        z-index: 18;
+        opacity: 0;
+        pointer-events: none;
+        transition: opacity 0.18s ease;
+      }
+
+      .history-overlay.is-open {
+        opacity: 1;
+        pointer-events: auto;
+      }
+
+      .history-panel {
+        position: fixed;
+        right: 16px;
+        bottom: 72px;
+        width: min(440px, calc(100% - 32px));
+        background: rgba(3, 9, 21, 0.92);
+        border: 1px solid rgba(255, 255, 255, 0.08);
+        border-radius: 18px;
+        box-shadow: 0 12px 30px rgba(0, 0, 0, 0.45);
+        padding: 14px 16px;
+        backdrop-filter: blur(14px);
+        display: flex;
+        flex-direction: column;
+        gap: 8px;
+        z-index: 20;
+        opacity: 0;
+        pointer-events: none;
+        transform: translateY(12px);
+        transition: opacity 0.18s ease, transform 0.18s ease;
+        max-height: min(70vh, 420px);
+      }
+
+      .history-panel.is-open {
+        opacity: 1;
+        pointer-events: auto;
+        transform: translateY(0);
+      }
+
+      .history-header {
+        font-size: 14px;
+        font-weight: 600;
+        color: var(--text);
+      }
+
+      .history-list {
+        list-style: none;
+        display: flex;
+        flex-direction: column;
+        gap: 8px;
+        max-height: 200px;
+        overflow-y: auto;
+      }
+
+      .history-list li {
+        display: flex;
+        flex-direction: column;
+        gap: 4px;
+        background: rgba(255, 255, 255, 0.03);
+        border: 1px solid rgba(255, 255, 255, 0.04);
+        border-radius: 10px;
+        padding: 8px 10px;
+      }
+
+      .history-list a {
+        color: var(--accent);
+        text-decoration: none;
+        font-size: 13px;
+        font-weight: 600;
+        word-break: break-all;
+      }
+
+      .history-list a:hover {
+        text-decoration: underline;
+      }
+
+      .history-list time {
+        font-size: 12px;
+        color: var(--muted);
+      }
+
+      .history-empty {
+        font-size: 12px;
+        color: var(--muted);
+        text-align: center;
+      }
+
+      @media (max-width: 640px) {
+        .history-panel {
+          left: 12px;
+          right: 12px;
+          width: auto;
+          bottom: 76px;
+        }
+
+        .history-toggle {
+          right: 12px;
+          bottom: 12px;
+        }
+      }
+
+      @media (max-width: 1060px) {
+        main.grid {
+          grid-template-columns: repeat(2, minmax(0, 1fr));
+        }
+      }
+
+      @media (max-width: 720px) {
+        body {
+          padding: 22px 14px 32px;
+        }
+
+        main.grid {
+          grid-template-columns: repeat(1, minmax(0, 1fr));
+        }
+
+        .hero h1 {
+          font-size: 24px;
+        }
+      }
+    </style>
+  </head>
+  <body>
+    <div class="page">
+      <header class="hero">
+        <h1>一键生成数字人</h1>
+        <p>用 Linode + WaveSpeedAI，连通图像、声音与唇形，一站式完成生成流程。</p>
+      </header>
+
+      <main class="grid">
+        <section class="panel">
+          <p class="eyebrow">STEP 1</p>
+          <h3>准备形象</h3>
+          <p class="muted">上传头像 (png/jpg ≤5MB) 或输入人物提示词，系统会自动选择合适模式。</p>
+          <label class="field">
+            <span>上传头像文件</span>
+            <input id="avatarFile" type="file" accept="image/png,image/jpeg" />
+          </label>
+          <div class="divider">或</div>
+          <label class="field">
+            <span>形象提示词</span>
+            <textarea
+              id="avatarPrompt"
+              rows="4"
+              placeholder="示例：专业商务女性，深蓝西装，柔和灯光，肩膀以上半身，朝向镜头"
+            ></textarea>
+          </label>
+          <button class="ghost-btn" id="fillPrompt" type="button">填入示例提示词</button>
+        </section>
+
+        <section class="panel">
+          <p class="eyebrow">STEP 2</p>
+          <h3>脚本与音色</h3>
+          <p class="muted">粘贴播报文本，选择音色和分辨率即可，其他参数默认保持精简。</p>
+          <label class="field">
+            <span>播报文本</span>
+            <textarea
+              id="speechText"
+              rows="6"
+              placeholder="请输入数字人要说的话，例如：欢迎来到数字人生成平台，我们将为你快速生成讲解视频。"
+            ></textarea>
+          </label>
+          <div class="row">
+            <label class="field">
+              <span>音色</span>
+              <select id="voiceId">
+                <option value="Chinese (Mandarin)_Reliable_Executive">普通话 · 稳重高管男声</option>
+                <option value="Chinese (Mandarin)_News_Anchor">普通话 · 新闻女主播</option>
+                <option value="Chinese (Mandarin)_Warm_Bestie">普通话 · 温暖闺蜜</option>
+                <option value="Chinese (Mandarin)_Gentleman">普通话 · 绅士男声</option>
+                <option value="Chinese (Mandarin)_Warm_Girl">普通话 · 暖心女声</option>
+                <option value="Chinese (Mandarin)_Male_Announcer">普通话 · 男播音员</option>
+                <option value="Chinese (Mandarin)_Gentle_Youth">普通话 · 温柔青年</option>
+                <option value="Chinese (Mandarin)_Cute_Spirit">普通话 · 可爱精灵</option>
+                <option value="Cantonese_GentleLady">粤语 · 温柔女士</option>
+                <option value="Cantonese_Narrator">粤语 · 叙述男声</option>
+                <option value="English_magnetic_voiced_man">English · Magnetic Male</option>
+                <option value="English_radiant_girl">English · Radiant Girl</option>
+                <option value="English_captivating_female1">English · Captivating Female</option>
+                <option value="English_Upbeat_Woman">English · Upbeat Woman</option>
+                <option value="English_Trustworth_Man">English · Trustworthy Male</option>
+                <option value="English_CalmWoman">English · Calm Woman</option>
+              </select>
+            </label>
+            <label class="field">
+              <span>分辨率</span>
+              <select id="resolution">
+                <option value="720p">720p</option>
+                <option value="1080p">1080p</option>
+              </select>
+            </label>
+          </div>
+        </section>
+
+        <section class="panel status-panel">
+          <p class="eyebrow">STEP 3</p>
+          <h3>一键生成</h3>
+          <p class="muted">点击生成后自动轮询任务，视频就绪后给出本地路径与公网链接。</p>
+          <button class="primary-btn" id="submitBtn" type="button">开始生成</button>
+          <div class="status">
+            <div id="statusChip" class="status-chip idle">待启动</div>
+            <div class="status-body">
+              <p>任务 ID：<code id="jobId">--</code></p>
+              <p>状态：<span id="statusText">尚未提交</span></p>
+              <p>进度：<span id="progressText">--</span></p>
+              <p>提示：<span id="messageText">准备中</span></p>
+              <p>Trace：<span id="traceText">--</span></p>
+            </div>
+            <a id="videoLink" class="link" href="#" target="_blank" rel="noopener" hidden>播放 / 下载数字人视频</a>
+            <div id="errorBox" class="error-box" hidden></div>
+          </div>
+        </section>
+      </main>
+    </div>
+
+    <button class="history-toggle" id="historyToggle" type="button" aria-expanded="false">
+      <span>历史视频</span>
+      <span class="history-toggle__count" id="historyCount">0</span>
+    </button>
+    <div class="history-overlay" id="historyOverlay" hidden></div>
+
+    <aside class="history-panel" id="historyPanel" aria-label="历史视频">
+      <div class="history-header">历史视频</div>
+      <ul class="history-list" id="historyList"></ul>
+      <p class="history-empty" id="historyEmpty">暂无生成记录</p>
+    </aside>
+
+    <script>
+      (() => {
+        const apiBase = (window.APP_CONFIG?.API_BASE || window.location.origin || "").replace(/\/$/, "");
+        const avatarFile = document.getElementById("avatarFile");
+        const avatarPrompt = document.getElementById("avatarPrompt");
+        const speechText = document.getElementById("speechText");
+        const voiceId = document.getElementById("voiceId");
+        const resolution = document.getElementById("resolution");
+        const submitBtn = document.getElementById("submitBtn");
+        const statusChip = document.getElementById("statusChip");
+        const jobIdEl = document.getElementById("jobId");
+        const statusText = document.getElementById("statusText");
+        const progressText = document.getElementById("progressText");
+        const messageText = document.getElementById("messageText");
+        const traceText = document.getElementById("traceText");
+        const videoLink = document.getElementById("videoLink");
+        const errorBox = document.getElementById("errorBox");
+        const historyList = document.getElementById("historyList");
+        const historyEmpty = document.getElementById("historyEmpty");
+        const historyToggle = document.getElementById("historyToggle");
+        const historyOverlay = document.getElementById("historyOverlay");
+        const historyPanel = document.getElementById("historyPanel");
+        const historyCount = document.getElementById("historyCount");
+
+        const defaults = {
+          speed: 1,
+          pitch: 0,
+          emotion: "neutral",
+          seed: 42,
+        };
+
+        const state = {
+          pollTimer: null,
+          currentJobId: null,
+        };
+
+        let historyRecords = [];
+        let historyLoading = false;
+        let historyOpen = false;
+
+        function setHistoryOpen(open) {
+          historyOpen = Boolean(open);
+          if (historyPanel) {
+            historyPanel.classList.toggle("is-open", historyOpen);
+          }
+          if (historyOverlay) {
+            historyOverlay.classList.toggle("is-open", historyOpen);
+            if (historyOpen) {
+              historyOverlay.removeAttribute("hidden");
+            } else {
+              historyOverlay.setAttribute("hidden", "");
+            }
+          }
+          if (historyToggle) {
+            historyToggle.setAttribute("aria-expanded", historyOpen ? "true" : "false");
+          }
+        }
+
+        setHistoryOpen(false);
+        renderHistory();
+        fetchHistory();
+        historyToggle?.addEventListener("click", () => setHistoryOpen(!historyOpen));
+        historyOverlay?.addEventListener("click", () => setHistoryOpen(false));
+        document.addEventListener("keydown", (event) => {
+          if (event.key === "Escape") {
+            setHistoryOpen(false);
+          }
+        });
+
+        function setStatusChip(kind, label) {
+          statusChip.className = `status-chip ${kind}`;
+          statusChip.textContent = label;
+        }
+
+        function setError(message) {
+          if (!message) {
+            errorBox.hidden = true;
+            errorBox.textContent = "";
+            return;
+          }
+          errorBox.hidden = false;
+          errorBox.textContent = message;
+        }
+
+        function setLoading(loading) {
+          submitBtn.disabled = loading;
+          submitBtn.textContent = loading ? "提交中..." : "开始生成";
+        }
+
+        function api(path) {
+          return `${apiBase}${path}`;
+        }
+
+        function renderHistory() {
+          if (!historyRecords.length) {
+            historyEmpty.hidden = false;
+            historyList.innerHTML = "";
+            if (historyCount) {
+              historyCount.textContent = "0";
+            }
+            return;
+          }
+          historyEmpty.hidden = true;
+          historyList.innerHTML = "";
+          if (historyCount) {
+            historyCount.textContent = historyRecords.length.toString();
+          }
+          const sorted = [...historyRecords].sort((a, b) => {
+            const aTime = a.timestamp || Date.parse(a.modified_at || "") || 0;
+            const bTime = b.timestamp || Date.parse(b.modified_at || "") || 0;
+            return bTime - aTime;
+          });
+          sorted.forEach((record) => {
+            const href = resolveHistoryUrl(record);
+            if (!href) {
+              return;
+            }
+            const li = document.createElement("li");
+            const link = document.createElement("a");
+            link.href = href;
+            link.target = "_blank";
+            link.rel = "noopener";
+            link.textContent = record.job_id || record.slug || href;
+            const time = document.createElement("time");
+            const dateValue = record.timestamp || Date.parse(record.modified_at || "") || Date.now();
+            const date = new Date(dateValue);
+            time.dateTime = Number.isNaN(date.getTime()) ? "" : date.toISOString();
+            time.textContent = Number.isNaN(date.getTime())
+              ? "--"
+              : date.toLocaleString("zh-CN", { hour12: false });
+            li.appendChild(link);
+            li.appendChild(time);
+            historyList.appendChild(li);
+          });
+        }
+
+        function resolveHistoryUrl(record) {
+          const candidates = [record.web_url, record.relative_url, record.video_url];
+          for (const entry of candidates) {
+            if (!entry) {
+              continue;
+            }
+            if (entry.startsWith("http")) {
+              return entry;
+            }
+            if (entry.startsWith("/")) {
+              try {
+                return new URL(entry, window.location.origin).href;
+              } catch (err) {
+                console.warn("invalid history URL", entry, err);
+              }
+            }
+          }
+          return null;
+        }
+
+        async function fetchHistory() {
+          if (historyLoading) {
+            return;
+          }
+          historyLoading = true;
+          try {
+            const resp = await fetch(api("/api/history/videos?limit=200"));
+            if (!resp.ok) {
+              throw new Error("历史记录获取失败");
+            }
+            const payload = await resp.json();
+            const items = Array.isArray(payload.items) ? payload.items : [];
+            historyRecords = items;
+            renderHistory();
+          } catch (err) {
+            console.warn(err);
+          } finally {
+            historyLoading = false;
+          }
+        }
+
+        function refreshHistorySoon() {
+          if (historyLoading) {
+            return;
+          }
+          fetchHistory();
+        }
+
+        async function uploadAvatar(file) {
+          const formData = new FormData();
+          formData.append("file", file);
+          const resp = await fetch(api("/api/assets/upload"), {
+            method: "POST",
+            body: formData,
+          });
+          if (!resp.ok) {
+            const payload = await resp.json().catch(() => ({}));
+            throw new Error(payload.detail || "头像上传失败");
+          }
+          return resp.json();
+        }
+
+        async function createTask(payload) {
+          const resp = await fetch(api("/api/tasks"), {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify(payload),
+          });
+          if (!resp.ok) {
+            const payloadErr = await resp.json().catch(() => ({}));
+            throw new Error(payloadErr.detail || "创建任务失败");
+          }
+          return resp.json();
+        }
+
+        async function fetchTask(jobId) {
+          const resp = await fetch(api(`/api/tasks/${jobId}`));
+          if (!resp.ok) {
+            const payloadErr = await resp.json().catch(() => ({}));
+            throw new Error(payloadErr.detail || "查询任务失败");
+          }
+          return resp.json();
+        }
+
+        function updateTaskUI(task) {
+          statusText.textContent = task.status || "unknown";
+          messageText.textContent = task.message || "处理中...";
+          traceText.textContent = task.trace_id || "--";
+
+          const stages = task.stages || {};
+          const stageSummary = Object.entries(stages)
+            .map(([k, v]) => `${k}:${v?.status || "..."}`)
+            .join(" · ");
+          progressText.textContent = stageSummary || "等待阶段更新";
+
+          const status = (task.status || "").toLowerCase();
+          const videoUrl = task.assets?.local_video_url || task.video_url;
+          if (status === "succeeded" && videoUrl) {
+            videoLink.href = videoUrl;
+            videoLink.hidden = false;
+          } else {
+            videoLink.hidden = true;
+          }
+
+          const jobId = task.job_id || task.jobId;
+          if (jobId) {
+            jobIdEl.textContent = jobId;
+          }
+
+          if (status === "succeeded") {
+            setStatusChip("success", "已完成");
+            refreshHistorySoon();
+          } else if (status === "failed") {
+            setStatusChip("error", "生成失败");
+          } else if (status === "running") {
+            setStatusChip("running", "生成中");
+          } else if (status === "pending") {
+            setStatusChip("pending", "排队中");
+          } else {
+            setStatusChip("idle", "待启动");
+          }
+        }
+
+        function stopPolling() {
+          if (state.pollTimer) {
+            clearInterval(state.pollTimer);
+            state.pollTimer = null;
+          }
+        }
+
+        async function pollTask(jobId) {
+          try {
+            const task = await fetchTask(jobId);
+            updateTaskUI(task);
+            const status = (task.status || "").toLowerCase();
+            if (["succeeded", "failed"].includes(status)) {
+              stopPolling();
+              setLoading(false);
+            }
+          } catch (err) {
+            setError(err.message || "任务查询失败");
+            stopPolling();
+            setLoading(false);
+          }
+        }
+
+        async function handleSubmit() {
+          setError("");
+          stopPolling();
+          videoLink.hidden = true;
+
+          const script = (speechText.value || "").trim();
+          const prompt = (avatarPrompt.value || "").trim();
+          const file = avatarFile.files[0];
+
+          if (!script) {
+            setError("请填写播报文本");
+            return;
+          }
+
+          if (!file && !prompt) {
+            setError("请上传头像或填写形象提示词");
+            return;
+          }
+
+          setLoading(true);
+          setStatusChip("pending", "提交中");
+          statusText.textContent = "提交任务...";
+          messageText.textContent = "正在发送请求";
+
+          try {
+            let avatarMode = "prompt";
+            let avatarUploadUrl = "";
+            let avatarPromptValue = prompt;
+
+            if (file) {
+              avatarMode = "upload";
+              const uploadResp = await uploadAvatar(file);
+              avatarUploadUrl = uploadResp.url || uploadResp.path;
+            }
+
+            const payload = {
+              avatar_mode: avatarMode,
+              avatar_prompt: avatarMode === "prompt" ? avatarPromptValue : null,
+              avatar_upload_url: avatarMode === "upload" ? avatarUploadUrl : null,
+              speech_text: script,
+              voice_id: voiceId.value,
+              resolution: resolution.value,
+              speed: defaults.speed,
+              pitch: defaults.pitch,
+              emotion: defaults.emotion,
+              seed: defaults.seed,
+            };
+
+            const taskResp = await createTask(payload);
+            state.currentJobId = taskResp.job_id;
+            jobIdEl.textContent = taskResp.job_id || "--";
+            messageText.textContent = taskResp.message || "任务已创建";
+            setStatusChip("running", "生成中");
+            statusText.textContent = "任务已创建";
+
+            await pollTask(taskResp.job_id);
+            state.pollTimer = setInterval(() => pollTask(taskResp.job_id), 2000);
+          } catch (err) {
+            setError(err.message || "提交失败");
+            setStatusChip("error", "提交失败");
+            setLoading(false);
+          }
+        }
+
+        document.getElementById("fillPrompt").addEventListener("click", () => {
+          avatarPrompt.value =
+            "商务风数字人，深蓝西装，干练短发，柔和光线，纯色背景，正面镜头，微笑";
+        });
+
+        submitBtn.addEventListener("click", handleSubmit);
+      })();
+    </script>
+  </body>
+</html>

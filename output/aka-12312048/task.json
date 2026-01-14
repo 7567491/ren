@@ -1,0 +1,137 @@
+{
+  "job_id": "aka-12312048",
+  "status": "finished",
+  "created_at": "2025-12-31T12:48:54.133613+00:00",
+  "updated_at": "2025-12-31T12:52:19.413150+00:00",
+  "params": {
+    "avatar_mode": "upload",
+    "avatar_prompt": "红色短波浪发女性，表情坚定警觉；穿黑色战术紧身衣，前胸拉链微开，双臂交叉；戴黑色护手与弹匣样护具，腰带红色沙漏徽标，肩袖神盾局标志，形象似黑寡妇。",
+    "avatar_upload_path": "/home/ren/resource/pic/Scalet.jpg",
+    "speech_text": "你好啊！欢迎进入Linode+WavespeedAI数字人空间。",
+    "voice_id": "female-yujie",
+    "resolution": "720p",
+    "speed": 1.0,
+    "pitch": 0,
+    "emotion": "neutral",
+    "seed": 42,
+    "mask_image": null,
+    "character": {
+      "id": "char-scalet",
+      "name": "暗影玫瑰",
+      "appearance": {
+        "zh": "红色短波浪发女性，表情坚定警觉；穿黑色战术紧身衣，前胸拉链微开，双臂交叉；戴黑色护手与弹匣样护具，腰带红色沙漏徽标，肩袖神盾局标志，形象似黑寡妇。",
+        "en": "Red short-wavy-haired woman with a firm, alert expression; dressed in a black tactical bodysuit with a slightly open front zipper, arms crossed; black gloves with ammo-like gauntlets, belt with red hourglass emblem, SHIELD insignia on sleeves, resembling Black Widow."
+      },
+      "voice": {
+        "zh": "女性，中低音，冷静果决；美式口音带轻微东欧调，表达简洁，节奏自信。",
+        "prompt": "Female, mid-low voice, composed and decisive; American accent with a faint Eastern European undertone, concise delivery, confident cadence.",
+        "voice_id": "female-yujie"
+      },
+      "image_url": "/api/characters/assets/Scalet.jpg",
+      "image_path": "Scalet.jpg",
+      "tags": [
+        "prebuilt",
+        "agent"
+      ],
+      "source": "prebuilt"
+    }
+  },
+  "trace_id": "trace-5eab8de121e8",
+  "duration": 185.105,
+  "stages": {
+    "avatar": {
+      "state": "completed",
+      "message": "头像生成完成",
+      "retries": 0,
+      "provider_task_id": null,
+      "output_url": "https://s.linapp.fun/ren/output/aka-12312048/avatar.png",
+      "artifact_path": null
+    },
+    "speech": {
+      "state": "completed",
+      "message": "语音生成完成 (0.0s)",
+      "retries": 0,
+      "provider_task_id": null,
+      "output_url": "https://d1q70pf5vjeyhc.cloudfront.net/predictions/94f194fd2781416da8f65b36aff890a6/1.mp3",
+      "artifact_path": "output/aka-12312048/speech.mp3"
+    },
+    "video": {
+      "state": "completed",
+      "message": "数字人视频生成完成",
+      "retries": 0,
+      "provider_task_id": null,
+      "output_url": "https://s.linapp.fun/ren/ren_12311252/digital_human.mp4",
+      "artifact_path": "output/aka-12312048/digital_human.mp4"
+    }
+  },
+  "cost": 0.36,
+  "cost_breakdown": {
+    "avatar": 0.0,
+    "speech": 0.0,
+    "video": 11.1063
+  },
+  "assets": {
+    "text_length": 32,
+    "character": {
+      "id": "char-scalet",
+      "name": "暗影玫瑰",
+      "appearance": {
+        "zh": "红色短波浪发女性，表情坚定警觉；穿黑色战术紧身衣，前胸拉链微开，双臂交叉；戴黑色护手与弹匣样护具，腰带红色沙漏徽标，肩袖神盾局标志，形象似黑寡妇。",
+        "en": "Red short-wavy-haired woman with a firm, alert expression; dressed in a black tactical bodysuit with a slightly open front zipper, arms crossed; black gloves with ammo-like gauntlets, belt with red hourglass emblem, SHIELD insignia on sleeves, resembling Black Widow."
+      },
+      "voice": {
+        "zh": "女性，中低音，冷静果决；美式口音带轻微东欧调，表达简洁，节奏自信。",
+        "prompt": "Female, mid-low voice, composed and decisive; American accent with a faint Eastern European undertone, concise delivery, confident cadence.",
+        "voice_id": "female-yujie"
+      },
+      "image_url": "/api/characters/assets/Scalet.jpg",
+      "image_path": "Scalet.jpg",
+      "tags": [
+        "prebuilt",
+        "agent"
+      ],
+      "source": "prebuilt"
+    },
+    "character_id": "char-scalet",
+    "avatar_url": "https://s.linapp.fun/ren/output/aka-12312048/avatar.png",
+    "wave_avatar_url": "https://s.linapp.fun/ren/output/aka-12312048/avatar.png",
+    "audio_url": "https://d1q70pf5vjeyhc.cloudfront.net/predictions/94f194fd2781416da8f65b36aff890a6/1.mp3",
+    "audio_path": "output/aka-12312048/speech.mp3",
+    "wave_audio_url": "https://d1q70pf5vjeyhc.cloudfront.net/predictions/94f194fd2781416da8f65b36aff890a6/1.mp3",
+    "video_stage_started_at": "2025-12-31T12:49:04.213093+00:00",
+    "video_url": "https://s.linapp.fun/ren/ren_12311252/digital_human.mp4",
+    "video_path": "output/aka-12312048/digital_human.mp4",
+    "public_video_path": "/mnt/www/ren/ren_12311252/digital_human.mp4",
+    "wave_video_url": "https://d2p7pge43lyniu.cloudfront.net/output/125e0f6a-b6c0-4e29-9f9e-1e97d080d213-u2_1735a287-0153-4c4e-9c00-0ba05a7c622e.mp4",
+    "local_video_url": "/output/aka-12312048/digital_human.mp4",
+    "duration": 185.105,
+    "video_stage_completed_at": "2025-12-31T12:52:19.410886+00:00",
+    "video_stage_seconds": 195.197793
+  },
+  "error": null,
+  "config_hash": "3e15b6d13da4a1fc957195ee985005a44cfc206c3dfde9339146fa1efc11c6ac",
+  "logs": [
+    "[INFO] 🎭 使用角色 暗影玫瑰",
+    "[INFO] 任务已创建，等待执行",
+    "[INFO] 正在生成头像...",
+    "[INFO] [avatar] 头像生成完成",
+    "[INFO] ✅ 头像生成完成: https://s.linapp.fun/ren/output/aka-12312048/avatar.png",
+    "[INFO] 正在生成语音...",
+    "[INFO] [speech] 语音生成完成 (0.0s)",
+    "[INFO] ✅ 语音生成完成",
+    "[INFO] 正在生成数字人视频...",
+    "[INFO] [video] 数字人视频生成完成",
+    "[INFO] ✅ 数字人视频生成完成"
+  ],
+  "avatar_url": "https://s.linapp.fun/ren/output/aka-12312048/avatar.png",
+  "audio_url": "https://d1q70pf5vjeyhc.cloudfront.net/predictions/94f194fd2781416da8f65b36aff890a6/1.mp3",
+  "video_url": "https://s.linapp.fun/ren/ren_12311252/digital_human.mp4",
+  "video_path": "output/aka-12312048/digital_human.mp4",
+  "billing": {
+    "currency": "USD",
+    "balance_before": 139.23,
+    "balance_after": 138.87,
+    "actual_cost": 0.36,
+    "updated_at": "2025-12-31T12:52:20.238704+00:00"
+  }
+}

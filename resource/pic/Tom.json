@@ -1,0 +1,10 @@
+{
+  "appearance": {
+    "zh": "灰白短发中年男性，微笑温和，自信友好；穿深色西装外套、淡色衬衫，系红白交织纹理领带；双手轻握于身前，站姿端正，白色背景，职业且亲和。",
+    "en": "Middle-aged man with short gray hair and a warm smile, confident and approachable; in a dark suit jacket, light dress shirt, and red-and-white patterned tie; hands gently clasped in front, upright stance on white background, professional and friendly."
+  },
+  "voice": {
+    "zh": "男性，中高音，友好清晰；中性美式口音，语速平稳，亲和且专业。",
+    "prompt": "Male, mid-high register, friendly and clear; neutral American accent, steady pace, welcoming and professional tone."
+  }
+}

@@ -1,0 +1,144 @@
+{
+  "job_id": "aka-01021703",
+  "status": "finished",
+  "created_at": "2026-01-02T09:03:11.541941+00:00",
+  "updated_at": "2026-01-02T09:05:01.644466+00:00",
+  "params": {
+    "avatar_mode": "upload",
+    "avatar_prompt": "高马尾红发女战士，丝带束发，目光锐利坚毅；穿白色无袖武服配红色边缘，束宽红腰带，红色裙摆飘动；手臂缠红色护腕与金属饰带，战斗姿态，格斗游戏插画风格。",
+    "avatar_upload_path": "/home/ren/resource/pic/mai.jpg",
+    "speech_text": "新年快乐",
+    "voice_id": "female-shaonv",
+    "resolution": "720p",
+    "speed": 1.0,
+    "pitch": 0,
+    "emotion": "neutral",
+    "seed": 42,
+    "mask_image": null,
+    "character": {
+      "id": "char-mai",
+      "name": "格斗女王",
+      "appearance": {
+        "zh": "高马尾红发女战士，丝带束发，目光锐利坚毅；穿白色无袖武服配红色边缘，束宽红腰带，红色裙摆飘动；手臂缠红色护腕与金属饰带，战斗姿态，格斗游戏插画风格。",
+        "en": "Red-haired female fighter with a high ponytail tied by a ribbon, sharp determined gaze; wearing a sleeveless white martial top with red trims, wide red sash, and flowing red skirt; arms wrapped with red bracers and metallic bands, battle-ready pose in a fighting-game illustration style."
+      },
+      "voice": {
+        "zh": "女性，明亮有活力的语气；英语带日式口音，语速轻快自信，活泼但吐字清晰。",
+        "prompt": "Female, bright and energetic tone; Japanese accent on English, quick confident cadence, spirited but clear articulation.",
+        "voice_id": "female-shaonv"
+      },
+      "image_url": "/api/characters/assets/mai.jpg",
+      "image_path": "mai.jpg",
+      "tags": [
+        "prebuilt",
+        "fighter"
+      ],
+      "source": "prebuilt"
+    }
+  },
+  "trace_id": "trace-90cf12e33b90",
+  "duration": 94.044,
+  "stages": {
+    "avatar": {
+      "state": "completed",
+      "message": "头像生成完成",
+      "retries": 0,
+      "provider_task_id": null,
+      "output_url": "https://s.linapp.fun/ren/output/aka-01021703/avatar.png",
+      "artifact_path": null
+    },
+    "speech": {
+      "state": "completed",
+      "message": "语音生成完成 (0.0s)",
+      "retries": 0,
+      "provider_task_id": null,
+      "output_url": "https://d1q70pf5vjeyhc.cloudfront.net/predictions/779a1f4d3ccb4bcc84091bd5f32ded07/1.mp3",
+      "artifact_path": "output/aka-01021703/speech.mp3"
+    },
+    "video": {
+      "state": "completed",
+      "message": "数字人视频生成完成",
+      "retries": 0,
+      "provider_task_id": null,
+      "output_url": "https://s.linapp.fun/ren/ren_01020905/digital_human.mp4",
+      "artifact_path": "output/aka-01021703/digital_human.mp4"
+    }
+  },
+  "cost": 0.88,
+  "cost_breakdown": {
+    "avatar": 0.0,
+    "speech": 0.0,
+    "video": 5.642639999999999
+  },
+  "assets": {
+    "text_length": 4,
+    "character": {
+      "id": "char-mai",
+      "name": "格斗女王",
+      "appearance": {
+        "zh": "高马尾红发女战士，丝带束发，目光锐利坚毅；穿白色无袖武服配红色边缘，束宽红腰带，红色裙摆飘动；手臂缠红色护腕与金属饰带，战斗姿态，格斗游戏插画风格。",
+        "en": "Red-haired female fighter with a high ponytail tied by a ribbon, sharp determined gaze; wearing a sleeveless white martial top with red trims, wide red sash, and flowing red skirt; arms wrapped with red bracers and metallic bands, battle-ready pose in a fighting-game illustration style."
+      },
+      "voice": {
+        "zh": "女性，明亮有活力的语气；英语带日式口音，语速轻快自信，活泼但吐字清晰。",
+        "prompt": "Female, bright and energetic tone; Japanese accent on English, quick confident cadence, spirited but clear articulation.",
+        "voice_id": "female-shaonv"
+      },
+      "image_url": "/api/characters/assets/mai.jpg",
+      "image_path": "mai.jpg",
+      "tags": [
+        "prebuilt",
+        "fighter"
+      ],
+      "source": "prebuilt"
+    },
+    "character_id": "char-mai",
+    "avatar_url": "https://s.linapp.fun/ren/output/aka-01021703/avatar.png",
+    "wave_avatar_url": "https://s.linapp.fun/ren/output/aka-01021703/avatar.png",
+    "audio_url": "https://d1q70pf5vjeyhc.cloudfront.net/predictions/779a1f4d3ccb4bcc84091bd5f32ded07/1.mp3",
+    "audio_path": "output/aka-01021703/speech.mp3",
+    "wave_audio_url": "https://d1q70pf5vjeyhc.cloudfront.net/predictions/779a1f4d3ccb4bcc84091bd5f32ded07/1.mp3",
+    "video_stage_started_at": "2026-01-02T09:03:18.536996+00:00",
+    "video_url": "https://s.linapp.fun/ren/ren_01020905/digital_human.mp4",
+    "video_path": "output/aka-01021703/digital_human.mp4",
+    "public_video_path": "/mnt/www/ren/ren_01020905/digital_human.mp4",
+    "video_mirrors": [
+      {
+        "name": "wave-ad",
+        "path": "/mnt/www/ad/aka-01021703.mp4",
+        "url": "https://s.linapp.fun/ad/aka-01021703.mp4"
+      }
+    ],
+    "wave_video_url": "https://d2p7pge43lyniu.cloudfront.net/output/7a94bd1f-b419-4e2d-8872-78d1e60a41bd-u2_ebd1db77-aafb-4e78-9d67-ddece1e72a4e.mp4",
+    "local_video_url": "/output/aka-01021703/digital_human.mp4",
+    "duration": 94.044,
+    "video_stage_completed_at": "2026-01-02T09:05:01.641681+00:00",
+    "video_stage_seconds": 103.104685
+  },
+  "error": null,
+  "config_hash": "c06e0ee94cdcba3f81e63365b5a5fb0d62c14592c90450e608638516bf773353",
+  "logs": [
+    "[INFO] 🎭 使用角色 格斗女王",
+    "[INFO] 任务已创建，等待执行",
+    "[INFO] 正在生成头像...",
+    "[INFO] [avatar] 头像生成完成",
+    "[INFO] ✅ 头像生成完成: https://s.linapp.fun/ren/output/aka-01021703/avatar.png",
+    "[INFO] 正在生成语音...",
+    "[INFO] [speech] 语音生成完成 (0.0s)",
+    "[INFO] ✅ 语音生成完成",
+    "[INFO] 正在生成数字人视频...",
+    "[INFO] [video] 数字人视频生成完成",
+    "[INFO] ✅ 数字人视频生成完成"
+  ],
+  "avatar_url": "https://s.linapp.fun/ren/output/aka-01021703/avatar.png",
+  "audio_url": "https://d1q70pf5vjeyhc.cloudfront.net/predictions/779a1f4d3ccb4bcc84091bd5f32ded07/1.mp3",
+  "video_url": "https://s.linapp.fun/ren/ren_01020905/digital_human.mp4",
+  "video_path": "output/aka-01021703/digital_human.mp4",
+  "billing": {
+    "currency": "USD",
+    "balance_before": 118.84,
+    "balance_after": 117.96,
+    "actual_cost": 0.88,
+    "updated_at": "2026-01-02T09:05:02.456499+00:00"
+  }
+}

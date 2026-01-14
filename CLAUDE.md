@@ -12,160 +12,350 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 ## 项目定位
 
-**本项目现为面向 Web 的数字人生成系统**
+**面向 Web 的数字人生成系统 (Digital Human Studio)**
 
-- 主程序 = `frontend/` Web 界面 + `ad-back.py`/`py/` 后端 API，统一 orchestrate WaveSpeedAI 数字人链路（详见 `doc/数字人.md`）。
-- 仍保留 `ad-aka.py` 作为历史脚本参考，但任何上线逻辑必须以后端 API 为准；如需复用算法请抽象至 `py/services/`。
+- 主架构：`frontend/dist/index.html` (单页静态 HTML) + `py/api_server.py` (FastAPI)
+- 三阶段流水线：形象生成 → 语音合成 → 唇同步视频
+- 部署：Nginx (`ren.linapp.fun`) → `127.0.0.1:18005`
+- 历史脚本 `ad-aka.py` 仅供参考，新功能必须通过 API 实现
+- **前端架构**：使用单个 HTML 文件（无构建步骤），包含所有 CSS 和 JavaScript
 
-## 项目概述
+## 核心架构
 
-**Digital Human Studio**：用户在浏览器输入提示词/脚本 → 后端串行执行“形象 → 语音 → 唇同步” → 返回可播放的视频 URL。
+### 模块调用链
 
-- 核心 API：`bytedance/seedream-v4`（头像）、`minimax/speech-02-hd`（语音）、`wavespeed-ai/infinitetalk`（唇同步）。
-- 技术栈：Python 3.10+（Flask/FastAPI）、前端可采用 Vite + Vue/React 或纯静态页面，Nginx 将 `ren.linapp.fun` 反向代理至本地 `0.0.0.0:18005`。
-- 提供 REST 接口：`POST /api/tasks` 创建任务、`GET /api/tasks/<id>` 查询状态、`POST /api/assets/upload` 上传头像等。
+```
+前端 (Vue) → Nginx → FastAPI (py/api_server.py)
+                        ↓
+              routes_digital_human.py (REST API 层)
+                        ↓
+              task_runner.py (状态机 + 任务调度)
+                        ↓
+              digital_human_service.py (三阶段编排)
+                        ↓
+         ┌──────────────┼──────────────┐
+         ↓              ↓              ↓
+   Seedream API   MiniMax TTS   Infinitetalk API
+   (形象生成)      (语音合成)      (唇同步)
+```
+
+### 任务状态机
+
+**完整状态流转**：
+```
+pending → avatar_generating → avatar_ready →
+speech_generating → speech_ready → video_rendering →
+finished / failed
+```
+
+- 状态管理：`py/function/task_runner.py`
+- 持久化：`output/aka-<task_id>/task.json`
+- 状态查询：`GET /api/tasks/<task_id>`
+
+### 关键技术决策
+
+1. **服务入口**：使用 `py.api_server:app` 作为 uvicorn 入口，`ad-back.py` 仅作 CLI 启动器
+2. **输出目录**：
+   - 本地：`output/aka-<task_id>/` (avatar.png, speech.mp3, digital_human.mp4, task.json, log.txt)
+   - 公网：复制到 `/mnt/www/ren/ren_MMDDHHMM/` 供 CDN 访问
+3. **角色库**：`py/services/character_repository.py` 管理预制角色，前端通过 `character_id` 参数复用形象和音色
+4. **并发控制**：Seedream ≤2 并发，Infinitetalk 串行 (≤1 QPS)
+5. **错误处理**：统一抛 `ExternalAPIError`，包含 provider/status/trace_id，前端可追溯
 
 ## 常用命令
+
+### 后端开发
 
 ```bash
 # 激活虚拟环境并安装依赖
 source venv/bin/activate
 pip install -r requirements.txt
 
-# 启动/重启后端（默认监听 18005）
-python3 ad-back.py --port 18005
-# 或使用 restart 脚本（自动加载 .env、优雅重启 uvicorn）
+# 启动后端（开发模式，自动重载）
+python3 ad-back.py --port 18005 --debug
+
+# 生产模式启动（优雅重启，自动加载 .env）
 ./restart_api_server.sh
 
-# 前端开发
-cd frontend && npm install && npm run dev
+# 查看 API 日志
+tail -f logs/api-server.log
 
-# WaveSpeed API 连通性 / 冒烟
+# 停止后端服务
+pkill -f "py.api_server:app"
+# 或强制停止
+pkill -9 -f "py.api_server:app"
+
+# 健康检查
+curl http://localhost:18005/api/health
+```
+
+### 前端开发
+
+```bash
+# 前端为单个静态 HTML 文件，无需构建步骤
+# 直接编辑文件：frontend/dist/index.html
+
+# 前端文件位置
+ls -la /home/ren/frontend/dist/index.html
+
+# Vue 旧架构已归档到
+ls -la /home/ren/frontend-vue-archive/
+```
+
+### 测试
+
+```bash
+# 运行后端测试
+source venv/bin/activate
+pytest
+
+# 运行特定测试文件
+pytest test/test_digital_human_storage_flow.py
+
+# 运行特定测试函数
+pytest test/test_infinitetalk_client.py::test_submit_task -v
+
+# WaveSpeed API 连通性测试
 python3 py/test_network.py --digital-human
-./test/smoke_digital_human.sh        # 10 秒冒烟，输出到 output/smoke/aka-*
 
-# 统一测试（CI 同步）
-PYTEST_WAVESPEED_MOCK=1 ./run_tests.sh
+# 真实冒烟测试（10秒脚本，<$0.1成本）
+./test/smoke_digital_human.sh
+```
+
+### 调试与运维
+
+```bash
+# 查看任务状态
+cat output/aka-<task_id>/task.json | python3 -m json.tool
+
+# 查看任务日志
+cat output/aka-<task_id>/log.txt
+
+# 查看最近的任务
+ls -lt output/ | head -10
+
+# 清理测试输出
+rm -rf output/smoke/
+
+# 检查进程
+ps aux | grep -E "(uvicorn|api_server)"
+
+# 检查端口占用
+sudo netstat -tlnp | grep 18005
+# 或使用 lsof
+sudo lsof -i :18005
 ```
 
 ## 配置层级
 
-- `.env`：存放 `WAVESPEED_API_KEY`、`MINIMAX_API_KEY`、对象存储凭证等敏感信息，不提交；可提供 `.env.example`。
-- `config.yaml`：全局参数（并发、重试、静态资源目录、Nginx 端口映射、调试模式）。
-- `user.yaml`：仅本地调试时使用，预填默认头像/语音；线上请求通过前端传参。
-- `doc/数字人.md`：数字人 API 协议的唯一来源，新增字段/模型前必须更新此文档。
+### 环境变量优先级
+
+`.env` > 命令行参数 > `config.yaml` 默认值
+
+### 配置文件说明
+
+| 文件 | 用途 | 是否提交 | 关键字段 |
+|------|------|---------|---------|
+| `.env` | 敏感信息（API Keys、凭证） | ❌ 不提交 | `WAVESPEED_API_KEY`, `MINIMAX_API_KEY`, `STORAGE_BUCKET_URL` |
+| `config.yaml` | 全局参数（并发、重试、目录） | ✅ 提交 | `tasks.max_avatar_workers`, `tasks.retry`, `storage.output_dir` |
+| `user.yaml` | 本地调试默认值（可选） | ❌ 不提交 | `avatar_prompt`, `speech_text`, `voice_id` |
+| `doc/数字人.md` | WaveSpeed API 协议规范 | ✅ 提交 | API 端点、参数、示例代码 |
+
+**重要**：新增 API 字段或模型前，必须先更新 `doc/数字人.md`
 
 ## 项目结构
 
 ```
-wavespeed/
-├── frontend/            # Web UI，负责任务创建/状态轮询/播放
-├── ad-back.py           # 后端入口，监听 18005
+/home/ren/
+├── frontend/                    # 前端静态文件
+│   └── dist/
+│       ├── index.html          # 单页应用（包含所有 CSS/JS）
+│       ├── config.js           # 配置文件
+│       ├── favicon.svg         # 网站图标
+│       └── preset-topics.json  # 预设主题
+│
+├── frontend-vue-archive/       # Vue 旧架构归档（已废弃）
+│   ├── src/                    # Vue 源代码
+│   ├── node_modules/           # npm 依赖
+│   └── package.json            # 依赖配置
+│
 ├── py/
-│   ├── api/             # REST 路由、任务控制器
-│   ├── function/        # 配置、上下文、步骤调度
-│   ├── services/        # WaveSpeed API 客户端、存储、队列
-│   ├── py1/             # 工具脚本
-│   └── test_network.py  # 连通性检测
-├── doc/                 # 设计/接口文档（含 数字人.md）
-├── output/              # 任务资产（avatar/speech/video/log）
-├── resource/            # 静态资源
-├── test/                # 自动化测试
-├── README.md
-└── requirements.txt
+│   ├── api_server.py           # FastAPI 应用入口 (uvicorn 启动)
+│   ├── api/
+│   │   └── routes_digital_human.py  # REST API 路由
+│   ├── function/
+│   │   ├── task_runner.py      # 任务状态机与调度
+│   │   ├── infinitetalk_client.py  # Infinitetalk 客户端
+│   │   ├── config_loader.py    # 配置解析
+│   │   └── env_loader.py       # 环境变量加载
+│   ├── services/
+│   │   ├── digital_human_service.py  # 三阶段编排
+│   │   ├── minimax_tts_service.py    # MiniMax TTS 客户端
+│   │   ├── storage_service.py        # 资产存储与发布
+│   │   └── character_repository.py   # 角色库管理
+│   ├── exceptions/
+│   │   └── external_api_error.py     # 统一异常类
+│   └── test_network.py         # API 连通性测试
+│
+├── test/                       # 自动化测试
+│   ├── smoke_digital_human.sh  # 冒烟测试脚本
+│   └── test_*.py               # pytest 测试用例
+│
+├── output/                     # 任务输出（不提交）
+│   └── aka-<task_id>/
+│       ├── avatar.png
+│       ├── speech.mp3
+│       ├── digital_human.mp4
+│       ├── task.json           # 状态、配置、成本
+│       └── log.txt             # 任务日志
+│
+├── doc/                        # 设计文档
+│   ├── 数字人.md               # WaveSpeed API 协议（权威）
+│   ├── design.md               # 架构设计
+│   └── *.md                    # 其他文档
+│
+├── ad-back.py                  # CLI 启动器（加载 .env 并启动 uvicorn）
+├── restart_api_server.sh       # 生产重启脚本
+├── run_tests.sh                # CI 测试脚本
+├── .env                        # 敏感配置（不提交）
+├── config.yaml                 # 全局配置
+└── requirements.txt            # Python 依赖
 ```
-
-## 数字人服务脚本
-
-- `py/services/digital_human_service.py`（或等效模块）：封装 Seedream/Minimax/Infinitetalk 请求，提供 trace id、重试策略。
-- `py/services/storage_service.py`：生成的视频上传到对象存储或 `output/`，返回可公网访问的 URL。
-- `py/api/routes_digital_human.py`：REST API 入口，处理任务生命周期。
-- `music/` 下历史 BGM 工具可选对接，为数字人视频添加背景音乐。
 
 ## 数字人生成流程
 
-1. **阶段0 前端交互**
-   - 用户填写 `avatar_mode`（上传/Prompt）、文本脚本、语音参数、分辨率。
-   - 前端 POST `/api/tasks`，后端写入 `task.json`（含 `trace_id/config_hash`）并持久化任务。
-2. **阶段1 形象生成**
-   - 上传头像直接落盘 `output/<job_id>/avatar.png`；Prompt 模式调用 `bytedance/seedream-v4`，记录成本。
-3. **阶段2 语音生成**
-   - 调用 `minimax/speech-02-hd` 生成音频，落盘 `speech.mp3`，记录时长与成本。
-4. **阶段3 唇同步**
-   - 调 `wavespeed-ai/infinitetalk`（或 MultiTalk）并轮询 `/api/v3/predictions/<id>`，生成 `digital_human.mp4`。
-5. **阶段4 发布**
-   - 使用 `storage_service.publish_video()` 将视频复制到 `/mnt/www/ren/ren_MMDDHHMM/` 并返回外链；`task.json` 与 `log.txt` 同步更新，前端轮询到 `finished`。
+### 五阶段流水线
 
-## 关键设计模式
+| 阶段 | 描述 | 关键模块 | 输出 |
+|------|------|----------|------|
+| 0. 创建 | 前端提交配置，后端初始化任务 | `routes_digital_human.py` | `task.json` (状态: pending) |
+| 1. 形象 | 上传头像或 Seedream 生成 | `digital_human_service.generate_avatar()` | `avatar.png` (状态: avatar_ready) |
+| 2. 语音 | MiniMax TTS 生成音频 | `minimax_tts_service.py` | `speech.mp3` (状态: speech_ready) |
+| 3. 唇同步 | Infinitetalk 合成视频 | `infinitetalk_client.py` | `digital_human.mp4` (状态: video_rendering) |
+| 4. 发布 | 复制到公网目录 | `storage_service.publish_video()` | CDN URL (状态: finished) |
 
-- **错误处理**：所有外部 API 抛 `ExternalAPIError`，附带 provider/status/trace_id；FastAPI 中统一注册 exception handler，将 `trace_id` 返回给前端对话框与日志。
-- **重试策略**：默认 3 次指数退避（5s/10s/15s）；429 或 5xx 必须重试，客户端可在响应体中看到详细日志，`output/<job_id>/log.txt` 要完整记录。
-- **任务状态机**：`pending → avatar_generating → avatar_ready → speech_generating → speech_ready → video_rendering → finished/failed`；服务重启后可继续，且会校验 `config_hash`。
-- **并发控制**：Seedream <=2 并发，Infinitetalk 串行（<=1 QPS）；必要时通过信号量或调度器限制。
+### 关键设计模式
 
-## 配置说明
+**错误处理**
+- 统一异常类：`py/exceptions/external_api_error.py`
+- 包含字段：`provider`, `status_code`, `trace_id`, `error_message`
+- FastAPI 全局 handler：自动将异常转为 JSON 响应
 
-### 环境变量示例
+**重试策略**
+- 默认配置：3 次重试，指数退避 (5s → 10s → 15s)
+- 可重试错误：429 (限流)、5xx (服务器错误)
+- 不重试错误：4xx (参数错误)
+- 日志记录：每次重试写入 `output/<job_id>/log.txt`
 
-```env
-WAVESPEED_API_KEY=your_wavespeed_key
-MINIMAX_API_KEY=your_minimax_key
-STORAGE_BUCKET=s.linapp.fun/background
-NGINX_SERVER=ren.linapp.fun
-```
+**任务恢复**
+- 服务重启后，通过 `task.json` 中的状态和 `config_hash` 判断是否可继续
+- 已完成的阶段不会重复执行（通过检查 avatar.png/speech.mp3 文件存在性）
 
-### 用户参数（前端传递）
+## API 接口
 
-- `avatar_mode` (`upload/prompt`), `avatar_prompt` 或上传文件 URL
-- `speech_text`, `voice_id`, `speed`, `pitch`, `emotion`, `english_normalization`
-- `resolution` (720p/1080p), `seed`, `mask_image`
-- 自定义水印/字幕开关（可复用原 `services/subtitle_service`）
+### 对外 REST API
 
-### 输出结构
+| 方法 | 路径 | 说明 |
+|------|------|------|
+| `POST /api/tasks` | 创建数字人任务 | 返回 `task_id` 和轮询链接 |
+| `GET /api/tasks/<task_id>` | 查询任务状态 | 返回状态、URLs、成本、日志 |
+| `POST /api/assets/upload` | 上传头像/素材 | 返回临时 URL (5MB 限制) |
+| `GET /api/characters` | 获取角色库 | 返回预制和用户角色列表 |
+| `POST /api/characters` | 创建新角色 | 上传头像和描述 |
+| `GET /api/health` | 健康检查 | 返回服务状态和 API 可用性 |
 
-```
-output/aka-{task_id}/
-├── avatar.png
-├── speech.mp3
-├── digital_human.mp4
-├── task.json
-└── log.txt
-```
+### WaveSpeed API 集成
 
-## API 集成（依据 `doc/数字人.md`）
+详见 `doc/数字人.md`，关键端点：
 
-- **Seedream v4**
-  - `POST https://api.wavespeed.ai/api/v3/bytedance/seedream-v4`
-  - 参数：`prompt`, `negative_prompt`, `width`, `height`, `num_inference_steps`, `guidance_scale`
-- **MiniMax speech-02-hd**
-  - `POST https://api.wavespeed.ai/api/v3/minimax/speech-02-hd`
-  - 参数：`text`, `voice_id`, `speed`, `pitch`, `emotion`, `sample_rate`, `channel`
-- **Infinitetalk**
-  - `POST https://api.wavespeed.ai/api/v3/wavespeed-ai/infinitetalk`
-  - 轮询 `GET https://api.wavespeed.ai/api/v3/tasks/{task_id}`
-  - 参数：`image_url`, `audio_url`, `mask_image`, `prompt`, `seed`
+- **Seedream v4**: `POST https://api.wavespeed.ai/api/v3/bytedance/seedream-v4`
+- **MiniMax TTS**: `POST https://api.wavespeed.ai/api/v3/minimax/speech-02-hd`
+- **Infinitetalk**: `POST https://api.wavespeed.ai/api/v3/wavespeed-ai/infinitetalk`
+- **任务查询**: `GET https://api.wavespeed.ai/api/v3/tasks/{task_id}`
 
 ## 成本估算
 
-| 服务 | 估算成本 |
-|------|---------|
-| Seedream 头像 | $0.02–0.05/张 |
-| MiniMax 语音 | $0.01–0.03/分钟 |
-| Infinitetalk 唇同步 | $0.10–0.20/分钟 |
+| 服务 | 估算成本 | 备注 |
+|------|---------|------|
+| Seedream 头像 | $0.02–0.05/张 | 1024x1024 图像 |
+| MiniMax 语音 | $0.01–0.03/分钟 | speech-02-hd 模型 |
+| Infinitetalk 唇同步 | $0.10–0.20/分钟 | 720p/1080p |
 
-单条 60 秒数字人视频 ≈ $0.13–0.28。调试时建议语音 < 10 秒，成本 < $0.05。
+**测试建议**：调试时使用 10 秒脚本，总成本 < $0.05
+
+## 前端架构说明
+
+### 当前架构：单页静态 HTML
+
+**文件位置**：`/home/ren/frontend/dist/index.html`
+
+**特点**：
+- ✅ 无需构建步骤，直接编辑 HTML 文件即可
+- ✅ 所有 CSS 和 JavaScript 内联在单个文件中
+- ✅ 包含 API Key 输入、余额查询、任务创建等完整功能
+- ✅ 使用 localStorage 持久化存储用户的 API Key
+- ✅ 响应式设计，支持移动端
+
+**主要功能模块**：
+1. **API 配置面板**：输入 Wavespeed API Key、查询余额
+2. **形象准备**：上传头像或输入提示词
+3. **脚本与音色**：输入播报文本、选择音色和分辨率
+4. **任务监控**：实时轮询任务状态、显示生成进度
+5. **历史记录**：查看历史生成的视频
+
+**修改前端**：
+```bash
+# 直接编辑 HTML 文件
+vim /home/ren/frontend/dist/index.html
+
+# 修改后刷新浏览器即可（无需重启服务）
+```
+
+### 旧架构归档（Vue 3 + Vite）
+
+**归档位置**：`/home/ren/frontend-vue-archive/`
+
+**包含内容**：
+- `src/` - Vue 3 组件和源代码
+- `node_modules/` - npm 依赖包
+- `package.json` - 依赖配置
+- `vite.config.ts` - Vite 构建配置
+- `tsconfig*.json` - TypeScript 配置
+
+**注意**：Vue 架构已废弃，不再维护。如需参考可查看归档目录。
+
+---
 
 ## 开发注意事项
 
-1. **Nginx**：`ren.linapp.fun` 必须代理到 `127.0.0.1:18005`；`/` 提供前端静态资源，`/api/` 设置 `proxy_read_timeout 120s`。
-2. **安全**：前端不得暴露 API Key；上传头像需校验文件类型、大小并落在受控目录或 OSS。
-3. **日志**：每个任务写入 `log.txt`，包含外部 task_id，方便追踪。
-4. **对象存储**：生成结果建议同步到 `https://s.linapp.fun/...`，返回可直接播放的 URL。
-5. **兼容历史模块**：保留原有日志、限流、音乐服务；但所有新增逻辑以数字人业务为优先。
+### 安全
 
-## 测试最佳实践
+- ✅ **API Key 由用户输入**：前端要求用户在浏览器中输入自己的 Wavespeed API Key
+- ✅ **localStorage 存储**：API Key 保存在用户浏览器的 localStorage，不上传到服务器
+- ✅ **请求时传递**：每次创建任务时，API Key 通过 POST 请求传递给后端
+- ✅ **后端不存储**：后端仅在请求期间使用 API Key，不持久化存储
+- ✅ 上传文件需校验类型 (PNG/JPG) 和大小 (≤5MB)
+- ✅ 使用 ACL 控制用户目录权限（`setfacl` 设置 ccp/ren 共享）
 
-1. **Mock 测试**：`PYTEST_WAVESPEED_MOCK=1 pytest test/test-digital-human.py`，验证状态机与 API 返回。
-2. **真实冒烟**：准备 8–10 秒脚本，运行 `python3 py/test_network.py --digital-human`；确认 Seedream/Minimax/Infinitetalk 均能返回 URL。
-3. **前后端联调**：`npm run dev` + `python3 ad-back.py --port 18005`，通过浏览器创建任务并验证播放。
-4. **部署验证**：上线后访问 `https://ren.linapp.fun/api/health`，确保 Nginx + 后端正常；生成一条 10 秒视频确认 CDN URL 可访问。
+### 日志规范
+
+- 格式：`[ISO时间][级别][trace=xxx] 消息`
+- 位置：`output/<job_id>/log.txt` + `logs/api-server.log`
+- 包含：外部 task_id、WaveSpeed trace_id、成本累计
+
+### Nginx 配置要点
+
+- 反代：`/api/` → `http://127.0.0.1:18005`
+- 超时：`proxy_read_timeout 120s` (唇同步轮询需要)
+- 静态：`/` → `frontend/dist`
+- 资产：`/output/` → `alias /home/ren/output/`
+
+### 部署检查清单
+
+- [ ] `.env` 配置了 `STORAGE_BUCKET_URL` 等必需配置（不再需要 API Keys）
+- [ ] `frontend/dist/index.html` 存在并可访问
+- [ ] 后端进程运行在 18005 端口
+- [ ] 访问 `/api/health` 返回 200
+- [ ] 前端输入 Wavespeed API Key 并查询余额成功
+- [ ] 创建测试任务能正常完成三阶段流程
+- [ ] 生成的视频 URL 可在浏览器播放

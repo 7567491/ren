@@ -1,0 +1,10 @@
+{
+  "appearance": {
+    "zh": "短发男子戴黑色墨镜，表情冷静专注；穿全黑西装与黑衬衫，无领带，右手伸出做阻挡姿势，左手收于身前；白色背景，带《黑客帝国》风格特工/主角感。",
+    "en": "Short-haired man in black sunglasses with a calm, focused expression; wearing an all-black suit and black shirt, no tie, right hand extended in a blocking pose, left hand near his torso; white background with a Matrix-inspired agent/hero vibe."
+  },
+  "voice": {
+    "zh": "男性，中低音，克制简约；中性美式口音，语句干练，平稳自信，像冷静的动作男主角。",
+    "prompt": "Male, mid-low voice, controlled and minimal; neutral American accent, clipped sentences, steady and confident like a calm action lead."
+  }
+}

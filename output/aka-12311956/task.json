@@ -1,0 +1,126 @@
+{
+  "job_id": "aka-12311956",
+  "status": "finished",
+  "created_at": "2025-12-31T11:56:06.930289+00:00",
+  "updated_at": "2025-12-31T11:59:24.162880+00:00",
+  "params": {
+    "avatar_mode": "upload",
+    "avatar_prompt": "短发男子戴黑色墨镜，表情冷静专注；穿全黑西装与黑衬衫，无领带，右手伸出做阻挡姿势，左手收于身前；白色背景，带《黑客帝国》风格特工/主角感。",
+    "avatar_upload_path": "/home/ren/resource/pic/Jack.jpg",
+    "speech_text": "你好啊！欢迎进入Linode+WavespeedAI数字人空间。",
+    "voice_id": "male-qn-qingse",
+    "resolution": "720p",
+    "speed": 1.0,
+    "pitch": 0,
+    "emotion": "neutral",
+    "seed": 42,
+    "mask_image": null,
+    "character": {
+      "id": "char-jack",
+      "name": "矩阵特工",
+      "appearance": {
+        "zh": "短发男子戴黑色墨镜，表情冷静专注；穿全黑西装与黑衬衫，无领带，右手伸出做阻挡姿势，左手收于身前；白色背景，带《黑客帝国》风格特工/主角感。",
+        "en": "Short-haired man in black sunglasses with a calm, focused expression; wearing an all-black suit and black shirt, no tie, right hand extended in a blocking pose, left hand near his torso; white background with a Matrix-inspired agent/hero vibe."
+      },
+      "voice": {
+        "zh": "男性，中低音，克制简约；中性美式口音，语句干练，平稳自信，像冷静的动作男主角。",
+        "prompt": "Male, mid-low voice, controlled and minimal; neutral American accent, clipped sentences, steady and confident like a calm action lead.",
+        "voice_id": "male-qn-qingse"
+      },
+      "image_url": "/api/characters/assets/Jack.jpg",
+      "image_path": "Jack.jpg",
+      "tags": [
+        "prebuilt",
+        "action"
+      ],
+      "source": "prebuilt"
+    }
+  },
+  "trace_id": "trace-b83d40695e52",
+  "duration": 180.108,
+  "stages": {
+    "avatar": {
+      "state": "completed",
+      "message": "头像生成完成",
+      "retries": 0,
+      "provider_task_id": null,
+      "output_url": "https://s.linapp.fun/ren/output/aka-12311956/avatar.png",
+      "artifact_path": null
+    },
+    "speech": {
+      "state": "completed",
+      "message": "语音生成完成 (0.0s)",
+      "retries": 0,
+      "provider_task_id": null,
+      "output_url": "https://d1q70pf5vjeyhc.cloudfront.net/predictions/f9dbbd83cfe641538178db5548ef1826/1.mp3",
+      "artifact_path": "output/aka-12311956/speech.mp3"
+    },
+    "video": {
+      "state": "completed",
+      "message": "数字人视频生成完成",
+      "retries": 0,
+      "provider_task_id": null,
+      "output_url": "https://s.linapp.fun/ren/ren_12311159/digital_human.mp4",
+      "artifact_path": "output/aka-12311956/digital_human.mp4"
+    }
+  },
+  "cost": 10.80648,
+  "cost_breakdown": {
+    "avatar": 0.0,
+    "speech": 0.0,
+    "video": 10.80648
+  },
+  "assets": {
+    "character": {
+      "id": "char-jack",
+      "name": "矩阵特工",
+      "appearance": {
+        "zh": "短发男子戴黑色墨镜，表情冷静专注；穿全黑西装与黑衬衫，无领带，右手伸出做阻挡姿势，左手收于身前；白色背景，带《黑客帝国》风格特工/主角感。",
+        "en": "Short-haired man in black sunglasses with a calm, focused expression; wearing an all-black suit and black shirt, no tie, right hand extended in a blocking pose, left hand near his torso; white background with a Matrix-inspired agent/hero vibe."
+      },
+      "voice": {
+        "zh": "男性，中低音，克制简约；中性美式口音，语句干练，平稳自信，像冷静的动作男主角。",
+        "prompt": "Male, mid-low voice, controlled and minimal; neutral American accent, clipped sentences, steady and confident like a calm action lead.",
+        "voice_id": "male-qn-qingse"
+      },
+      "image_url": "/api/characters/assets/Jack.jpg",
+      "image_path": "Jack.jpg",
+      "tags": [
+        "prebuilt",
+        "action"
+      ],
+      "source": "prebuilt"
+    },
+    "character_id": "char-jack",
+    "avatar_url": "https://s.linapp.fun/ren/output/aka-12311956/avatar.png",
+    "wave_avatar_url": "https://s.linapp.fun/ren/output/aka-12311956/avatar.png",
+    "audio_url": "https://d1q70pf5vjeyhc.cloudfront.net/predictions/f9dbbd83cfe641538178db5548ef1826/1.mp3",
+    "audio_path": "output/aka-12311956/speech.mp3",
+    "wave_audio_url": "https://d1q70pf5vjeyhc.cloudfront.net/predictions/f9dbbd83cfe641538178db5548ef1826/1.mp3",
+    "video_url": "https://s.linapp.fun/ren/ren_12311159/digital_human.mp4",
+    "video_path": "output/aka-12311956/digital_human.mp4",
+    "public_video_path": "/mnt/www/ren/ren_12311159/digital_human.mp4",
+    "wave_video_url": "https://d2p7pge43lyniu.cloudfront.net/output/188e0b8b-b8c2-4e1e-abdb-f192e3cd6fd4-u2_a0f46b88-5fcb-4962-af4e-f9b0fb3e38bb.mp4",
+    "local_video_url": "/output/aka-12311956/digital_human.mp4",
+    "duration": 180.108
+  },
+  "error": null,
+  "config_hash": "3e15b6d13da4a1fc957195ee985005a44cfc206c3dfde9339146fa1efc11c6ac",
+  "logs": [
+    "[INFO] 🎭 使用角色 矩阵特工",
+    "[INFO] 任务已创建，等待执行",
+    "[INFO] 正在生成头像...",
+    "[INFO] [avatar] 头像生成完成",
+    "[INFO] ✅ 头像生成完成: https://s.linapp.fun/ren/output/aka-12311956/avatar.png",
+    "[INFO] 正在生成语音...",
+    "[INFO] [speech] 语音生成完成 (0.0s)",
+    "[INFO] ✅ 语音生成完成",
+    "[INFO] 正在生成数字人视频...",
+    "[INFO] [video] 数字人视频生成完成",
+    "[INFO] ✅ 数字人视频生成完成"
+  ],
+  "avatar_url": "https://s.linapp.fun/ren/output/aka-12311956/avatar.png",
+  "audio_url": "https://d1q70pf5vjeyhc.cloudfront.net/predictions/f9dbbd83cfe641538178db5548ef1826/1.mp3",
+  "video_url": "https://s.linapp.fun/ren/ren_12311159/digital_human.mp4",
+  "video_path": "output/aka-12311956/digital_human.mp4"
+}

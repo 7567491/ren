@@ -1,0 +1,70 @@
+{
+  "job_id": "test-job-001",
+  "status": "failed",
+  "created_at": "2026-01-03T02:58:44.411625+00:00",
+  "updated_at": "2026-01-03T02:58:44.411933+00:00",
+  "params": {
+    "avatar_mode": "prompt",
+    "avatar_prompt": "专业女性播音员，微笑，正面照",
+    "avatar_upload_path": null,
+    "speech_text": "大家好，欢迎收看今天的节目。",
+    "voice_id": "female-shaonv",
+    "resolution": "720p",
+    "speed": 1.0,
+    "pitch": 0,
+    "emotion": "neutral",
+    "seed": 42,
+    "mask_image": null,
+    "character": null
+  },
+  "trace_id": "trace-99cf23eb094f",
+  "duration": null,
+  "stages": {
+    "avatar": {
+      "state": "pending",
+      "message": "",
+      "retries": 0,
+      "provider_task_id": null,
+      "output_url": null,
+      "artifact_path": null
+    },
+    "speech": {
+      "state": "pending",
+      "message": "",
+      "retries": 0,
+      "provider_task_id": null,
+      "output_url": null,
+      "artifact_path": null
+    },
+    "video": {
+      "state": "pending",
+      "message": "",
+      "retries": 0,
+      "provider_task_id": null,
+      "output_url": null,
+      "artifact_path": null
+    }
+  },
+  "cost": 0.0,
+  "cost_breakdown": {
+    "avatar": 0.0,
+    "speech": 0.0,
+    "video": 0.0
+  },
+  "assets": {
+    "text_length": 14
+  },
+  "error": {
+    "message": "配置文件已更新，无法继续使用旧任务。请重新创建任务以加载最新配置。",
+    "type": "RuntimeError",
+    "trace_id": "trace-99cf23eb094f"
+  },
+  "config_hash": "c06e0ee94cdcba3f81e63365b5a5fb0d62c14592c90450e608638516bf773353",
+  "logs": [
+    "[ERROR] ❌ 生成失败: 配置文件已更新，无法继续使用旧任务。请重新创建任务以加载最新配置。"
+  ],
+  "avatar_url": null,
+  "audio_url": null,
+  "video_url": null,
+  "video_path": null
+}

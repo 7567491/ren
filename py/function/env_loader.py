@@ -7,7 +7,7 @@ from __future__ import annotations
 import os
 from typing import Iterable, List
 
-REQUIRED_ENV_KEYS = ["WAVESPEED_API_KEY", "MINIMAX_API_KEY", "STORAGE_BUCKET_URL"]
+REQUIRED_ENV_KEYS = ["STORAGE_BUCKET_URL"]
 
 
 def ensure_required_env(required_keys: Iterable[str] | None = None) -> None:

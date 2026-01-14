@@ -1,0 +1,137 @@
+{
+  "job_id": "aka-12312059",
+  "status": "finished",
+  "created_at": "2025-12-31T12:59:45.475388+00:00",
+  "updated_at": "2025-12-31T13:02:13.643253+00:00",
+  "params": {
+    "avatar_mode": "upload",
+    "avatar_prompt": "灰白短发中年男性，微笑温和，自信友好；穿深色西装外套、淡色衬衫，系红白交织纹理领带；双手轻握于身前，站姿端正，白色背景，职业且亲和。",
+    "avatar_upload_path": "/home/ren/resource/pic/Tom.jpg",
+    "speech_text": "你好啊！欢迎进入Linode+WavespeedAI数字人空间。",
+    "voice_id": "male-qn-qingse",
+    "resolution": "720p",
+    "speed": 1.0,
+    "pitch": 0,
+    "emotion": "neutral",
+    "seed": 42,
+    "mask_image": null,
+    "character": {
+      "id": "char-tom",
+      "name": "睿智导师",
+      "appearance": {
+        "zh": "灰白短发中年男性，微笑温和，自信友好；穿深色西装外套、淡色衬衫，系红白交织纹理领带；双手轻握于身前，站姿端正，白色背景，职业且亲和。",
+        "en": "Middle-aged man with short gray hair and a warm smile, confident and approachable; in a dark suit jacket, light dress shirt, and red-and-white patterned tie; hands gently clasped in front, upright stance on white background, professional and friendly."
+      },
+      "voice": {
+        "zh": "男性，中高音，友好清晰；中性美式口音，语速平稳，亲和且专业。",
+        "prompt": "Male, mid-high register, friendly and clear; neutral American accent, steady pace, welcoming and professional tone.",
+        "voice_id": "male-qn-qingse"
+      },
+      "image_url": "/api/characters/assets/Tom.jpg",
+      "image_path": "Tom.jpg",
+      "tags": [
+        "prebuilt",
+        "mentor"
+      ],
+      "source": "prebuilt"
+    }
+  },
+  "trace_id": "trace-736527c9f292",
+  "duration": 128.493,
+  "stages": {
+    "avatar": {
+      "state": "completed",
+      "message": "头像生成完成",
+      "retries": 0,
+      "provider_task_id": null,
+      "output_url": "https://s.linapp.fun/ren/output/aka-12312059/avatar.png",
+      "artifact_path": null
+    },
+    "speech": {
+      "state": "completed",
+      "message": "语音生成完成 (0.0s)",
+      "retries": 0,
+      "provider_task_id": null,
+      "output_url": "https://d1q70pf5vjeyhc.cloudfront.net/predictions/c1cf3234a115461d8e61b14522af630e/1.mp3",
+      "artifact_path": "output/aka-12312059/speech.mp3"
+    },
+    "video": {
+      "state": "completed",
+      "message": "数字人视频生成完成",
+      "retries": 0,
+      "provider_task_id": null,
+      "output_url": "https://s.linapp.fun/ren/ren_12311302/digital_human.mp4",
+      "artifact_path": "output/aka-12312059/digital_human.mp4"
+    }
+  },
+  "cost": 0.32,
+  "cost_breakdown": {
+    "avatar": 0.0,
+    "speech": 0.0,
+    "video": 7.709579999999999
+  },
+  "assets": {
+    "text_length": 32,
+    "character": {
+      "id": "char-tom",
+      "name": "睿智导师",
+      "appearance": {
+        "zh": "灰白短发中年男性，微笑温和，自信友好；穿深色西装外套、淡色衬衫，系红白交织纹理领带；双手轻握于身前，站姿端正，白色背景，职业且亲和。",
+        "en": "Middle-aged man with short gray hair and a warm smile, confident and approachable; in a dark suit jacket, light dress shirt, and red-and-white patterned tie; hands gently clasped in front, upright stance on white background, professional and friendly."
+      },
+      "voice": {
+        "zh": "男性，中高音，友好清晰；中性美式口音，语速平稳，亲和且专业。",
+        "prompt": "Male, mid-high register, friendly and clear; neutral American accent, steady pace, welcoming and professional tone.",
+        "voice_id": "male-qn-qingse"
+      },
+      "image_url": "/api/characters/assets/Tom.jpg",
+      "image_path": "Tom.jpg",
+      "tags": [
+        "prebuilt",
+        "mentor"
+      ],
+      "source": "prebuilt"
+    },
+    "character_id": "char-tom",
+    "avatar_url": "https://s.linapp.fun/ren/output/aka-12312059/avatar.png",
+    "wave_avatar_url": "https://s.linapp.fun/ren/output/aka-12312059/avatar.png",
+    "audio_url": "https://d1q70pf5vjeyhc.cloudfront.net/predictions/c1cf3234a115461d8e61b14522af630e/1.mp3",
+    "audio_path": "output/aka-12312059/speech.mp3",
+    "wave_audio_url": "https://d1q70pf5vjeyhc.cloudfront.net/predictions/c1cf3234a115461d8e61b14522af630e/1.mp3",
+    "video_stage_started_at": "2025-12-31T12:59:51.870262+00:00",
+    "video_url": "https://s.linapp.fun/ren/ren_12311302/digital_human.mp4",
+    "video_path": "output/aka-12312059/digital_human.mp4",
+    "public_video_path": "/mnt/www/ren/ren_12311302/digital_human.mp4",
+    "wave_video_url": "https://d2p7pge43lyniu.cloudfront.net/output/57722e13-9d13-4121-b068-005934529c14-u1_ec3f10e6-614d-4409-8b64-5f3df849656a.mp4",
+    "local_video_url": "/output/aka-12312059/digital_human.mp4",
+    "duration": 128.493,
+    "video_stage_completed_at": "2025-12-31T13:02:13.641025+00:00",
+    "video_stage_seconds": 141.770763
+  },
+  "error": null,
+  "config_hash": "3e15b6d13da4a1fc957195ee985005a44cfc206c3dfde9339146fa1efc11c6ac",
+  "logs": [
+    "[INFO] 🎭 使用角色 睿智导师",
+    "[INFO] 任务已创建，等待执行",
+    "[INFO] 正在生成头像...",
+    "[INFO] [avatar] 头像生成完成",
+    "[INFO] ✅ 头像生成完成: https://s.linapp.fun/ren/output/aka-12312059/avatar.png",
+    "[INFO] 正在生成语音...",
+    "[INFO] [speech] 语音生成完成 (0.0s)",
+    "[INFO] ✅ 语音生成完成",
+    "[INFO] 正在生成数字人视频...",
+    "[INFO] [video] 数字人视频生成完成",
+    "[INFO] ✅ 数字人视频生成完成"
+  ],
+  "avatar_url": "https://s.linapp.fun/ren/output/aka-12312059/avatar.png",
+  "audio_url": "https://d1q70pf5vjeyhc.cloudfront.net/predictions/c1cf3234a115461d8e61b14522af630e/1.mp3",
+  "video_url": "https://s.linapp.fun/ren/ren_12311302/digital_human.mp4",
+  "video_path": "output/aka-12312059/digital_human.mp4",
+  "billing": {
+    "currency": "USD",
+    "balance_before": 138.87,
+    "balance_after": 138.55,
+    "actual_cost": 0.32,
+    "updated_at": "2025-12-31T13:02:14.389516+00:00"
+  }
+}

@@ -19,7 +19,7 @@
 
 | 卡片 | 关键字段 | 交互要点 |
 |------|----------|----------|
-| API Key 卡片 | `apiKeyInput`、`balanceValue` | 迷你输入框 + 三个图标按钮（显隐/保存/清除）。空值或格式不合法时会提示“Key 需以 sk_/ws_/pk_ 开头”，按钮置灰。余额按钮调用 `/api/wavespeed/balance` 并在卡片右下角显示更新时间。 |
+| API Key 卡片 | `apiKeyInput`、`balanceValue` | 迷你输入框 + 三个图标按钮（显隐/保存/清除）。为空时会提示“Key 不能为空”，按钮置灰。余额按钮调用 `/api/wavespeed/balance` 并在卡片右下角显示更新时间。 |
 | 任务管理卡片 | 任务列表、轮询按钮、折叠表单 | 任务列表可立即切换 job，右上角两个文本按钮负责刷新和暂停/恢复轮询。下半段表单等同旧版 `App.vue` 逻辑，但头像模式/角色选择统一放在 `CardContainer` 内，任何校验错误都通过卡片内 `formAlert` 提示。 |
 | 进度卡片 | `stageDefinitions`、`overallProgress`、播放器 | 顶部是聚合进度条（按头像/语音/视频 20/30/50% 加权），下方三段 stage 列表显示状态 + emoji + 文案颜色。卡片尾部复用播放器/下载操作。 |
 | 素材卡片 | `materialItems`、路径复制按钮 | 首先展示 `/mnt/www/ren/<job_id>/` 根目录，然后按 avatar/audio/video/log 四类列出本地/公网路径，并提供复制/打开按钮。 |

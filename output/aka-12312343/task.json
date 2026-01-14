@@ -1,0 +1,144 @@
+{
+  "job_id": "aka-12312343",
+  "status": "finished",
+  "created_at": "2025-12-31T15:43:13.023836+00:00",
+  "updated_at": "2025-12-31T15:47:49.338456+00:00",
+  "params": {
+    "avatar_mode": "upload",
+    "avatar_prompt": "短立发硬汉，戴黑色墨镜，表情冷峻；穿黑色皮夹克与黑T恤，脸部一侧有浅色伤痕/白痕；强烈光影对比，经典《终结者》T-800肖像感。",
+    "avatar_upload_path": "/home/ren/resource/pic/terminator.jpg",
+    "speech_text": "星辰如炬，点燃2026。愿新年之光驱散迷惘，劈波斩浪。愿您心怀梦想，步履不息，于变局中开新篇！",
+    "voice_id": "male-qn-jingying",
+    "resolution": "720p",
+    "speed": 1.0,
+    "pitch": 0,
+    "emotion": "neutral",
+    "seed": 42,
+    "mask_image": null,
+    "character": {
+      "id": "char-terminator",
+      "name": "未来守护者",
+      "appearance": {
+        "zh": "短立发硬汉，戴黑色墨镜，表情冷峻；穿黑色皮夹克与黑T恤，脸部一侧有浅色伤痕/白痕；强烈光影对比，经典《终结者》T-800肖像感。",
+        "en": "Tough man with short spiked hair and black sunglasses, stern expression; in a black leather jacket and black T-shirt, light scar/white mark on one side of the face; strong contrast lighting, classic Terminator T-800 portrait vibe."
+      },
+      "voice": {
+        "zh": "男性，低沉单调，语速简短；英语带奥地利口音，机械般稳定，几乎无情绪，节奏刻意。",
+        "prompt": "Male, low monotone, terse delivery; Austrian accent, mechanical steadiness, minimal emotion, deliberate pace.",
+        "voice_id": "male-qn-jingying"
+      },
+      "image_url": "/api/characters/assets/terminator.jpg",
+      "image_path": "terminator.jpg",
+      "tags": [
+        "prebuilt",
+        "cyber"
+      ],
+      "source": "prebuilt"
+    }
+  },
+  "trace_id": "trace-debabe8ee641",
+  "duration": 253.831,
+  "stages": {
+    "avatar": {
+      "state": "completed",
+      "message": "头像生成完成",
+      "retries": 0,
+      "provider_task_id": null,
+      "output_url": "https://s.linapp.fun/ren/output/aka-12312343/avatar.png",
+      "artifact_path": null
+    },
+    "speech": {
+      "state": "completed",
+      "message": "语音生成完成 (0.0s)",
+      "retries": 0,
+      "provider_task_id": null,
+      "output_url": "https://d1q70pf5vjeyhc.cloudfront.net/predictions/90b2f556e770491baa6e3f95b365e476/1.mp3",
+      "artifact_path": "output/aka-12312343/speech.mp3"
+    },
+    "video": {
+      "state": "completed",
+      "message": "数字人视频生成完成",
+      "retries": 0,
+      "provider_task_id": null,
+      "output_url": "https://s.linapp.fun/ren/ren_12311547/digital_human.mp4",
+      "artifact_path": "output/aka-12312343/digital_human.mp4"
+    }
+  },
+  "cost": 0.61,
+  "cost_breakdown": {
+    "avatar": 0.0,
+    "speech": 0.0,
+    "video": 15.229859999999999
+  },
+  "assets": {
+    "text_length": 47,
+    "character": {
+      "id": "char-terminator",
+      "name": "未来守护者",
+      "appearance": {
+        "zh": "短立发硬汉，戴黑色墨镜，表情冷峻；穿黑色皮夹克与黑T恤，脸部一侧有浅色伤痕/白痕；强烈光影对比，经典《终结者》T-800肖像感。",
+        "en": "Tough man with short spiked hair and black sunglasses, stern expression; in a black leather jacket and black T-shirt, light scar/white mark on one side of the face; strong contrast lighting, classic Terminator T-800 portrait vibe."
+      },
+      "voice": {
+        "zh": "男性，低沉单调，语速简短；英语带奥地利口音，机械般稳定，几乎无情绪，节奏刻意。",
+        "prompt": "Male, low monotone, terse delivery; Austrian accent, mechanical steadiness, minimal emotion, deliberate pace.",
+        "voice_id": "male-qn-jingying"
+      },
+      "image_url": "/api/characters/assets/terminator.jpg",
+      "image_path": "terminator.jpg",
+      "tags": [
+        "prebuilt",
+        "cyber"
+      ],
+      "source": "prebuilt"
+    },
+    "character_id": "char-terminator",
+    "avatar_url": "https://s.linapp.fun/ren/output/aka-12312343/avatar.png",
+    "wave_avatar_url": "https://s.linapp.fun/ren/output/aka-12312343/avatar.png",
+    "audio_url": "https://d1q70pf5vjeyhc.cloudfront.net/predictions/90b2f556e770491baa6e3f95b365e476/1.mp3",
+    "audio_path": "output/aka-12312343/speech.mp3",
+    "wave_audio_url": "https://d1q70pf5vjeyhc.cloudfront.net/predictions/90b2f556e770491baa6e3f95b365e476/1.mp3",
+    "video_stage_started_at": "2025-12-31T15:43:22.614427+00:00",
+    "video_url": "https://s.linapp.fun/ren/ren_12311547/digital_human.mp4",
+    "video_path": "output/aka-12312343/digital_human.mp4",
+    "public_video_path": "/mnt/www/ren/ren_12311547/digital_human.mp4",
+    "video_mirrors": [
+      {
+        "name": "wave-ad",
+        "path": "/mnt/www/ad/aka-12312343.mp4",
+        "url": "https://s.linapp.fun/ad/aka-12312343.mp4"
+      }
+    ],
+    "wave_video_url": "https://d2p7pge43lyniu.cloudfront.net/output/f99429cc-a05d-4a53-875d-8086f27c116c-u2_0f1d87f8-7254-48ff-82de-47df986ddd22.mp4",
+    "local_video_url": "/output/aka-12312343/digital_human.mp4",
+    "duration": 253.831,
+    "video_stage_completed_at": "2025-12-31T15:47:49.336701+00:00",
+    "video_stage_seconds": 266.722274
+  },
+  "error": null,
+  "config_hash": "c06e0ee94cdcba3f81e63365b5a5fb0d62c14592c90450e608638516bf773353",
+  "logs": [
+    "[INFO] 🎭 使用角色 未来守护者",
+    "[INFO] 任务已创建，等待执行",
+    "[INFO] 正在生成头像...",
+    "[INFO] [avatar] 头像生成完成",
+    "[INFO] ✅ 头像生成完成: https://s.linapp.fun/ren/output/aka-12312343/avatar.png",
+    "[INFO] 正在生成语音...",
+    "[INFO] [speech] 语音生成完成 (0.0s)",
+    "[INFO] ✅ 语音生成完成",
+    "[INFO] 正在生成数字人视频...",
+    "[INFO] [video] 数字人视频生成完成",
+    "[INFO] ✅ 数字人视频生成完成"
+  ],
+  "avatar_url": "https://s.linapp.fun/ren/output/aka-12312343/avatar.png",
+  "audio_url": "https://d1q70pf5vjeyhc.cloudfront.net/predictions/90b2f556e770491baa6e3f95b365e476/1.mp3",
+  "video_url": "https://s.linapp.fun/ren/ren_12311547/digital_human.mp4",
+  "video_path": "output/aka-12312343/digital_human.mp4",
+  "billing": {
+    "currency": "USD",
+    "balance_before": 121.09,
+    "balance_after": 120.48,
+    "actual_cost": 0.61,
+    "updated_at": "2025-12-31T15:47:50.157214+00:00"
+  }
+}

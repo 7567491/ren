@@ -1,0 +1,91 @@
+{
+  "job_id": "aka-01051405",
+  "status": "failed",
+  "created_at": "2026-01-05T06:05:09.797870+00:00",
+  "updated_at": "2026-01-05T06:15:27.661337+00:00",
+  "params": {
+    "avatar_mode": "upload",
+    "avatar_prompt": null,
+    "avatar_upload_path": "output/uploads/3a893ed5301c45d4904dba8a1c5b7f0f.jpg",
+    "speech_text": "Every day, billions of people connect with their favorite brands to shop online, play games, share ideas, manage money, and so much more. They may not know it, but Akamai is there, powering and protecting life online.\n\nFor over 25 years, Akamai has been solving the internet’s toughest challenges, working toward our vision of a safer and more connected world.\n\nOur market-leading security solutions, superior threat intelligence, and global operations team provide defense in depth to safeguard critical data and applications at every touchpoint. Our full-stack cloud computing solutions deliver superior performance and affordability on the world’s most distributed cloud platform. \n\nGlobal enterprises across every sector trust Akamai to provide the industry-leading reliability, scale, and expertise they need to grow their business with confidence.",
+    "voice_id": "male-qn-qingse",
+    "resolution": "720p",
+    "speed": 1.0,
+    "pitch": 0,
+    "emotion": "neutral",
+    "seed": 42,
+    "mask_image": null,
+    "character": null
+  },
+  "trace_id": "trace-36e1e67b4211",
+  "duration": null,
+  "stages": {
+    "avatar": {
+      "state": "completed",
+      "message": "头像生成完成",
+      "retries": 0,
+      "provider_task_id": null,
+      "output_url": "https://s.linapp.fun/ren/output/aka-01051405/avatar.png",
+      "artifact_path": null
+    },
+    "speech": {
+      "state": "completed",
+      "message": "语音生成完成 (0.0s)",
+      "retries": 0,
+      "provider_task_id": null,
+      "output_url": "https://d1q70pf5vjeyhc.cloudfront.net/predictions/41f325a2456e4af2ba53db82d5e31aea/1.mp3",
+      "artifact_path": "output/aka-01051405/speech.mp3"
+    },
+    "video": {
+      "state": "pending",
+      "message": "",
+      "retries": 0,
+      "provider_task_id": null,
+      "output_url": null,
+      "artifact_path": null
+    }
+  },
+  "cost": 3.55,
+  "cost_breakdown": {
+    "avatar": 0.0,
+    "speech": 0.0,
+    "video": 0.0
+  },
+  "assets": {
+    "text_length": 853,
+    "avatar_url": "https://s.linapp.fun/ren/output/aka-01051405/avatar.png",
+    "wave_avatar_url": "https://s.linapp.fun/ren/output/aka-01051405/avatar.png",
+    "audio_url": "https://d1q70pf5vjeyhc.cloudfront.net/predictions/41f325a2456e4af2ba53db82d5e31aea/1.mp3",
+    "audio_path": "output/aka-01051405/speech.mp3",
+    "wave_audio_url": "https://d1q70pf5vjeyhc.cloudfront.net/predictions/41f325a2456e4af2ba53db82d5e31aea/1.mp3",
+    "video_stage_started_at": "2026-01-05T06:05:20.346550+00:00"
+  },
+  "error": {
+    "message": "[infinitetalk] 等待 Infinitetalk 任务完成超时 (600秒) (status: 408)",
+    "type": "ExternalAPIError",
+    "trace_id": "trace-36e1e67b4211"
+  },
+  "config_hash": "c06e0ee94cdcba3f81e63365b5a5fb0d62c14592c90450e608638516bf773353",
+  "logs": [
+    "[INFO] 任务已创建，等待执行",
+    "[INFO] 正在生成头像...",
+    "[INFO] [avatar] 头像生成完成",
+    "[INFO] ✅ 头像生成完成: https://s.linapp.fun/ren/output/aka-01051405/avatar.png",
+    "[INFO] 正在生成语音...",
+    "[INFO] [speech] 语音生成完成 (0.0s)",
+    "[INFO] ✅ 语音生成完成",
+    "[INFO] 正在生成数字人视频...",
+    "[ERROR] ❌ 生成失败: [infinitetalk] 等待 Infinitetalk 任务完成超时 (600秒) (status: 408)"
+  ],
+  "avatar_url": "https://s.linapp.fun/ren/output/aka-01051405/avatar.png",
+  "audio_url": "https://d1q70pf5vjeyhc.cloudfront.net/predictions/41f325a2456e4af2ba53db82d5e31aea/1.mp3",
+  "video_url": null,
+  "video_path": null,
+  "billing": {
+    "currency": "USD",
+    "balance_before": 104.88,
+    "balance_after": 101.33,
+    "actual_cost": 3.55,
+    "updated_at": "2026-01-05T06:15:28.515099+00:00"
+  }
+}

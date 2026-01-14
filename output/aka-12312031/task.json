@@ -1,0 +1,126 @@
+{
+  "job_id": "aka-12312031",
+  "status": "finished",
+  "created_at": "2025-12-31T12:31:21.318635+00:00",
+  "updated_at": "2025-12-31T12:34:37.314854+00:00",
+  "params": {
+    "avatar_mode": "upload",
+    "avatar_prompt": "短棕发男性，神情严肃略嘟嘴，眼神直接；穿深蓝/黑色西装外套，内搭敞领白色条纹衬衫；半身肖像白底，外观似埃隆·马斯克。",
+    "avatar_upload_path": "/home/ren/resource/pic/mask.jpg",
+    "speech_text": "你好啊！欢迎进入Linode+WavespeedAI数字人空间。",
+    "voice_id": "male-qn-qingse",
+    "resolution": "720p",
+    "speed": 1.0,
+    "pitch": 0,
+    "emotion": "neutral",
+    "seed": 42,
+    "mask_image": null,
+    "character": {
+      "id": "char-mask",
+      "name": "星舰领袖",
+      "appearance": {
+        "zh": "短棕发男性，神情严肃略嘟嘴，眼神直接；穿深蓝/黑色西装外套，内搭敞领白色条纹衬衫；半身肖像白底，外观似埃隆·马斯克。",
+        "en": "Short brown-haired man with a serious slightly pursed look and direct gaze; in a dark navy/black suit jacket over an open-collar white striped shirt; half-body portrait on white, resembling Elon Musk."
+      },
+      "voice": {
+        "zh": "男性，中音，沉稳思考；英语带南非混美式口音，关键点前略作停顿，语气分析感。",
+        "prompt": "Male, mid register, measured and thoughtful; South African-tinged American accent, slight pauses before key points, analytical tone.",
+        "voice_id": "male-qn-qingse"
+      },
+      "image_url": "/api/characters/assets/mask.jpg",
+      "image_path": "mask.jpg",
+      "tags": [
+        "prebuilt",
+        "leader"
+      ],
+      "source": "prebuilt"
+    }
+  },
+  "trace_id": "trace-45f5012469fe",
+  "duration": 182.12,
+  "stages": {
+    "avatar": {
+      "state": "completed",
+      "message": "头像生成完成",
+      "retries": 0,
+      "provider_task_id": null,
+      "output_url": "https://s.linapp.fun/ren/output/aka-12312031/avatar.png",
+      "artifact_path": null
+    },
+    "speech": {
+      "state": "completed",
+      "message": "语音生成完成 (0.0s)",
+      "retries": 0,
+      "provider_task_id": null,
+      "output_url": "https://d1q70pf5vjeyhc.cloudfront.net/predictions/f0ab0efb13b349d3986d54d8d34f6102/1.mp3",
+      "artifact_path": "output/aka-12312031/speech.mp3"
+    },
+    "video": {
+      "state": "completed",
+      "message": "数字人视频生成完成",
+      "retries": 0,
+      "provider_task_id": null,
+      "output_url": "https://s.linapp.fun/ren/ren_12311234/digital_human.mp4",
+      "artifact_path": "output/aka-12312031/digital_human.mp4"
+    }
+  },
+  "cost": 10.9272,
+  "cost_breakdown": {
+    "avatar": 0.0,
+    "speech": 0.0,
+    "video": 10.9272
+  },
+  "assets": {
+    "character": {
+      "id": "char-mask",
+      "name": "星舰领袖",
+      "appearance": {
+        "zh": "短棕发男性，神情严肃略嘟嘴，眼神直接；穿深蓝/黑色西装外套，内搭敞领白色条纹衬衫；半身肖像白底，外观似埃隆·马斯克。",
+        "en": "Short brown-haired man with a serious slightly pursed look and direct gaze; in a dark navy/black suit jacket over an open-collar white striped shirt; half-body portrait on white, resembling Elon Musk."
+      },
+      "voice": {
+        "zh": "男性，中音，沉稳思考；英语带南非混美式口音，关键点前略作停顿，语气分析感。",
+        "prompt": "Male, mid register, measured and thoughtful; South African-tinged American accent, slight pauses before key points, analytical tone.",
+        "voice_id": "male-qn-qingse"
+      },
+      "image_url": "/api/characters/assets/mask.jpg",
+      "image_path": "mask.jpg",
+      "tags": [
+        "prebuilt",
+        "leader"
+      ],
+      "source": "prebuilt"
+    },
+    "character_id": "char-mask",
+    "avatar_url": "https://s.linapp.fun/ren/output/aka-12312031/avatar.png",
+    "wave_avatar_url": "https://s.linapp.fun/ren/output/aka-12312031/avatar.png",
+    "audio_url": "https://d1q70pf5vjeyhc.cloudfront.net/predictions/f0ab0efb13b349d3986d54d8d34f6102/1.mp3",
+    "audio_path": "output/aka-12312031/speech.mp3",
+    "wave_audio_url": "https://d1q70pf5vjeyhc.cloudfront.net/predictions/f0ab0efb13b349d3986d54d8d34f6102/1.mp3",
+    "video_url": "https://s.linapp.fun/ren/ren_12311234/digital_human.mp4",
+    "video_path": "output/aka-12312031/digital_human.mp4",
+    "public_video_path": "/mnt/www/ren/ren_12311234/digital_human.mp4",
+    "wave_video_url": "https://d2p7pge43lyniu.cloudfront.net/output/0fde106a-54d4-424e-8cc2-1df268d1af09-u1_5ada0999-9cef-4398-8303-d8ef8603ebe1.mp4",
+    "local_video_url": "/output/aka-12312031/digital_human.mp4",
+    "duration": 182.12
+  },
+  "error": null,
+  "config_hash": "3e15b6d13da4a1fc957195ee985005a44cfc206c3dfde9339146fa1efc11c6ac",
+  "logs": [
+    "[INFO] 🎭 使用角色 星舰领袖",
+    "[INFO] 任务已创建，等待执行",
+    "[INFO] 正在生成头像...",
+    "[INFO] [avatar] 头像生成完成",
+    "[INFO] ✅ 头像生成完成: https://s.linapp.fun/ren/output/aka-12312031/avatar.png",
+    "[INFO] 正在生成语音...",
+    "[INFO] [speech] 语音生成完成 (0.0s)",
+    "[INFO] ✅ 语音生成完成",
+    "[INFO] 正在生成数字人视频...",
+    "[INFO] [video] 数字人视频生成完成",
+    "[INFO] ✅ 数字人视频生成完成"
+  ],
+  "avatar_url": "https://s.linapp.fun/ren/output/aka-12312031/avatar.png",
+  "audio_url": "https://d1q70pf5vjeyhc.cloudfront.net/predictions/f0ab0efb13b349d3986d54d8d34f6102/1.mp3",
+  "video_url": "https://s.linapp.fun/ren/ren_12311234/digital_human.mp4",
+  "video_path": "output/aka-12312031/digital_human.mp4"
+}

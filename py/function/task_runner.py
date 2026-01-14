@@ -273,7 +273,9 @@ class TaskRunner:
         publish_info = None
         try:
             publish_info = self.storage.publish_video(ctx.job_id, local_path)
-        except FileNotFoundError:
+        except (FileNotFoundError, PermissionError) as exc:
+            # 发布到对象存储失败不影响任务完成（视频已在本地生成）
+            self.logger.warning(f"⚠️ 视频发布到公共目录失败: {exc}")
             publish_info = None
 
         self._increase_cost(ctx, "video", video_result.get("cost", 0.0))
@@ -286,6 +288,13 @@ class TaskRunner:
                 if mirror_url:
                     resolved_video_url = mirror_url
                     break
+
+        # 如果没有公开URL，回退到本地 Nginx URL
+        if not resolved_video_url:
+            import os
+            base_url = os.getenv("DIGITAL_HUMAN_PUBLIC_URL", "http://172.236.130.10:16000")
+            resolved_video_url = f"{base_url.rstrip('/')}/output/{ctx.job_id}/{self.storage.final_video_name}"
+
         ctx.record.assets["video_url"] = resolved_video_url
         ctx.record.assets["video_path"] = str(local_path)
         ctx.record.assets["public_video_path"] = (publish_info or {}).get("path")

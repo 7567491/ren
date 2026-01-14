@@ -256,7 +256,11 @@ class DigitalHumanService:
         except ValueError:
             relative = target_path
         public_path = Path("output") / relative
-        return f"https://s.linapp.fun/{public_path.as_posix().lstrip('/')}"
+
+        # 优先使用环境变量配置的 URL，否则使用本地服务器 IP
+        import os
+        base_url = os.getenv("DIGITAL_HUMAN_PUBLIC_URL", "http://172.236.130.10:16000")
+        return f"{base_url.rstrip('/')}/{public_path.as_posix().lstrip('/')}"
 
     async def _safe_fetch_balance(self, job_id: str, phase: str) -> Optional[float]:
         """查询 Wavespeed 余额（带日志，失败不中断主流程）。"""

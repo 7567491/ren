@@ -871,7 +871,7 @@
 
           const status = (task.status || "").toLowerCase();
           const videoUrl = task.assets?.local_video_url || task.video_url;
-          if (status === "succeeded" && videoUrl) {
+          if (status === "finished" && videoUrl) {
             videoLink.href = videoUrl;
             videoLink.hidden = false;
           } else {
@@ -883,7 +883,7 @@
             jobIdEl.textContent = jobId;
           }
 
-          if (status === "succeeded") {
+          if (status === "finished") {
             setStatusChip("success", "已完成");
             refreshHistorySoon();
           } else if (status === "failed") {
@@ -909,7 +909,7 @@
             const task = await fetchTask(jobId);
             updateTaskUI(task);
             const status = (task.status || "").toLowerCase();
-            if (["succeeded", "failed"].includes(status)) {
+            if (["finished", "failed"].includes(status)) {
               stopPolling();
               setLoading(false);
             }

@@ -1,4 +1,4 @@
-# Python
+# ===== Python =====
 venv/
 __pycache__/
 *.pyc
@@ -8,63 +8,61 @@ __pycache__/
 *.so
 *.egg
 *.egg-info/
-# 只忽略 Python 的 dist/ 目录，不忽略 frontend/dist/
 /py/dist/
 build/
 
-# 环境变量和密钥
+# ===== Node / 前端 =====
+node_modules/
+frontend/node_modules/
+# frontend/dist/ 含静态 HTML, 保留提交
+
+# ===== 环境变量和密钥 =====
 .env
 *.key
 *.pem
 
-# 输出文件
-output/  # 包含 aka-* 任务与 smoke 冒烟产物
+# ===== 输出 / 临时 =====
+output/           # 任务产物 (aka-* 等) - 体积大, 不入库
 temp/
-# 只忽略 output 和 temp 目录下的媒体文件
-# resource/pic/ 下的预制角色图片需要提交
-
-# Node / 前端
-node_modules/
-frontend/node_modules/
-# frontend/dist/ 现在包含静态 HTML，需要提交
-
-# 用户配置
-.bash_history
-.cache/
-.config/
-.npm/
-.ssh/
-.sudo_as_admin_successful
-.claude/
-.claudecode/
-.codex/
-.claude.json
-.claude.json.backup
-
-# IDE
-.vscode/
-.idea/
-*.swp
-*.swo
-*~
-
-# 系统文件
-.DS_Store
-Thumbs.db
-
-# 日志
 *.log
 log.txt
 
-# 资源文件（可能很大）
+# ===== 资源 (体积大, 按需) =====
 resource/songs/
 resource/music_features.json
 resource/fonts/
-
-# 角色素材上传
 resource/pic/user/
 resource/pic/user/*
 resource/characters/user/
 
-# Codex
-codex-*/
+# ===== 用户级配置 (不该入库) =====
+.bash_logout
+.bashrc
+.profile
+.gitconfig
+.gemini/
+.gemini.json
+.gemini.json.backup
+.ssh/
+.sudo_as_admin_successful
+
+# ===== Claude / Codex / IDE =====
+.claude/
+.claudecode/
+.claude.json
+.claude.json.backup
+.codex/
+.codex-*/
+.vscode/
+.idea/
+
+# ===== 第三方工具 (本地 clone, 不入库) =====
+gemini-0.22.4/
+frontend-vue-archive/
+
+# ===== 系统文件 =====
+.DS_Store
+Thumbs.db
+*.swp
+*.swo
+*~
